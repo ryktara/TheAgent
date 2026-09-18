@@ -321,951 +321,6 @@ paths:
         idempotent: true
         offline_capable: true
         audit: true
-  /order-lines:
-    get:
-      operationId: "order_line_list"
-      summary: "List OrderLine"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/OrderLinePage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    post:
-      operationId: "order_line_create"
-      summary: "Create OrderLine"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/OrderLine"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/OrderLine"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /order-lines/{id}:
-    get:
-      operationId: "order_line_get"
-      summary: "Get OrderLine"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/OrderLine"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "order_line_update"
-      summary: "Update OrderLine"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/OrderLine"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/OrderLine"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "order_line_archive"
-      summary: "Archive OrderLine"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /modifiers:
-    get:
-      operationId: "modifier_list"
-      summary: "List Modifier"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ModifierPage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    post:
-      operationId: "modifier_create"
-      summary: "Create Modifier"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Modifier"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Modifier"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /modifiers/{id}:
-    get:
-      operationId: "modifier_get"
-      summary: "Get Modifier"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Modifier"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "modifier_update"
-      summary: "Update Modifier"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Modifier"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Modifier"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "modifier_archive"
-      summary: "Archive Modifier"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /modifier-groups:
-    get:
-      operationId: "modifier_group_list"
-      summary: "List ModifierGroup"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ModifierGroupPage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    post:
-      operationId: "modifier_group_create"
-      summary: "Create ModifierGroup"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/ModifierGroup"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ModifierGroup"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /modifier-groups/{id}:
-    get:
-      operationId: "modifier_group_get"
-      summary: "Get ModifierGroup"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ModifierGroup"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "modifier_group_update"
-      summary: "Update ModifierGroup"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/ModifierGroup"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ModifierGroup"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "modifier_group_archive"
-      summary: "Archive ModifierGroup"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: true
-        audit: true
   /tables:
     get:
       operationId: "table_list"
@@ -1581,10 +636,10 @@ paths:
         idempotent: true
         offline_capable: true
         audit: true
-  /shifts:
+  /admin/shifts:
     get:
       operationId: "shift_list"
-      summary: "List Shift"
+      summary: "List Shift (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -1596,11 +651,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -1643,79 +693,14 @@ paths:
         personas:
           - "cashier"
           - "owner"
-        authz: "role in [cashier, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: true
         audit: false
-    post:
-      operationId: "shift_create"
-      summary: "Create Shift"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Shift"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Shift"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /shifts/{id}:
+  /admin/shifts/{id}:
     get:
       operationId: "shift_get"
-      summary: "Get Shift"
+      summary: "Get Shift (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -1769,133 +754,10 @@ paths:
         personas:
           - "cashier"
           - "owner"
-        authz: "role in [cashier, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "shift_update"
-      summary: "Update Shift"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Shift"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Shift"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "shift_archive"
-      summary: "Archive Shift"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "cashier"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: true
-        audit: true
+        audit: false
   /payments:
     get:
       operationId: "payment_list"
@@ -2211,10 +1073,10 @@ paths:
         idempotent: true
         offline_capable: false
         audit: true
-  /tenders:
+  /admin/tenders:
     get:
       operationId: "tender_list"
-      summary: "List Tender"
+      summary: "List Tender (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -2226,11 +1088,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -2273,79 +1130,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "tender_create"
-      summary: "Create Tender"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Tender"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Tender"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /tenders/{id}:
+  /admin/tenders/{id}:
     get:
       operationId: "tender_get"
-      summary: "Get Tender"
+      summary: "Get Tender (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -2399,137 +1191,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "tender_update"
-      summary: "Update Tender"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Tender"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Tender"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "tender_archive"
-      summary: "Archive Tender"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
-  /refunds:
+        audit: false
+  /admin/refunds:
     get:
       operationId: "refund_list"
-      summary: "List Refund"
+      summary: "List Refund (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -2541,11 +1210,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -2588,79 +1252,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "refund_create"
-      summary: "Create Refund"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Refund"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Refund"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /refunds/{id}:
+  /admin/refunds/{id}:
     get:
       operationId: "refund_get"
-      summary: "Get Refund"
+      summary: "Get Refund (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -2714,137 +1313,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "refund_update"
-      summary: "Update Refund"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Refund"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Refund"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "refund_archive"
-      summary: "Archive Refund"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
-  /receipts:
+        audit: false
+  /admin/receipts:
     get:
       operationId: "receipt_list"
-      summary: "List Receipt"
+      summary: "List Receipt (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -2856,11 +1332,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -2903,79 +1374,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "receipt_create"
-      summary: "Create Receipt"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Receipt"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Receipt"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /receipts/{id}:
+  /admin/receipts/{id}:
     get:
       operationId: "receipt_get"
-      summary: "Get Receipt"
+      summary: "Get Receipt (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -3029,133 +1435,10 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "receipt_update"
-      summary: "Update Receipt"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Receipt"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Receipt"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "receipt_archive"
-      summary: "Archive Receipt"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
+        audit: false
   /menu-items:
     get:
       operationId: "menu_item_list"
@@ -3466,951 +1749,6 @@ paths:
         job: "archive"
         personas:
           - "manager"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /variants:
-    get:
-      operationId: "variant_list"
-      summary: "List Variant"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/VariantPage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    post:
-      operationId: "variant_create"
-      summary: "Create Variant"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Variant"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Variant"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /variants/{id}:
-    get:
-      operationId: "variant_get"
-      summary: "Get Variant"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Variant"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "variant_update"
-      summary: "Update Variant"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Variant"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Variant"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "variant_archive"
-      summary: "Archive Variant"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /courses:
-    get:
-      operationId: "course_list"
-      summary: "List Course"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CoursePage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    post:
-      operationId: "course_create"
-      summary: "Create Course"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Course"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Course"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /courses/{id}:
-    get:
-      operationId: "course_get"
-      summary: "Get Course"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Course"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "course_update"
-      summary: "Update Course"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Course"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Course"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "course_archive"
-      summary: "Archive Course"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /kitchen-tickets:
-    get:
-      operationId: "kitchen_ticket_list"
-      summary: "List KitchenTicket"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/KitchenTicketPage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    post:
-      operationId: "kitchen_ticket_create"
-      summary: "Create KitchenTicket"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/KitchenTicket"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/KitchenTicket"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and branch scope"
-        idempotent: true
-        offline_capable: true
-        audit: true
-  /kitchen-tickets/{id}:
-    get:
-      operationId: "kitchen_ticket_get"
-      summary: "Get KitchenTicket"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/KitchenTicket"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and same branch"
-        idempotent: true
-        offline_capable: true
-        audit: false
-    patch:
-      operationId: "kitchen_ticket_update"
-      summary: "Update KitchenTicket"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/KitchenTicket"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/KitchenTicket"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "waiter"
-          - "owner"
-        authz: "role in [waiter, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: true
-        audit: true
-    delete:
-      operationId: "kitchen_ticket_archive"
-      summary: "Archive KitchenTicket"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "waiter"
           - "owner"
         authz: "role == owner"
         idempotent: true
@@ -5046,10 +2384,10 @@ paths:
         idempotent: true
         offline_capable: false
         audit: true
-  /discounts:
+  /admin/discounts:
     get:
       operationId: "discount_list"
-      summary: "List Discount"
+      summary: "List Discount (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -5061,11 +2399,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -5108,79 +2441,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "discount_create"
-      summary: "Create Discount"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Discount"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Discount"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /discounts/{id}:
+  /admin/discounts/{id}:
     get:
       operationId: "discount_get"
-      summary: "Get Discount"
+      summary: "Get Discount (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -5234,137 +2502,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "discount_update"
-      summary: "Update Discount"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Discount"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Discount"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "discount_archive"
-      summary: "Archive Discount"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
-  /tax-rules:
+        audit: false
+  /admin/tax-rules:
     get:
       operationId: "tax_rule_list"
-      summary: "List TaxRule"
+      summary: "List TaxRule (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -5376,11 +2521,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -5423,79 +2563,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "tax_rule_create"
-      summary: "Create TaxRule"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/TaxRule"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/TaxRule"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /tax-rules/{id}:
+  /admin/tax-rules/{id}:
     get:
       operationId: "tax_rule_get"
-      summary: "Get TaxRule"
+      summary: "Get TaxRule (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -5549,137 +2624,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "tax_rule_update"
-      summary: "Update TaxRule"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/TaxRule"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/TaxRule"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "tax_rule_archive"
-      summary: "Archive TaxRule"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
-  /branches:
+        audit: false
+  /admin/branches:
     get:
       operationId: "branch_list"
-      summary: "List Branch"
+      summary: "List Branch (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -5691,11 +2643,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -5738,79 +2685,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "branch_create"
-      summary: "Create Branch"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Branch"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Branch"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /branches/{id}:
+  /admin/branches/{id}:
     get:
       operationId: "branch_get"
-      summary: "Get Branch"
+      summary: "Get Branch (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -5864,137 +2746,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "branch_update"
-      summary: "Update Branch"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Branch"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Branch"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "branch_archive"
-      summary: "Archive Branch"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
-  /staffs:
+        audit: false
+  /admin/staffs:
     get:
       operationId: "staff_list"
-      summary: "List Staff"
+      summary: "List Staff (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -6006,11 +2765,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -6053,79 +2807,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "staff_create"
-      summary: "Create Staff"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Staff"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Staff"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /staffs/{id}:
+  /admin/staffs/{id}:
     get:
       operationId: "staff_get"
-      summary: "Get Staff"
+      summary: "Get Staff (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -6179,137 +2868,14 @@ paths:
         personas:
           - "manager"
           - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "staff_update"
-      summary: "Update Staff"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Staff"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Staff"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "staff_archive"
-      summary: "Archive Staff"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
-  /roles:
+        audit: false
+  /admin/roles:
     get:
       operationId: "role_list"
-      summary: "List Role"
+      summary: "List Role (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -6321,11 +2887,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -6368,79 +2929,14 @@ paths:
         personas:
           - "cashier"
           - "owner"
-        authz: "role in [cashier, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "role_create"
-      summary: "Create Role"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Role"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Role"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /roles/{id}:
+  /admin/roles/{id}:
     get:
       operationId: "role_get"
-      summary: "Get Role"
+      summary: "Get Role (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -6494,133 +2990,10 @@ paths:
         personas:
           - "cashier"
           - "owner"
-        authz: "role in [cashier, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "role_update"
-      summary: "Update Role"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Role"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Role"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "role_archive"
-      summary: "Archive Role"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "cashier"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
+        audit: false
   /inventory-items:
     get:
       operationId: "inventory_item_list"
@@ -6936,640 +3309,10 @@ paths:
         idempotent: true
         offline_capable: false
         audit: true
-  /recipes:
-    get:
-      operationId: "recipe_list"
-      summary: "List Recipe"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/RecipePage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    post:
-      operationId: "recipe_create"
-      summary: "Create Recipe"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Recipe"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Recipe"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /recipes/{id}:
-    get:
-      operationId: "recipe_get"
-      summary: "Get Recipe"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Recipe"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "recipe_update"
-      summary: "Update Recipe"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Recipe"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Recipe"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role in [manager, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "recipe_archive"
-      summary: "Archive Recipe"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "manager"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /stock-movements:
-    get:
-      operationId: "stock_movement_list"
-      summary: "List StockMovement"
-      parameters:
-        - name: "cursor"
-          in: "query"
-          schema:
-            type: "string"
-        - name: "limit"
-          in: "query"
-          schema:
-            type: "integer"
-            default: 25
-            maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/StockMovementPage"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    post:
-      operationId: "stock_movement_create"
-      summary: "Create StockMovement"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/StockMovement"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/StockMovement"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /stock-movements/{id}:
-    get:
-      operationId: "stock_movement_get"
-      summary: "Get StockMovement"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/StockMovement"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "read"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "stock_movement_update"
-      summary: "Update StockMovement"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/StockMovement"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/StockMovement"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "stock_movement_archive"
-      summary: "Archive StockMovement"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role == owner"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /sync-events:
+  /admin/sync-events:
     get:
       operationId: "sync_event_list"
-      summary: "List SyncEvent"
+      summary: "List SyncEvent (internal)"
       parameters:
         - name: "cursor"
           in: "query"
@@ -7581,11 +3324,6 @@ paths:
             type: "integer"
             default: 25
             maximum: 200
-        - name: "branch_id"
-          in: "query"
-          schema:
-            type: "string"
-            format: "uuid"
       responses:
         "200":
           description: "OK"
@@ -7628,79 +3366,14 @@ paths:
         personas:
           - "cashier"
           - "owner"
-        authz: "role in [cashier, owner] and branch scope"
+        authz: "role == owner"
         idempotent: true
         offline_capable: false
         audit: false
-    post:
-      operationId: "sync_event_create"
-      summary: "Create SyncEvent"
-      parameters:
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/SyncEvent"
-      responses:
-        "201":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SyncEvent"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "create"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and branch scope"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /sync-events/{id}:
+  /admin/sync-events/{id}:
     get:
       operationId: "sync_event_get"
-      summary: "Get SyncEvent"
+      summary: "Get SyncEvent (internal)"
       parameters:
         - name: "id"
           in: "path"
@@ -7754,133 +3427,10 @@ paths:
         personas:
           - "cashier"
           - "owner"
-        authz: "role in [cashier, owner] and same branch"
-        idempotent: true
-        offline_capable: false
-        audit: false
-    patch:
-      operationId: "sync_event_update"
-      summary: "Update SyncEvent"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "If-Match"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/SyncEvent"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SyncEvent"
-          headers:
-            ETag:
-              schema:
-                type: "string"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "update"
-        personas:
-          - "cashier"
-          - "owner"
-        authz: "role in [cashier, owner] and same branch; state guards per domain.yaml"
-        idempotent: true
-        offline_capable: false
-        audit: true
-    delete:
-      operationId: "sync_event_archive"
-      summary: "Archive SyncEvent"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-      responses:
-        "204":
-          description: "OK"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "archive"
-        personas:
-          - "cashier"
-          - "owner"
         authz: "role == owner"
         idempotent: true
         offline_capable: false
-        audit: true
+        audit: false
   /orders/{id}/take-order-table:
     post:
       operationId: "order_take_order_table"
@@ -8484,144 +4034,10 @@ paths:
         idempotent: true
         offline_capable: true
         audit: true
-  /discounts/{id}/apply-discount:
+  /orders/{id}/apply-discount:
     post:
-      operationId: "discount_apply_discount"
+      operationId: "order_apply_discount"
       summary: "apply discount"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: "object"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Discount"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "apply-discount"
-        personas:
-          - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /payments/{id}/tips-service-charge:
-    post:
-      operationId: "payment_tips_service_charge"
-      summary: "tips service charge"
-      parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
-        - name: "Idempotency-Key"
-          in: "header"
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: "object"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Payment"
-        "400":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "401":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "403":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "404":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        "409":
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-      x-foundry:
-        job: "tips-service-charge"
-        personas:
-          - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
-        idempotent: true
-        offline_capable: false
-        audit: true
-  /orders/{id}/take-payment:
-    post:
-      operationId: "order_take_payment"
-      summary: "take payment"
       parameters:
         - name: "id"
           in: "path"
@@ -8678,12 +4094,146 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Error"
       x-foundry:
-        job: "take-payment"
+        job: "apply-discount"
         personas:
           - "cashier"
         authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
         idempotent: true
         offline_capable: true
+        audit: true
+  /orders/{id}/tips-service-charge:
+    post:
+      operationId: "order_tips_service_charge"
+      summary: "tips service charge"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "Idempotency-Key"
+          in: "header"
+          required: true
+          schema:
+            type: "string"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Order"
+        "400":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "401":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "403":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      x-foundry:
+        job: "tips-service-charge"
+        personas:
+          - "cashier"
+        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        idempotent: true
+        offline_capable: true
+        audit: true
+  /payments/{id}/take-payment:
+    post:
+      operationId: "payment_take_payment"
+      summary: "take payment"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "Idempotency-Key"
+          in: "header"
+          required: true
+          schema:
+            type: "string"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Payment"
+        "400":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "401":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "403":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      x-foundry:
+        job: "take-payment"
+        personas:
+          - "cashier"
+        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        idempotent: true
+        offline_capable: false
         audit: true
   /receipts/{id}/print-receipt:
     post:
@@ -9355,17 +4905,11 @@ paths:
         idempotent: true
         offline_capable: true
         audit: true
-  /orders/{id}/reports:
+  /jobs/reports:
     post:
-      operationId: "order_reports"
+      operationId: "job_reports"
       summary: "reports"
       parameters:
-        - name: "id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            format: "uuid"
         - name: "Idempotency-Key"
           in: "header"
           required: true
@@ -9380,10 +4924,6 @@ paths:
       responses:
         "200":
           description: "OK"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Order"
         "400":
           description: "Error"
           content:
@@ -9420,7 +4960,7 @@ paths:
           - "owner"
         authz: "role == owner or role == owner; branch scope; manager PIN when the job guards it"
         idempotent: true
-        offline_capable: true
+        offline_capable: false
         audit: true
   /staffs/{id}/staff-roles:
     post:

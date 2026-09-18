@@ -25,7 +25,7 @@ import foundry as F  # noqa: E402
 BRIEFS = ROOT / "evals" / "briefs"
 EXPECTED = ROOT / "evals" / "expected"
 FIXTURES = ROOT / "evals" / "fixtures"
-STAGES = ("match", "grill", "prd", "domain", "architecture", "data", "api")
+STAGES = ("match", "grill", "prd", "domain", "architecture", "data", "api", "design", "screens")
 
 
 def load_cases(include_variants: bool = False) -> list[dict]:
@@ -119,7 +119,7 @@ def _fixture_copy() -> Path:
     for name in ("CONTEXT.md", "openapi.yaml"):
         if (fx / name).exists():
             shutil.copy(fx / name, tmp / name)
-    for d in ("prisma", "migrations"):
+    for d in ("prisma", "migrations", "design-system"):
         if (fx / d).exists():
             shutil.copytree(fx / d, tmp / d)
     return tmp
@@ -173,6 +173,42 @@ def stage_api(cases):
     return _stage_skeleton("api", run, "api")
 
 
+def stage_design(cases):
+    import foundry_phases as P
+    import foundry_design as D
+    def run(tmp, root):
+        P.run_domain_skeleton(tmp, root); P.run_arch_skeleton(tmp, root); P.run_schema_skeleton(tmp, root, "prisma"); P.run_api_skeleton(tmp, root)
+        D.run_design_skeleton(tmp, root)
+    tmp = _fixture_copy()
+    try:
+        run(tmp, ROOT)
+        errs = D.gate_design(tmp, ROOT)
+        print(f"design skeleton on fixture: {'pass' if not errs else 'FAIL'}")
+        for x in errs:
+            print(f"    {x}")
+        print(f"\ndesign: {'1/1' if not errs else '0/1'} pass")
+        return 0 if not errs else 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def stage_screens(cases):
+    import foundry_phases as P
+    import foundry_design as D
+    tmp = _fixture_copy()
+    try:
+        P.run_domain_skeleton(tmp, ROOT); P.run_arch_skeleton(tmp, ROOT); P.run_schema_skeleton(tmp, ROOT, "prisma"); P.run_api_skeleton(tmp, ROOT)
+        D.run_design_skeleton(tmp, ROOT); D.run_screens_skeleton(tmp, ROOT)
+        errs = D.gate_screens(tmp, ROOT)
+        print(f"screens skeleton on fixture: {'pass' if not errs else 'FAIL'}")
+        for x in errs:
+            print(f"    {x}")
+        print(f"\nscreens: {'1/1' if not errs else '0/1'} pass")
+        return 0 if not errs else 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--stage", choices=STAGES, help="run one stage (default: all implemented)")
@@ -184,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     rc = 0
     for st in ([a.stage] if a.stage else list(STAGES)):
         fn = {"match": stage_match, "grill": stage_grill, "prd": stage_prd, "domain": stage_domain,
-              "architecture": stage_architecture, "data": stage_data, "api": stage_api}[st]
+              "architecture": stage_architecture, "data": stage_data, "api": stage_api, "design": stage_design, "screens": stage_screens}[st]
         rc |= fn(load_cases(include_variants=True) if st == "match" else cases)
         print()
     return rc

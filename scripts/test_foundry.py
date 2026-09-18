@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import json
 import shutil
 import sys
 import tempfile
@@ -27,7 +28,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.4"
+PACK_EXAMPLE = """version: "1.5"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
@@ -229,7 +230,7 @@ class ScaffoldPackTests(unittest.TestCase):
         self.assertEqual(run(foundry.run_scaffold_pack, "Bad Slug", self.root)[0], 1)
 
     def test_unimplemented_commands_exit_2(self):
-        code, out = run(foundry.main, ["gate", "7"])
+        code, out = run(foundry.main, ["gate", "9"])
         self.assertEqual(code, 2)
         self.assertIn("not implemented", out)
 
@@ -569,6 +570,80 @@ class P4Tests(unittest.TestCase):
         code, out = run(foundry.main, ["doctor"])
         self.assertIn("python", out)
         self.assertIn("codebase-memory-mcp", out)
+
+
+class P5Tests(unittest.TestCase):
+    def setUp(self):
+        import foundry_design as D
+        import foundry_phases as P
+        self.D, self.P = D, P
+        self.tmp = Path(tempfile.mkdtemp())
+        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        shutil.copytree(fx / ".foundry", self.tmp / ".foundry")
+        for name in ("CONTEXT.md", "openapi.yaml"):
+            shutil.copy(fx / name, self.tmp / name)
+        for d in ("prisma", "migrations"):
+            shutil.copytree(fx / d, self.tmp / d)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_contrast_formula(self):
+        self.assertAlmostEqual(self.D.contrast_ratio("#000000", "#ffffff"), 21.0, places=2)
+        self.assertAlmostEqual(self.D.contrast_ratio("#767676", "#ffffff"), 4.54, places=2)
+        self.assertAlmostEqual(self.D.contrast_ratio("#fff", "#000"), 21.0, places=2)
+
+    def test_palettes_pass_and_row_counts(self):
+        n, errs = self.D.check_palettes(REPO / "data" / "palettes.csv")
+        self.assertGreaterEqual(n, 60)
+        self.assertEqual(errs, [])
+        import csv
+        for name, minimum in (("ux-rules", 220), ("typography", 30), ("styles", 25), ("product-types", 60), ("charts", 25), ("components", 45)):
+            with (REPO / "data" / f"{name}.csv").open(encoding="utf-8", newline="") as fh:
+                rows = list(csv.DictReader(fh))
+            self.assertGreaterEqual(len(rows), minimum, name)
+        self.assertTrue(any("2.5.8" in r for r in (REPO / "data" / "ux-rules.csv").read_text(encoding="utf-8").splitlines()))
+
+    def test_token_checks(self):
+        tokens = {"font": {"size": {"base": {"$value": "16px"}, "md": {"$value": "20px"}, "lg": {"$value": "24px"}}}, "space": {"0": {"$value": "0px"}, "1": {"$value": "4px"}},
+                  "radius": {"r0": {"$value": "0px"}}, "z": {"base": {"$value": 0}}, "motion": {"duration": {"fast": {"$value": "100ms"}}, "reduced": {"$value": "none"}},
+                  "touch": {"min": {"$value": "48px"}}, "foundry": {"tabular_numerals": True}}
+        self.assertEqual(self.D.check_tokens(tokens, 48, True), [])
+        bad = json.loads(json.dumps(tokens)); bad["font"]["size"]["base"]["$value"] = "14px"; bad["space"]["1"]["$value"] = "5px"; bad["motion"]["duration"]["fast"]["$value"] = "900ms"
+        errs = self.D.check_tokens(bad, 48, True)
+        self.assertTrue(any("base" in e for e in errs) and any("space" in e for e in errs) and any("motion" in e for e in errs), errs)
+
+    def test_design_and_screens_skeletons_pass_gates(self):
+        self.D.run_design_skeleton(self.tmp, REPO)
+        self.assertEqual(self.D.gate_design(self.tmp, REPO), [])
+        master = (self.tmp / "design-system" / "MASTER.md").read_text(encoding="utf-8")
+        for sec in self.D.REQUIRED_MASTER_SECTIONS:
+            self.assertIn(f"## {sec}", master)
+        tokens = json.loads((self.tmp / "design-system" / "tokens.json").read_text(encoding="utf-8"))
+        self.assertEqual(tokens["touch"]["min"]["$value"], "48px")
+        self.assertTrue(tokens["foundry"]["tabular_numerals"])
+        self.D.run_screens_skeleton(self.tmp, REPO)
+        self.assertEqual(self.D.gate_screens(self.tmp, REPO), [])
+        oe = (self.tmp / ".foundry" / "screens" / "order-entry.md").read_text(encoding="utf-8")
+        self.assertIn("order_send_to_kitchen", oe)
+        self.assertIn('"numpad"', oe)
+        self.assertIn("| offline |", oe)
+
+    def test_screens_gate_catches_bad_binding_and_missing_state(self):
+        self.D.run_design_skeleton(self.tmp, REPO); self.D.run_screens_skeleton(self.tmp, REPO)
+        p = self.tmp / ".foundry" / "screens" / "tender.md"
+        p.write_text(p.read_text(encoding="utf-8").replace('"payment_create"', '"payment_nope"').replace("| locked |", "| lockedx |"), encoding="utf-8")
+        errs = self.D.gate_screens(self.tmp, REPO)
+        self.assertTrue(any("payment_nope" in e for e in errs), errs)
+        self.assertTrue(any("locked" in e for e in errs), errs)
+
+    def test_api_pruned_by_exposure(self):
+        spec = foundry.parse_yaml((self.tmp / "openapi.yaml").read_text(encoding="utf-8"))
+        ops = sum(1 for m in spec["paths"].values() for k in m if k in ("get", "post", "patch", "delete"))
+        self.assertLessEqual(ops, 90)
+        self.assertNotIn("/kitchen-tickets", spec["paths"])
+        self.assertIn("/admin/receipts", spec["paths"])
+        self.assertIn("/order-lines/{id}/modify-order", spec["paths"])
 
 
 class GateTests(unittest.TestCase):

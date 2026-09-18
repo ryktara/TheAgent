@@ -17,5 +17,9 @@ jobs:
           python-version: "3.11"
       - name: Validate skills, packs, schemas
         run: python scripts/foundry.py validate
+      - name: Design check (palette contrast)
+        run: python scripts/foundry.py design-check --palettes-only
+      - name: Evals
+        run: python evals/run.py
       - name: Unit tests
         run: python -m unittest scripts/test_foundry.py -v

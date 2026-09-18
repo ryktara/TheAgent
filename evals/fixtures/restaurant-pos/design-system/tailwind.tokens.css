@@ -1,0 +1,52 @@
+:root {
+  --color-primary: #ca4c16;
+  --color-primary-fg: #ffffff;
+  --color-secondary: #ab922b;
+  --color-accent: #0b92cb;
+  --color-bg: #ffffff;
+  --color-surface: #fbf9f9;
+  --color-surface-alt: #f4f1f0;
+  --color-text: #261c17;
+  --color-text-muted: #72615a;
+  --color-border: #a48d84;
+  --color-success: #279b57;
+  --color-warning: #b36f0f;
+  --color-danger: #aa1818;
+  --color-info: #1d78a5;
+  --text-base: 16px;
+  --text-md: 19px;
+  --text-lg: 23px;
+  --text-xl: 28px;
+  --text-2xl: 33px;
+  --text-3xl: 40px;
+  --text-4xl: 48px;
+  --font-heading: "Inter";
+  --font-body: "Inter";
+  --font-mono: "JetBrains Mono";
+  --font-arabic: "IBM Plex Sans Arabic";
+  --font-urdu: "Noto Nastaliq Urdu";
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-r0: 0px;
+  --radius-r1: 6px;
+  --radius-r2: 12px;
+  --duration-fast: 100ms;
+  --duration-base: 200ms;
+  --duration-slow: 240ms;
+  --touch-min: 48px;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --color-bg: #1a1614;
+  --color-surface: #25201d;
+  --color-text: #eceae9;
+  --color-primary: #ca4c16;
+} }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; animation: none !important; } }

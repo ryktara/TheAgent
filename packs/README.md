@@ -38,10 +38,10 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example (schema 1.4)
+## pack.yaml example (schema 1.5)
 
 ```yaml
-version: "1.4"
+version: "1.5"
 complete: false
 threshold: 0.7
 slug: restaurant-pos
@@ -75,6 +75,8 @@ Schema: `schemas/pack.schema.json`.
 | complete | true turns on the pack lint below; false for placeholder packs |
 | compliance_should | optional control ids alongside `compliance_must` |
 | jobs[].persona | persona that performs the job (used by the PRD jobs table) |
+| jobs[].entity | entity the job acts on (`none` when no entity); required for complete packs; job operations attach to `/<entity-plural>/{id}/<job>` |
+| entities[].exposure | public (CRUD), internal (read-only under /admin), derived (no endpoints; served inside its parent) |
 | regional[R].compliance_must / compliance_should | region-specific control ids; only the decided region's ids reach the PRD and compliance.yaml |
 | regional[R].tax_by_province | table `{name: {rate, digital_rate, authority, as_of, note}}` rendered as a table in PRD §8 |
 
@@ -85,7 +87,7 @@ screens.md; every CamelCase name in invariants is an entity and every entity app
 invariant or in screens.md; every `compliance_must` id appears in compliance.md; glossary.csv has
 at least 80 rows; reference/sources.md exists and every VERIFIED row carries a URL; every `maps_to` is unique; every `enables` target is a should_have id; regional control ids exist in compliance.md.
 
-## Question bank (1.4)
+## Question bank (1.5)
 
 `questions` is a ranked bank of at most 12. The 7/3 round budget is enforced at grill time by
 `schemas/decisions.schema.json`, so a brief that pre-answers three questions still leaves enough

@@ -4,38 +4,101 @@
   "title": "Foundry domain model (.foundry/domain.yaml)",
   "type": "object",
   "additionalProperties": false,
-  "required": ["pack", "contexts", "entities", "events"],
+  "required": [
+    "pack",
+    "contexts",
+    "entities",
+    "events"
+  ],
   "properties": {
-    "pack": { "type": "string" },
-    "decisions_hash": { "type": "string" },
-    "contexts": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "pack": {
+      "type": "string"
+    },
+    "decisions_hash": {
+      "type": "string"
+    },
+    "contexts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
     "entities": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name", "fields", "states", "transitions", "invariants", "owned_by"],
+        "required": [
+          "name",
+          "fields",
+          "states",
+          "transitions",
+          "invariants",
+          "owned_by"
+        ],
         "additionalProperties": false,
         "properties": {
-          "name": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
-          "fields": { "type": "array", "items": { "type": "string" } },
-          "states": { "type": "array", "items": { "type": "string" } },
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Za-z0-9]*$"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "transitions": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["from", "to", "by"],
+              "required": [
+                "from",
+                "to",
+                "by"
+              ],
               "additionalProperties": false,
               "properties": {
-                "from": { "type": "string" },
-                "to": { "type": "string" },
-                "by": { "type": "string", "minLength": 1 },
-                "guard": { "type": "string" }
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "guard": {
+                  "type": "string"
+                }
               }
             }
           },
-          "invariants": { "type": "array", "items": { "type": "string" } },
-          "owned_by": { "type": "string" }
+          "invariants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "owned_by": {
+            "type": "string"
+          },
+          "exposure": {
+            "type": "string",
+            "enum": [
+              "public",
+              "internal",
+              "derived"
+            ]
+          }
         }
       }
     },
@@ -43,15 +106,34 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "producer", "consumers"],
+        "required": [
+          "name",
+          "producer",
+          "consumers"
+        ],
         "additionalProperties": false,
         "properties": {
-          "name": { "type": "string" },
-          "entity": { "type": "string" },
-          "transition": { "type": "string" },
-          "producer": { "type": "string" },
-          "consumers": { "type": "array", "items": { "type": "string" } },
-          "external": { "type": "boolean" }
+          "name": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "transition": {
+            "type": "string"
+          },
+          "producer": {
+            "type": "string"
+          },
+          "consumers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "external": {
+            "type": "boolean"
+          }
         }
       }
     }

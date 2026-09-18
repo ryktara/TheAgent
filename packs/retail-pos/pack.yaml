@@ -1,4 +1,4 @@
-version: "1.4"
+version: "1.5"
 complete: false
 threshold: 0.7
 slug: retail-pos
@@ -7,10 +7,10 @@ aliases: [retail point of sale, retail pos, shop pos, store pos, supermarket pos
 confidence_keywords: [retail, shop, store, boutique, supermarket, hypermarket, grocery, baqala, bakala, minimart, pharmacy, barcode, sku, stock, inventory, shelf, size, colour, returns, exchanges, refund, till, cashier, receipt, e-invoice, zatca, fatoora, loyalty points, clothing, garments, electronics, wholesale, pos]
 personas: [cashier, store-manager, stock-keeper, owner, customer]
 jobs:
-  - {id: sell, must: true, screens: [checkout, product-search]}
-  - {id: manage-stock, must: true, screens: [inventory, receive-stock]}
-  - {id: return-exchange, must: true, screens: [returns]}
-  - {id: close-day, must: true, screens: [z-report]}
+  - {id: sell, entity: Sale, must: true, screens: [checkout, product-search]}
+  - {id: manage-stock, entity: Variant, must: true, screens: [inventory, receive-stock]}
+  - {id: return-exchange, entity: Return, must: true, screens: [returns]}
+  - {id: close-day, entity: Sale, must: true, screens: [z-report]}
 must_have: [checkout, barcode-scan, variants, inventory, returns-exchanges, receipts, e-invoice, z-report, loyalty, offline-queue]
 should_have: [multi-store, purchase-orders, supplier-management, promotions, gift-cards, ecommerce-sync]
 entities:

@@ -1,4 +1,4 @@
-version: "1.4"
+version: "1.5"
 complete: true
 threshold: 0.7
 slug: restaurant-pos
@@ -7,61 +7,61 @@ aliases: [restaurant point of sale, restaurant pos, cafe pos, f&b pos, qsr pos, 
 confidence_keywords: [restaurant, cafe, cafeteria, coffee shop, kitchen, kds, kitchen display, table, dine-in, dining, fine dining, takeaway, parcel, menu, modifiers, order, waiter, chef, bill, split bill, tips, reservations, food, f&b, qsr, fast food, shisha, hookah, mandi, shawarma, karak, chai, tea shop, bakery, cloud kitchen, dark kitchen, delivery, talabat, deliveroo, careem, noon food, pos, ipad, tablet, food court, kiosk, self-order, qr menu, qr ordering, hotel restaurant, room charge, room service, buffet, catering, canteen, bistro, grill, pizzeria, burger, juice bar, dhaba, biryani, kebab, falafel, lounge, brunch, eatery, diner, kot, covers, brands]
 personas: [cashier, waiter, kitchen, manager, owner, accountant, customer, delivery-rider]
 jobs:
-  - {id: take-order-table, persona: waiter, must: true, screens: [table-map, order-entry]}
-  - {id: take-order-counter, persona: cashier, must: true, screens: [order-entry]}
-  - {id: take-order-qr, persona: customer, must: false, screens: [qr-self-order]}
-  - {id: modify-order, persona: waiter, must: true, screens: [order-entry, modifier-sheet]}
-  - {id: send-to-kitchen, persona: waiter, must: true, screens: [order-entry, kds]}
-  - {id: kds-bump, persona: kitchen, must: true, screens: [kds]}
-  - {id: hold-void-comp, persona: manager, must: true, screens: [order-entry, manager-pin]}
-  - {id: split-bill, persona: cashier, must: true, screens: [split-bill]}
-  - {id: merge-transfer-tables, persona: waiter, must: true, screens: [table-map]}
-  - {id: apply-discount, persona: cashier, must: true, screens: [tender, manager-pin]}
-  - {id: tips-service-charge, persona: cashier, must: true, screens: [tender]}
-  - {id: take-payment, persona: cashier, must: true, screens: [tender]}
-  - {id: print-receipt, persona: cashier, must: true, screens: [receipt-preview]}
-  - {id: refund, persona: manager, must: true, screens: [refund, manager-pin]}
-  - {id: open-close-shift, persona: cashier, must: true, screens: [shift-open, shift-close]}
-  - {id: end-of-day, persona: manager, must: true, screens: [end-of-day]}
-  - {id: manage-menu, persona: manager, must: true, screens: [menu-management]}
-  - {id: manage-floor, persona: manager, must: true, screens: [floor-editor, table-map]}
-  - {id: reservations-waitlist, persona: waiter, must: false, screens: [reservations]}
-  - {id: inventory-basic, persona: manager, must: true, screens: [inventory, recipe-editor]}
-  - {id: purchasing, persona: manager, must: false, screens: [purchasing]}
-  - {id: delivery-orders, persona: kitchen, must: false, screens: [delivery-inbox, kds]}
-  - {id: reports, persona: owner, must: true, screens: [reports]}
-  - {id: staff-roles, persona: owner, must: true, screens: [staff-roles]}
-  - {id: multi-branch, persona: owner, must: false, screens: [branch-switcher, menu-management]}
-  - {id: loyalty, persona: cashier, must: false, screens: [tender, customer-lookup]}
-  - {id: offline-sync, persona: cashier, must: true, screens: [sync-status]}
+  - {id: take-order-table, entity: Order, persona: waiter, must: true, screens: [table-map, order-entry]}
+  - {id: take-order-counter, entity: Order, persona: cashier, must: true, screens: [order-entry]}
+  - {id: take-order-qr, entity: Order, persona: customer, must: false, screens: [qr-self-order]}
+  - {id: modify-order, entity: OrderLine, persona: waiter, must: true, screens: [order-entry, modifier-sheet]}
+  - {id: send-to-kitchen, entity: Order, persona: waiter, must: true, screens: [order-entry, kds]}
+  - {id: kds-bump, entity: KitchenTicket, persona: kitchen, must: true, screens: [kds]}
+  - {id: hold-void-comp, entity: OrderLine, persona: manager, must: true, screens: [order-entry, manager-pin]}
+  - {id: split-bill, entity: Order, persona: cashier, must: true, screens: [split-bill]}
+  - {id: merge-transfer-tables, entity: Table, persona: waiter, must: true, screens: [table-map]}
+  - {id: apply-discount, entity: Order, persona: cashier, must: true, screens: [tender, manager-pin]}
+  - {id: tips-service-charge, entity: Order, persona: cashier, must: true, screens: [tender]}
+  - {id: take-payment, entity: Payment, persona: cashier, must: true, screens: [tender]}
+  - {id: print-receipt, entity: Receipt, persona: cashier, must: true, screens: [receipt-preview]}
+  - {id: refund, entity: Refund, persona: manager, must: true, screens: [refund, manager-pin]}
+  - {id: open-close-shift, entity: Shift, persona: cashier, must: true, screens: [shift-open, shift-close]}
+  - {id: end-of-day, entity: Shift, persona: manager, must: true, screens: [end-of-day]}
+  - {id: manage-menu, entity: MenuItem, persona: manager, must: true, screens: [menu-management]}
+  - {id: manage-floor, entity: Table, persona: manager, must: true, screens: [floor-editor, table-map]}
+  - {id: reservations-waitlist, entity: Reservation, persona: waiter, must: false, screens: [reservations]}
+  - {id: inventory-basic, entity: InventoryItem, persona: manager, must: true, screens: [inventory, recipe-editor]}
+  - {id: purchasing, entity: InventoryItem, persona: manager, must: false, screens: [purchasing]}
+  - {id: delivery-orders, entity: Order, persona: kitchen, must: false, screens: [delivery-inbox, kds]}
+  - {id: reports, entity: none, persona: owner, must: true, screens: [reports]}
+  - {id: staff-roles, entity: Staff, persona: owner, must: true, screens: [staff-roles]}
+  - {id: multi-branch, entity: Branch, persona: owner, must: false, screens: [branch-switcher, menu-management]}
+  - {id: loyalty, entity: Customer, persona: cashier, must: false, screens: [tender, customer-lookup]}
+  - {id: offline-sync, entity: SyncEvent, persona: cashier, must: true, screens: [sync-status]}
 must_have: [order-entry, table-map, modifiers, course-firing, send-to-kitchen, kds, hold-void-comp, split-bill, merge-transfer, discounts, tips-service-charge, tender-cash-card-wallet, split-tender, receipt-bilingual-qr, refunds, shift-cash-count, z-report, end-of-day, menu-management, floor-management, inventory-basic, reports-core, staff-roles, offline-queue, audit-log]
 should_have: [qr-self-order, room-charge, reservations, waitlist, purchasing, delivery-integration, multi-branch, loyalty, whatsapp-receipts, accounting-sync, customer-display, e-invoicing]
 entities:
   Order: {states: [draft, sent, in-progress, ready, served, billed, paid, closed, void, refunded], fields: [id, client_uuid, device_seq, branch_id, table_id, channel, covers, subtotal, discount_total, service_charge, tax_total, total, opened_at, closed_at]}
-  OrderLine: {states: [pending, held, fired, ready, served, voided, comped], fields: [order_id, menu_item_id, variant_id, qty, unit_price, modifiers_total, line_total, course, seat, notes, allergens]}
-  Modifier: {states: [active, hidden], fields: [group_id, name, price_delta, max_qty]}
-  ModifierGroup: {states: [active, hidden], fields: [name, min_select, max_select, required]}
+  OrderLine: {states: [pending, held, fired, ready, served, voided, comped], exposure: derived, fields: [order_id, menu_item_id, variant_id, qty, unit_price, modifiers_total, line_total, course, seat, notes, allergens]}
+  Modifier: {states: [active, hidden], exposure: derived, fields: [group_id, name, price_delta, max_qty]}
+  ModifierGroup: {states: [active, hidden], exposure: derived, fields: [name, min_select, max_select, required]}
   Table: {states: [free, seated, ordered, billed, dirty, blocked], fields: [branch_id, zone, number, seats, shape, x, y]}
-  Shift: {states: [open, closed, reconciled], fields: [branch_id, device_id, opened_by, opening_float, closing_count, expected_cash, variance]}
+  Shift: {states: [open, closed, reconciled], exposure: internal, fields: [branch_id, device_id, opened_by, opening_float, closing_count, expected_cash, variance]}
   Payment: {states: [pending, authorised, captured, declined, refunded, voided], fields: [order_id, amount, tender_id, provider_ref, approval_code, captured_at]}
-  Tender: {states: [active, disabled], fields: [name, kind, provider, surcharge_pct, opens_drawer]}
-  Refund: {states: [requested, approved, processed, failed], fields: [payment_id, amount, reason, approver_id]}
-  Receipt: {states: [issued, reprinted, voided], fields: [order_id, branch_id, number, fiscal_qr, language, issued_at]}
+  Tender: {states: [active, disabled], exposure: internal, fields: [name, kind, provider, surcharge_pct, opens_drawer]}
+  Refund: {states: [requested, approved, processed, failed], exposure: internal, fields: [payment_id, amount, reason, approver_id]}
+  Receipt: {states: [issued, reprinted, voided], exposure: internal, fields: [order_id, branch_id, number, fiscal_qr, language, issued_at]}
   MenuItem: {states: [active, sold-out, hidden, seasonal], fields: [category_id, plu, name_en, name_ar, price, tax_rule_id, kitchen_station, image]}
-  Variant: {states: [active, hidden], fields: [menu_item_id, name, price_delta, sku]}
-  Course: {states: [scheduled, fired, served], fields: [order_id, sequence, name, fired_at]}
-  KitchenTicket: {states: [new, in-progress, ready, bumped, recalled], fields: [order_id, station, lines, fired_at, bumped_at, age_seconds]}
+  Variant: {states: [active, hidden], exposure: derived, fields: [menu_item_id, name, price_delta, sku]}
+  Course: {states: [scheduled, fired, served], exposure: derived, fields: [order_id, sequence, name, fired_at]}
+  KitchenTicket: {states: [new, in-progress, ready, bumped, recalled], exposure: derived, fields: [order_id, station, lines, fired_at, bumped_at, age_seconds]}
   Reservation: {states: [requested, confirmed, seated, no-show, cancelled], fields: [customer_id, party_size, slot, table_id, notes]}
   Customer: {states: [guest, registered, blocked], fields: [name, phone, email, loyalty_points, khaata_balance, allergens]}
-  Discount: {states: [active, expired], fields: [name, kind, value, scope, requires_pin, channel]}
-  TaxRule: {states: [active, retired], fields: [region, name, rate, inclusive, applies_to]}
-  Branch: {states: [active, suspended], fields: [name, region, currency, timezone, receipt_prefix, fiscal_regime]}
-  Staff: {states: [active, suspended], fields: [name, pin_hash, role_id, branch_ids]}
-  Role: {states: [active], fields: [name, permissions]}
+  Discount: {states: [active, expired], exposure: internal, fields: [name, kind, value, scope, requires_pin, channel]}
+  TaxRule: {states: [active, retired], exposure: internal, fields: [region, name, rate, inclusive, applies_to]}
+  Branch: {states: [active, suspended], exposure: internal, fields: [name, region, currency, timezone, receipt_prefix, fiscal_regime]}
+  Staff: {states: [active, suspended], exposure: internal, fields: [name, pin_hash, role_id, branch_ids]}
+  Role: {states: [active], exposure: internal, fields: [name, permissions]}
   InventoryItem: {states: [active, discontinued], fields: [name, unit, on_hand, par_level, cost]}
-  Recipe: {states: [active, retired], fields: [menu_item_id, components, yield]}
-  StockMovement: {states: [recorded], fields: [inventory_item_id, qty, kind, reference, at]}
-  SyncEvent: {states: [pending, sent, acked, conflict], fields: [device_id, seq, entity, payload, created_at]}
+  Recipe: {states: [active, retired], exposure: derived, fields: [menu_item_id, components, yield]}
+  StockMovement: {states: [recorded], exposure: derived, fields: [inventory_item_id, qty, kind, reference, at]}
+  SyncEvent: {states: [pending, sent, acked, conflict], exposure: internal, fields: [device_id, seq, entity, payload, created_at]}
 invariants:
   - "Order.total == sum(OrderLine.line_total) - Order.discount_total + Order.service_charge + Order.tax_total, computed in minor units"
   - "When TaxRule.inclusive is true, tax_total is extracted from tax-inclusive prices and rounding happens once per Order, not per line"

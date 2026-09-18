@@ -1,4 +1,4 @@
-version: "1.4"
+version: "1.5"
 complete: true
 threshold: 0.0
 slug: generic
@@ -7,20 +7,20 @@ aliases: [business app, internal tool, admin panel, back office, crud app, manag
 confidence_keywords: [app, application, software, system, platform, portal, dashboard, tool, records, admin, database, manage, management, workflow, forms, reports, users, roles, login, web app, mobile app, saas]
 personas: [owner, admin, staff, customer]
 jobs:
-  - {id: sign-in, persona: staff, must: true, screens: [auth]}
-  - {id: manage-records, persona: staff, must: true, screens: [list, detail, edit]}
-  - {id: see-overview, persona: admin, must: true, screens: [dashboard]}
-  - {id: run-reports, persona: admin, must: true, screens: [reports]}
-  - {id: administer, persona: owner, must: true, screens: [settings, users-roles]}
-  - {id: audit-activity, persona: owner, must: false, screens: [audit-log]}
+  - {id: sign-in, entity: User, persona: staff, must: true, screens: [auth]}
+  - {id: manage-records, entity: Record, persona: staff, must: true, screens: [list, detail, edit]}
+  - {id: see-overview, entity: none, persona: admin, must: true, screens: [dashboard]}
+  - {id: run-reports, entity: none, persona: admin, must: true, screens: [reports]}
+  - {id: administer, entity: Role, persona: owner, must: true, screens: [settings, users-roles]}
+  - {id: audit-activity, entity: AuditEvent, persona: owner, must: false, screens: [audit-log]}
 must_have: [auth, roles, records-crud, search-filter, dashboard, reports, settings, audit-log, data-export, notifications]
 should_have: [multi-tenant, file-attachments, bulk-import, api-keys, mobile-companion, i18n]
 entities:
   Tenant: {states: [trial, active, suspended, closed]}
   User: {states: [invited, active, disabled]}
-  Role: {states: [active]}
+  Role: {states: [active], exposure: internal}
   Record: {states: [draft, active, archived]}
-  AuditEvent: {states: [recorded]}
+  AuditEvent: {states: [recorded], exposure: internal}
   Notification: {states: [pending, sent, read]}
 invariants:
   - "Every Record belongs to exactly one Tenant"

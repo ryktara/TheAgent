@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://foundry.dev/schemas/pack.schema.json",
-  "title": "Foundry domain pack (pack.yaml) v1.4",
+  "title": "Foundry domain pack (pack.yaml) v1.5",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "const": "1.4"
+      "const": "1.5"
     },
     "slug": {
       "type": "string",
@@ -83,6 +83,9 @@
           },
           "persona": {
             "type": "string"
+          },
+          "entity": {
+            "type": "string"
           }
         }
       }
@@ -109,6 +112,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "exposure": {
+            "type": "string",
+            "enum": [
+              "public",
+              "internal",
+              "derived"
+            ]
           }
         },
         "additionalProperties": true

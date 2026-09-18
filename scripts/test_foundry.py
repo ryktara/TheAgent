@@ -27,7 +27,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.3"
+PACK_EXAMPLE = """version: "1.4"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
@@ -460,6 +460,117 @@ class P3Tests(unittest.TestCase):
             self.assertIn("screen 'kds' has no", out)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+class P4Tests(unittest.TestCase):
+    """Phases 4-6 on the restaurant fixture."""
+
+    def setUp(self):
+        import foundry_phases as P
+        self.P = P
+        self.tmp = Path(tempfile.mkdtemp())
+        shutil.copytree(REPO / "evals" / "fixtures" / "restaurant-pos" / ".foundry", self.tmp / ".foundry")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_yaml_block_map_in_list(self):
+        d = foundry.parse_yaml("items:\n  - name: a\n    n: 1\n  - name: b\n    n: 2\nx: 3\n")
+        self.assertEqual(d, {"items": [{"name": "a", "n": 1}, {"name": "b", "n": 2}], "x": 3})
+
+    def test_enables_replaces_heuristic(self):
+        pack = foundry.load_pack(REPO, "restaurant-pos")
+        self.assertIsNotNone(foundry.should_have_enabled("multi-branch", [{"id": "branches", "value": "multi", "source": "human"}], pack))
+        self.assertIsNone(foundry.should_have_enabled("multi-branch", [{"id": "branches", "value": "single", "source": "human"}], pack))
+        self.assertIsNotNone(foundry.should_have_enabled("delivery-integration", [{"id": "delivery", "value": True, "source": "pack-default"}], pack))
+        self.assertIsNone(foundry.should_have_enabled("accounting-sync", [{"id": "central-menu-sync", "value": "central", "source": "human"}], pack))
+
+    def test_prd_region_scoping_and_tax_table(self):
+        pack = foundry.load_pack(REPO, "restaurant-pos")
+        ledger = foundry.load_ledger(self.tmp)
+        text = foundry.prd_skeleton(pack, ledger, "x")
+        sec8 = text.split("## 8.")[1].split("## 9.")[0]
+        self.assertIn("`C-AE-01`", sec8)
+        self.assertNotIn("C-SA-", sec8)
+        self.assertNotIn("C-PK-", sec8)
+        foundry.decide(ledger, pack, "region", "PK", "human", None, 1)
+        text = foundry.prd_skeleton(pack, ledger, "x")
+        sec8 = text.split("## 8.")[1].split("## 9.")[0]
+        self.assertIn("| Punjab | 16% | 5% | PRA |", sec8)
+        self.assertIn("`C-PK-02`", sec8)
+        self.assertNotIn("C-AE-", sec8)
+
+    def test_gate_prd_rejects_foreign_region_control(self):
+        prd = self.tmp / ".foundry" / "prd.md"
+        prd.write_text(prd.read_text(encoding="utf-8").replace("`C-AE-01`", "`C-AE-01`, `C-SA-01`"), encoding="utf-8")
+        errs = foundry.gate_prd(self.tmp, REPO)
+        self.assertTrue(any("C-SA-01" in e for e in errs), errs)
+
+    def test_domain_skeleton_passes_gate(self):
+        self.P.run_domain_skeleton(self.tmp, REPO)
+        self.assertEqual(self.P.gate_domain(self.tmp, REPO), [])
+        d = foundry.parse_yaml((self.tmp / ".foundry" / "domain.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(len(d["entities"]), 25)
+        order = next(e for e in d["entities"] if e["name"] == "Order")
+        self.assertIn({"from": "draft", "to": "sent", "by": "waiter", "guard": ""}, order["transitions"])
+        self.assertTrue(any(ev["name"] == "OrderSent" and "kitchen" in ev["consumers"] for ev in d["events"]))
+        ctx = (self.tmp / "CONTEXT.md").read_text(encoding="utf-8")
+        self.assertIn("| KOT |", ctx)
+        self.assertIn("kitchen output", ctx)
+
+    def test_domain_gate_catches_missing_actor(self):
+        self.P.run_domain_skeleton(self.tmp, REPO)
+        p = self.tmp / ".foundry" / "domain.yaml"
+        p.write_text(p.read_text(encoding="utf-8").replace('by: "waiter"', 'by: "nobody"', 1), encoding="utf-8")
+        self.assertTrue(any("not a persona" in e for e in self.P.gate_domain(self.tmp, REPO)))
+
+    def test_arch_skeleton_passes_gate(self):
+        self.P.run_domain_skeleton(self.tmp, REPO)
+        self.P.run_arch_skeleton(self.tmp, REPO)
+        self.assertEqual(self.P.gate_architecture(self.tmp, REPO), [])
+        adrs = sorted((self.tmp / ".foundry" / "adr").glob("*.md"))
+        self.assertEqual([p.name[:4] for p in adrs], self.P.ADR_IDS)
+        for p in adrs:
+            self.assertLessEqual(len(p.read_text(encoding="utf-8").splitlines()), 60, p.name)
+
+    def test_schema_and_api_pass_gates(self):
+        self.P.run_domain_skeleton(self.tmp, REPO)
+        self.P.run_arch_skeleton(self.tmp, REPO)
+        self.P.run_schema_skeleton(self.tmp, REPO, "prisma")
+        self.assertEqual(self.P.gate_data(self.tmp, REPO), [])
+        schema = (self.tmp / "prisma" / "schema.prisma").read_text(encoding="utf-8")
+        self.assertIn("model Order {", schema)
+        self.assertIn("enum OrderState {", schema)
+        self.assertIn("@db.Decimal(12, 2)", schema)
+        self.P.run_api_skeleton(self.tmp, REPO)
+        self.assertEqual(self.P.gate_api(self.tmp, REPO), [])
+        spec = foundry.parse_yaml((self.tmp / "openapi.yaml").read_text(encoding="utf-8"))
+        self.assertIn("/orders/{id}/send-to-kitchen", spec["paths"])
+        self.assertIn("/sync/push", spec["paths"])
+        self.assertIn("/webhooks/payments/{provider}", spec["paths"])
+        self.P.run_schema_skeleton(self.tmp, REPO, "drizzle")
+        self.assertIn("pgTable", (self.tmp / "db" / "schema.ts").read_text(encoding="utf-8"))
+
+    def test_api_gate_catches_duplicate_operation_id(self):
+        self.P.run_domain_skeleton(self.tmp, REPO)
+        self.P.run_arch_skeleton(self.tmp, REPO)
+        self.P.run_schema_skeleton(self.tmp, REPO, "prisma")
+        self.P.run_api_skeleton(self.tmp, REPO)
+        p = self.tmp / "openapi.yaml"
+        p.write_text(p.read_text(encoding="utf-8").replace('operationId: "order_get"', 'operationId: "order_list"'), encoding="utf-8")
+        self.assertTrue(any("used 2 times" in e for e in self.P.gate_api(self.tmp, REPO)))
+
+    def test_query_and_doctor(self):
+        code, out = run(foundry.main, ["query", "stacks", "--layer", "api"])
+        self.assertEqual(code, 0)
+        self.assertIn("hono-node", out)
+        self.assertIn("nestjs", out)
+        code, out = run(foundry.main, ["query", "stacks", "--layer", "api", "--json"])
+        self.assertEqual(code, 0)
+        self.assertIn('"total": 2', out)
+        code, out = run(foundry.main, ["doctor"])
+        self.assertIn("python", out)
+        self.assertIn("codebase-memory-mcp", out)
 
 
 class GateTests(unittest.TestCase):

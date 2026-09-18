@@ -4,6 +4,7 @@ Stages:
   match   run foundry.py match on every golden brief; compare to expected_pack / min_confidence.
   grill   match -> apply-prefilled -> grill-plan round 1 in a temp dir; check budget and confirms.
   prd     gate prd against the fixture under evals/fixtures/restaurant-pos.
+  domain, architecture, data, api   run the phase skeletons on the fixture and their gates.
 
 Usage: python evals/run.py [--stage match|grill|prd]
 """
@@ -24,7 +25,7 @@ import foundry as F  # noqa: E402
 BRIEFS = ROOT / "evals" / "briefs"
 EXPECTED = ROOT / "evals" / "expected"
 FIXTURES = ROOT / "evals" / "fixtures"
-STAGES = ("match", "grill", "prd")
+STAGES = ("match", "grill", "prd", "domain", "architecture", "data", "api")
 
 
 def load_cases(include_variants: bool = False) -> list[dict]:
@@ -111,6 +112,67 @@ def stage_prd(cases: list[dict]) -> int:
     return 0 if fixtures and passed == len(fixtures) else 1
 
 
+def _fixture_copy() -> Path:
+    fx = FIXTURES / "restaurant-pos"
+    tmp = Path(tempfile.mkdtemp(prefix="foundry-eval-"))
+    shutil.copytree(fx / ".foundry", tmp / ".foundry")
+    for name in ("CONTEXT.md", "openapi.yaml"):
+        if (fx / name).exists():
+            shutil.copy(fx / name, tmp / name)
+    for d in ("prisma", "migrations"):
+        if (fx / d).exists():
+            shutil.copytree(fx / d, tmp / d)
+    return tmp
+
+
+def _stage_skeleton(name: str, run_fn, gate_name: str) -> int:
+    import foundry_phases as P
+    tmp = _fixture_copy()
+    try:
+        # regenerate from the fixture ledger so the gate checks skeleton output without model refinement
+        run_fn(tmp, ROOT)
+        errs = P.GATES[gate_name](tmp, ROOT)
+        print(f"{name} skeleton on fixture: {'pass' if not errs else 'FAIL'}")
+        for x in errs:
+            print(f"    {x}")
+        print(f"\n{name}: {'1/1' if not errs else '0/1'} pass")
+        return 0 if not errs else 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def stage_domain(cases):
+    import foundry_phases as P
+    return _stage_skeleton("domain", P.run_domain_skeleton, "domain")
+
+
+def stage_architecture(cases):
+    import foundry_phases as P
+    def run(tmp, root):
+        P.run_domain_skeleton(tmp, root)
+        P.run_arch_skeleton(tmp, root)
+    return _stage_skeleton("architecture", run, "architecture")
+
+
+def stage_data(cases):
+    import foundry_phases as P
+    def run(tmp, root):
+        P.run_domain_skeleton(tmp, root)
+        P.run_arch_skeleton(tmp, root)
+        P.run_schema_skeleton(tmp, root, "prisma")
+    return _stage_skeleton("data", run, "data")
+
+
+def stage_api(cases):
+    import foundry_phases as P
+    def run(tmp, root):
+        P.run_domain_skeleton(tmp, root)
+        P.run_arch_skeleton(tmp, root)
+        P.run_schema_skeleton(tmp, root, "prisma")
+        P.run_api_skeleton(tmp, root)
+    return _stage_skeleton("api", run, "api")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--stage", choices=STAGES, help="run one stage (default: all implemented)")
@@ -121,7 +183,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     rc = 0
     for st in ([a.stage] if a.stage else list(STAGES)):
-        fn = {"match": stage_match, "grill": stage_grill, "prd": stage_prd}[st]
+        fn = {"match": stage_match, "grill": stage_grill, "prd": stage_prd, "domain": stage_domain,
+              "architecture": stage_architecture, "data": stage_data, "api": stage_api}[st]
         rc |= fn(load_cases(include_variants=True) if st == "match" else cases)
         print()
     return rc

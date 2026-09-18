@@ -291,6 +291,7 @@ def run_metrics_report(project: Path) -> int:
             d["graph_calls"] += int(r.get("graph_calls") or 1)
         if tool in ("Grep", "Read", "Glob"):
             d["grep_read_calls"] += 1
+        d["grep_read_calls"] += int(r.get("grep_read_calls") or 0)  # agent-reported count on ticket-end records
         if tool == "dod:typecheck":
             d["dod_loops"] += 1
         d["review_blocking"] += int(r.get("review_blocking_count") or 0)

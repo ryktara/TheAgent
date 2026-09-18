@@ -4,6 +4,8 @@ One entry per build step. Newest first.
 
 ## P7b — Build loop on real tickets (2026-09-18)
 
+- fix: `metrics report` sums the agent-reported `grep_read_calls` on ticket-end records (reason: the P7b
+  report showed 0 for every ticket although the values were recorded).
 - fix: scaffold `globals.css` adds `@source "../../../packages/ui/src"` (reason: Tailwind v4 never scanned the
   shared UI package, so `grid-cols-3` on Numpad was missing and the T-004 RTL numpad test failed once `.next` was
   rebuilt in T-008).

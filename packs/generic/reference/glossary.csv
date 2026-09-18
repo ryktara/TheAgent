@@ -1,0 +1,32 @@
+term,definition,aliases
+Tenant,An organisation whose data is isolated from every other organisation in the system,organisation;company;workspace;account
+User,A person who can sign in; always belongs to at least one Tenant with at least one Role,member;login;account holder
+Role,A named bundle of permissions assigned to a User within a Tenant,permission set;access level
+Permission,A single allowed action on a resource such as record.update or report.export,capability;right
+Owner,The Role that can manage billing and delete the Tenant; at least one per Tenant,account owner;super admin
+Admin,A Role that manages users and settings but not billing,administrator;manager
+Staff,A Role for day-to-day record work without settings access,operator;agent;employee
+Customer,An external person served by the Tenant; may or may not have a login,client;end user;member
+Record,The primary business object the app manages; has states draft active archived,item;entry;case;ticket
+State,The lifecycle position of a Record or other entity; transitions are explicit,status;stage
+Transition,A permitted move from one State to another with its guard conditions,state change;action
+Invariant,A rule that must hold for an entity in every state,business rule;constraint
+AuditEvent,An immutable log line recording who did what to which object and when,audit log entry;activity;history
+Session,A signed-in period for a User on one device; revocable,login session;token
+Invite,A time-limited token that lets a person join a Tenant with a preset Role,invitation
+Dashboard,The landing screen showing KPIs quick actions and recent activity,home;overview
+KPI,A single headline number derived from Records over a time window,metric;stat tile
+Report,A parameterised query over Records with tabular and chart output,query;analytics view
+Saved view,A named combination of filters sort and columns on a list screen,filter preset;smart list
+Bulk action,One operation applied to many selected Records as a background job,batch action;mass update
+Job,A background task with progress and a result summary,background task;worker task
+Notification,A message to a User about an event delivered in-app or by email,alert;push
+Integration,A connection to an external system with credentials status and sync history,connector;sync
+Export,A user-requested file containing Records or reports in CSV XLSX or PDF,download;data dump
+Retention,How long data is kept before automatic deletion,retention policy;data lifecycle
+RLS,Row-level security: database policies that scope every query to the caller's Tenant,row level security;tenant isolation
+SSO,Signing in through an external identity provider such as Google or Microsoft,single sign-on;federated login
+MFA,A second sign-in factor such as a TOTP code,2FA;two-factor
+Soft delete,Marking a Record archived instead of removing the row,archive;tombstone
+Locale,Language and region settings that drive formatting and translations,language setting;i18n
+RTL,Right-to-left layout used for Arabic and Urdu,right-to-left;bidi

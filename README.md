@@ -40,7 +40,8 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | P4 | Domain model, architecture + 9 ADRs, data model, API contract, doctor, query | done |
 | P5 | Design layer: 7 data CSVs, design-check, design-system, screen specs | done |
 | P6 | Security controls, threat model, compliance, tickets; /foundry ends at phase 10 | done |
-| P7 | Implementation loop: /foundry-build, implement-ticket, review subagents, hooks | planned |
+| P7a | Build loop machinery: CBM mandatory, DoD runner, hooks, implement-ticket + review skills, T-000 scaffold executed | done |
+| P7b | Feature tickets implemented through the loop | planned |
 | P8 | Wizard, release, handoff, /foundry-resume | planned |
 | P9 | Evals runner, metrics report, dogfood run | planned |
 | P10 | retail-pos + trading-app packs | planned |

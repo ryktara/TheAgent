@@ -2,6 +2,19 @@
 
 One entry per build step. Newest first.
 
+## P7a — Build loop machinery and T-000 (2026-09-18)
+
+- schema 1.7 `jobs[].priority`; tickets ordered by priority, entity graph, pack job order.
+- Unreviewed copy rows render with `<!-- unreviewed -->` in screen specs.
+- `doctor --build` requires codebase-memory-mcp on PATH and registered as an MCP server.
+- scripts/foundry_build.py: `build activate|complete|index|status` (.foundry/build.yaml),
+  `dod --ticket` (10 steps, status.yaml, metrics), `scaffold --stack nextjs-pwa` (T-000: pnpm
+  monorepo with Next 15 + Tailwind 4 + next-intl, Hono api, Prisma db, ui components, vitest,
+  Playwright + axe, docker compose, CI).
+- hooks/: bash_guard, edit_guard, metrics, session_start, stop_check; hooks.json registered in
+  the plugin manifest; hooks/test_hooks.py.
+- Skills: implement-ticket, code-review, ui-review, security-review; /foundry-build real.
+
 ## P6 — Security, compliance, tickets (2026-09-18)
 
 - fix: palettes.csv carries a full dark role set and design-check validates dark pairs;

@@ -2,6 +2,21 @@
 
 One entry per build step. Newest first.
 
+## P3 — restaurant-pos pack, prd-skeleton, fixes (2026-09-18)
+
+- fix: `followups[].when` accepts a list (schema 1.3); `derive_from` resolves a question from its
+  parent answer with `source: agent-fact`; payment vocabulary removed from keyword lists so a
+  provider name no longer ties two packs; saturation at 2 distinct hits.
+- packs/restaurant-pos: complete pack (27 jobs, 25 entities, 24 invariants, 8 regions, 12 ranked
+  questions) with reference/ screens, workflows, glossary (104 terms), compliance (control ids),
+  ux-patterns, sources (verified vs UNVERIFIED).
+- `foundry.py prd-skeleton` writes sections 2–8 and 10; prd skill fills 1 and 9; gate prd rejects
+  unfilled model blocks.
+- `foundry.py match --rematch --answers` re-scores with round-1 free-text answers.
+- Pack lint for `complete: true`: screens headings, entity references, compliance ids, glossary
+  size, sources.md, unique maps_to. generic marked complete and brought up to the lint.
+- Evals: 6 restaurant variant briefs (match 11/11).
+
 ## P2 — Bounded grilling, decision ledger, PRD, /foundry 0–3 (2026-09-18)
 
 - pack.schema.json 1.2: `threshold` in pack.yaml, `followups` on questions (round-2 unlocks).

@@ -1,0 +1,45 @@
+version: "1.1"
+slug: restaurant-pos
+name: Restaurant POS
+aliases: [restaurant point of sale, restaurant pos, cafe pos, f&b pos, qsr pos, coffee shop pos, cafeteria pos]
+confidence_keywords: [restaurant, cafe, cafeteria, coffee shop, kitchen, kds, kitchen display, table, tables, dine-in, dine in, takeaway, menu, modifiers, order, orders, waiter, chef, bill, split bill, tips, reservations, food, f&b, qsr, shisha, mandi, shawarma, karak, bakery, cloud kitchen, delivery, talabat, deliveroo, pos, ipad, tablet, cards, network international, n-genius]
+personas: [cashier, waiter, kitchen, manager, owner, customer]
+jobs:
+  - {id: take-order, must: true, screens: [order-entry, table-map]}
+  - {id: prepare-order, must: true, screens: [kds]}
+  - {id: settle-bill, must: true, screens: [payment, split-bill]}
+  - {id: close-shift, must: true, screens: [shift-close]}
+  - {id: review-sales, must: true, screens: [reports-daily]}
+must_have: [order-entry, modifiers, split-bill, kds, payments, shift-close, inventory-basic, reports-daily, offline-queue, vat-receipt]
+should_have: [reservations, loyalty, delivery-integration, multi-branch, table-map, tips]
+entities:
+  Order: {states: [draft, sent, ready, served, paid, void]}
+  OrderLine: {states: [pending, fired, ready, served, voided]}
+  Table: {states: [free, seated, ordered, billed]}
+  Payment: {states: [pending, authorised, captured, refunded, failed]}
+  Shift: {states: [open, closed, reconciled]}
+  MenuItem: {states: [active, sold-out, hidden]}
+invariants:
+  - "Order total == sum(lines) - discounts + tax"
+  - "A paid Order has payments summing to its total"
+  - "A void Order has zero captured payments"
+  - "Every fired OrderLine appears on exactly one KDS station"
+  - "A Shift closes only when every Order opened in it is paid or void"
+integrations: {payments: [stripe, network-intl, tap, checkout], delivery: [talabat, deliveroo, careem], accounting: [zoho, quickbooks], printers: [epson-epos, star]}
+regional:
+  AE: {tax: "VAT 5%", receipt_lang: [en, ar], einvoice: "FTA phase 2 (2026)"}
+  SA: {tax: "VAT 15%", receipt_lang: [ar, en], einvoice: "ZATCA Fatoora phase 2"}
+  PK: {tax: "GST/PST by province", receipt_lang: [en, ur], fbr_pos_integration: true}
+compliance_must: [PCI-DSS SAQ-A via hosted fields, receipt retention 5y, VAT-compliant receipt fields]
+nfr_defaults: {offline: required, p95_order_entry_ms: 200, tablets: [ipad, android-10in], printers: thermal-80mm}
+stack_default: {web: nextjs, api: hono, db: postgres, offline: pglite-sync, mobile: expo}
+ui_profile: {style: high-contrast-operational, density: high, touch: 48dp, dark: kitchen-only, fonts: [Inter, tabular-numerals]}
+questions:
+  - {id: service-model, rank: 1, ask: "Dine-in, quick-service, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, dine in, quick-service, quick service, qsr, takeaway only, table service], brief_hints: {dine-in: [dine-in, dine in, table service, waiters, at the table], quick-service: [quick-service, quick service, qsr, counter, takeaway only, fast food], both: [dine-in and takeaway, both]}, maps_to: service.model}
+  - {id: region, rank: 2, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, ajman, uae, emirates, riyadh, jeddah, saudi, ksa, karachi, lahore, islamabad, pakistan], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}, maps_to: region.country}
+  - {id: payments, rank: 3, ask: "Card payments via which provider?", answer_type: choice, choices: [stripe, network-intl, tap, checkout, cash-only], default: stripe, reversible: true, skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, checkout.com, cash only], brief_hints: {stripe: [stripe], network-intl: [network international, n-genius, ngenius], tap: [tap payments, tap], checkout: [checkout.com], cash-only: [cash only, no cards]}, maps_to: payments.provider}
+  - {id: branches, rank: 4, ask: "Single location or multi-branch?", answer_type: choice, choices: [single, multi], default: single, reversible: true, skip_if_brief_mentions: [branches, two cafes, three cafes, multiple locations, outlets, chain], brief_hints: {multi: [branches, two cafes, three cafes, multiple locations, outlets, chain, franchise], single: [one location, single location, one restaurant]}, maps_to: org.branches}
+  - {id: kds, rank: 5, ask: "Kitchen display screen, printed tickets, or both?", answer_type: choice, choices: [kds, printer, both], default: both, reversible: true, skip_if_brief_mentions: [kitchen screen, kitchen display, kds, kitchen printer], brief_hints: {kds: [kitchen screen, kitchen display, kds], printer: [kitchen printer, print tickets]}, maps_to: kitchen.output}
+  - {id: delivery, rank: 6, ask: "Integrate delivery platforms?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [talabat, deliveroo, careem, delivery orders], maps_to: integrations.delivery}
+  - {id: offline, rank: 7, ask: "Must order-taking keep working when internet drops?", answer_type: bool, default: true, reversible: false, skip_if_brief_mentions: [offline, internet drops, without internet, no connectivity], maps_to: nfr.offline}
+reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}

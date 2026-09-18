@@ -37,9 +37,10 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example
+## pack.yaml example (schema 1.1)
 
 ```yaml
+version: "1.1"
 slug: restaurant-pos
 name: Restaurant POS
 aliases: [restaurant point of sale, cafe pos, qsr pos]
@@ -56,12 +57,35 @@ compliance_must: [PCI-DSS SAQ-A via hosted fields]
 nfr_defaults: {offline: required, p95_order_entry_ms: 200}
 stack_default: {web: nextjs, api: hono, db: postgres, mobile: expo}
 ui_profile: {style: high-contrast-operational, density: high, touch: 48dp}
-questions: [{id: service-model, ask: "Dine-in, quick-service, or both?", default: both, reversible: false}]
+questions:
+  - {id: service-model, rank: 1, ask: "Dine-in, quick-service, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, quick-service, qsr], brief_hints: {dine-in: [table service, waiters], quick-service: [qsr, counter]}, maps_to: service.model}
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}
 ```
 
-Schema: `schemas/pack.schema.json`. `questions` is capped at 7 entries, matching the round-1
-budget.
+Schema: `schemas/pack.schema.json`.
+
+## Question bank (1.1)
+
+`questions` is a ranked bank of at most 12. The 7/3 round budget is enforced at grill time by
+`schemas/decisions.schema.json`, so a brief that pre-answers three questions still leaves enough
+ranked questions to fill round 1.
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| id | yes | stable key, kebab-case |
+| rank | yes | 1 = ask first; unique within the pack |
+| ask | yes | the sentence shown to the founder |
+| answer_type | yes | choice, text, number, bool |
+| choices | when choice | allowed values; `default` is one of them |
+| default | yes | used when the founder is silent or the budget is spent |
+| reversible | no | false marks a decision that is costly to change later |
+| skip_if_brief_mentions | no | keywords; any hit pre-answers the question with `source: brief` |
+| brief_hints | no | choice → keywords; a hit resolves the value to that choice |
+| maps_to | no | dotted path into decisions, e.g. `region.country` |
+
+`foundry.py match` prefills: for a choice question, the value is the `brief_hints` choice whose
+keyword hit, else the choice whose text matches, else the matched phrase. Bool questions become
+`true` on any hit; text and number questions carry the matched phrase.
 
 ## reference/ folder
 

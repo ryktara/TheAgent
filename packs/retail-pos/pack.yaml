@@ -1,0 +1,41 @@
+version: "1.1"
+slug: retail-pos
+name: Retail POS
+aliases: [retail point of sale, retail pos, shop pos, store pos, supermarket pos, grocery pos, pharmacy pos]
+confidence_keywords: [retail, shop, store, boutique, supermarket, hypermarket, grocery, baqala, bakala, minimart, pharmacy, barcode, sku, stock, inventory, shelf, size, colour, returns, exchanges, refund, till, cashier, receipt, e-invoice, zatca, fatoora, loyalty points, clothing, garments, electronics, wholesale, pos, cards, network international]
+personas: [cashier, store-manager, stock-keeper, owner, customer]
+jobs:
+  - {id: sell, must: true, screens: [checkout, product-search]}
+  - {id: manage-stock, must: true, screens: [inventory, receive-stock]}
+  - {id: return-exchange, must: true, screens: [returns]}
+  - {id: close-day, must: true, screens: [z-report]}
+must_have: [checkout, barcode-scan, variants, inventory, returns-exchanges, receipts, e-invoice, z-report, loyalty, offline-queue]
+should_have: [multi-store, purchase-orders, supplier-management, promotions, gift-cards, ecommerce-sync]
+entities:
+  Product: {states: [active, discontinued]}
+  Variant: {states: [active, out-of-stock, discontinued]}
+  Sale: {states: [open, paid, refunded, void]}
+  Return: {states: [requested, approved, refunded, rejected]}
+  StockMovement: {states: [recorded]}
+invariants:
+  - "Sale total == sum(lines) - discounts + tax"
+  - "Stock on hand == sum(StockMovements) per Variant per Store"
+  - "A Return references lines of exactly one paid Sale"
+integrations: {payments: [stripe, network-intl, tap, mada], einvoice: [zatca, fta], accounting: [zoho, quickbooks], ecommerce: [shopify, salla]}
+regional:
+  AE: {tax: "VAT 5%", receipt_lang: [en, ar]}
+  SA: {tax: "VAT 15%", einvoice: "ZATCA Fatoora phase 2", receipt_lang: [ar, en]}
+  PK: {tax: "GST by province", fbr_pos_integration: true}
+compliance_must: [PCI-DSS SAQ-A via hosted fields, e-invoice where mandated, receipt retention 5y]
+nfr_defaults: {offline: required, p95_checkout_ms: 300, scanners: [usb-hid, camera]}
+stack_default: {web: nextjs, api: hono, db: postgres, offline: pglite-sync, mobile: expo}
+ui_profile: {style: high-contrast-operational, density: high, touch: 48dp, fonts: [Inter, tabular-numerals]}
+questions:
+  - {id: region, rank: 1, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, uae, riyadh, jeddah, saudi, ksa, karachi, lahore, pakistan], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}, maps_to: region.country}
+  - {id: payments, rank: 2, ask: "Card payments via which provider?", answer_type: choice, choices: [stripe, network-intl, tap, mada, cash-only], default: stripe, reversible: true, skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, mada, cash only], brief_hints: {network-intl: [network international, n-genius], tap: [tap payments], mada: [mada], cash-only: [cash only]}, maps_to: payments.provider}
+  - {id: branches, rank: 3, ask: "Single store or multi-store?", answer_type: choice, choices: [single, multi], default: single, reversible: true, skip_if_brief_mentions: [one store, second store, stores, branches, outlets, chain], brief_hints: {multi: [stores, branches, outlets, chain, second store next year], single: [one store, single store]}, maps_to: org.branches}
+  - {id: variants, rank: 4, ask: "Do products come in sizes or colours?", answer_type: bool, default: true, reversible: true, skip_if_brief_mentions: [size, sizes, colour, colours, color, colors, variants], maps_to: catalog.variants}
+  - {id: einvoice, rank: 5, ask: "Government e-invoicing required?", answer_type: bool, default: false, reversible: false, skip_if_brief_mentions: [zatca, fatoora, e-invoice, e-invoices, einvoice, fbr], maps_to: compliance.einvoice}
+  - {id: loyalty, rank: 6, ask: "Loyalty programme?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [loyalty, points, rewards], maps_to: features.loyalty}
+  - {id: offline, rank: 7, ask: "Must checkout keep working when internet drops?", answer_type: bool, default: true, reversible: false, skip_if_brief_mentions: [offline, internet drops, without internet], maps_to: nfr.offline}
+reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}

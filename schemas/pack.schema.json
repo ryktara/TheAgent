@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://foundry.dev/schemas/pack.schema.json",
-  "title": "Foundry domain pack (pack.yaml) v1.3",
+  "title": "Foundry domain pack (pack.yaml) v1.4",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "const": "1.3"
+      "const": "1.4"
     },
     "slug": {
       "type": "string",
@@ -132,7 +132,33 @@
     "regional": {
       "type": "object",
       "additionalProperties": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "compliance_must": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "compliance_should": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tax_by_province": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "rate",
+                "digital_rate",
+                "authority",
+                "as_of"
+              ]
+            }
+          }
+        }
       }
     },
     "compliance_must": {
@@ -253,6 +279,15 @@
               },
               "map": {
                 "type": "object"
+              }
+            }
+          },
+          "enables": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }

@@ -1,4 +1,4 @@
-version: "1.3"
+version: "1.4"
 complete: false
 threshold: 0.7
 slug: trading-app

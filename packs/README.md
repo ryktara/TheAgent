@@ -38,10 +38,10 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example (schema 1.3)
+## pack.yaml example (schema 1.4)
 
 ```yaml
-version: "1.3"
+version: "1.4"
 complete: false
 threshold: 0.7
 slug: restaurant-pos
@@ -75,15 +75,17 @@ Schema: `schemas/pack.schema.json`.
 | complete | true turns on the pack lint below; false for placeholder packs |
 | compliance_should | optional control ids alongside `compliance_must` |
 | jobs[].persona | persona that performs the job (used by the PRD jobs table) |
+| regional[R].compliance_must / compliance_should | region-specific control ids; only the decided region's ids reach the PRD and compliance.yaml |
+| regional[R].tax_by_province | table `{name: {rate, digital_rate, authority, as_of, note}}` rendered as a table in PRD §8 |
 
 ## Pack lint (`complete: true`)
 
 `validate` additionally requires: every job screen has a `## <screen-id>` heading in
 screens.md; every CamelCase name in invariants is an entity and every entity appears in an
 invariant or in screens.md; every `compliance_must` id appears in compliance.md; glossary.csv has
-at least 80 rows; reference/sources.md exists; every `maps_to` is unique.
+at least 80 rows; reference/sources.md exists and every VERIFIED row carries a URL; every `maps_to` is unique; every `enables` target is a should_have id; regional control ids exist in compliance.md.
 
-## Question bank (1.3)
+## Question bank (1.4)
 
 `questions` is a ranked bank of at most 12. The 7/3 round budget is enforced at grill time by
 `schemas/decisions.schema.json`, so a brief that pre-answers three questions still leaves enough
@@ -102,6 +104,7 @@ ranked questions to fill round 1.
 | brief_hints | no | choice → keywords; a hit resolves the value to that choice |
 | maps_to | no | dotted path into decisions, e.g. `region.country` |
 | followups | no | up to 3 of `{when: <value, list of values, or "*">, ask: [ids]}`; targets are round-2 only and never fill round 1 |
+| enables | no | `{<value>: [should_have ids]}`; the PRD turns those should-haves on when the decided value matches (replaces any heuristic) |
 | derive_from | no | `{question: <parent id>, map: {<parent value>: <this value or null>}}`; resolved by `decide --apply-defaults` with `source: agent-fact`; a null map value leaves the question to a followup or the default |
 
 `foundry.py match` prefills: for a choice question, the value is the `brief_hints` choice whose

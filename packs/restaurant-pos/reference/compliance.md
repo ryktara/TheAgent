@@ -39,18 +39,18 @@ its verification. Facts marked UNVERIFIED in sources.md carry the same mark here
 | Id | Control | Features | Verification |
 |----|---------|----------|--------------|
 | C-PK-01 | FBR POS integration where notified: each sale sent in real time, FBR invoice number and QR printed; offline buffer with resend | e-invoicing, receipt-bilingual-qr, offline-queue | sandbox test |
-| C-PK-02 | Provincial sales tax on restaurant services by payment mode: Punjab 16% cash / 8% card; Sindh 15% cash / 8% card, wallet or QR; rate table per province editable | tender-cash-card-wallet | unit tests per province and tender |
-| C-PK-03 | KP and Balochistan rates configurable (UNVERIFIED current rates) | tender-cash-card-wallet | config review |
+| C-PK-02 | Provincial sales tax on restaurant services by province and payment mode from `regional.PK.tax_by_province` (Punjab 16% / 5% digital PRA; Sindh 15% SRB; KP 8% KPRA; Balochistan 15% BRA; as of 2026-09, VERIFY-BEFORE-GO-LIVE); editable rate table | tender-cash-card-wallet | unit tests per province and tender |
+| C-PK-03 | Rate table reviewed before go-live and on each provincial budget | tender-cash-card-wallet | config review |
 
-## Other GCC and Egypt (UNVERIFIED rates, configurable)
+## Other GCC and Egypt (rates confirmed 2026-09-18; configurable)
 
 | Id | Control | Notes |
 |----|---------|-------|
-| C-QA-01 | No VAT in force; receipts without tax lines; service charge shown | UNVERIFIED |
-| C-BH-01 | VAT 10% inclusive; 3 minor units; hotel/restaurant levy | UNVERIFIED |
-| C-KW-01 | No VAT; 3 minor units | UNVERIFIED |
-| C-OM-01 | VAT 5%; 3 minor units | UNVERIFIED |
-| C-EG-01 | VAT 14%; ETA e-receipt for B2C | UNVERIFIED |
+| C-QA-01 | No VAT in force; receipts without tax lines; service charge shown | confirmed |
+| C-BH-01 | VAT 10% inclusive; 3 minor units; hotel/restaurant levy (levy UNVERIFIED) | confirmed |
+| C-KW-01 | No VAT; 3 minor units | confirmed |
+| C-OM-01 | VAT 5%; 3 minor units | confirmed |
+| C-EG-01 | VAT 14%; ETA e-receipt for B2C | confirmed |
 
 ## PCI scope decisions
 
@@ -66,7 +66,7 @@ its verification. Facts marked UNVERIFIED in sources.md carry the same mark here
 
 | Data | Retention | Basis |
 |------|-----------|-------|
-| Orders, receipts, payments, refunds, shifts | 5 years (AE VAT record-keeping), 6 years KSA, 6 years PK (UNVERIFIED exact) | tax law |
+| Orders, receipts, payments, refunds, shifts | 5 years (AE VAT record-keeping), 6 years KSA, 6 years PK | tax law |
 | Audit log | Same as financial records | tax audit |
 | Customer PII | Until deletion request or 2 years inactivity | PDPL baseline |
 | KDS tickets | 90 days | operational |

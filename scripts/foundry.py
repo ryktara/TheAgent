@@ -4,6 +4,7 @@
 Subcommands:
   validate       lint skills, packs, schemas, index.csv  (implemented)
   scaffold-pack  create packs/<slug>/ from the pack schema (implemented)
+  match          score a brief against packs/index.csv   (implemented)
   query          query data/*.csv                         (P5)
   metrics        summarise .foundry/metrics.jsonl          (P7)
   gate           run a phase gate                          (P7)
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -368,7 +370,32 @@ def validate_pack(path: Path, schema: dict) -> list[FoundryError]:
     for key, rel in (data.get("reference") or {}).items():
         if isinstance(rel, str) and not (path.parent / rel).exists():
             errs.append(FoundryError(path, 1, f"reference.{key} -> {rel} does not exist"))
+    ranks: set[int] = set()
+    for q in data.get("questions") or []:
+        if not isinstance(q, dict):
+            continue
+        r = q.get("rank")
+        if r in ranks:
+            errs.append(FoundryError(path, 1, f"questions: duplicate rank {r} (id {q.get('id')})"))
+        ranks.add(r)
+        if q.get("answer_type") == "choice" and not q.get("choices"):
+            errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: answer_type choice requires choices"))
+        if q.get("answer_type") == "choice" and q.get("choices") and q.get("default") not in q["choices"]:
+            errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: default not in choices"))
+        for hint_key in (q.get("brief_hints") or {}):
+            if q.get("choices") and hint_key not in q["choices"]:
+                errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: brief_hints key '{hint_key}' not in choices"))
     return errs
+
+
+def validate_selection(path: Path, schema: dict) -> list[FoundryError]:
+    try:
+        data = parse_yaml(path.read_text(encoding="utf-8"))
+    except YamlError as e:
+        return [FoundryError(path, e.line, e.msg)]
+    if not isinstance(data, dict):
+        return [FoundryError(path, 1, "pack selection is not a mapping")]
+    return [FoundryError(path, 1, m) for m in validate_schema(data, schema)]
 
 
 def validate_index(path: Path) -> list[FoundryError]:
@@ -418,6 +445,10 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
         checked += 1
         errs += validate_pack(p, pack_schema)
     errs += validate_index(packs_dir / "index.csv")
+    selection = Path.cwd() / ".foundry" / "pack.yaml"
+    if selection.exists():
+        checked += 1
+        errs += validate_selection(selection, load_schema("pack-selection.schema.json", schemas_dir))
     for e in errs:
         print(f"{e.path}:{e.line}: {e.msg}")
     if not quiet:
@@ -426,7 +457,8 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """slug: {slug}
+PACK_TEMPLATE = """version: "1.1"
+slug: {slug}
 name: {title}
 aliases: [{title_lower}]
 confidence_keywords: [{first_word}]
@@ -442,7 +474,9 @@ compliance_must: []
 nfr_defaults: {{offline: optional}}
 stack_default: {{web: nextjs, api: hono, db: postgres}}
 ui_profile: {{style: clean-operational, density: medium, touch: 44dp}}
-questions: [{{id: region, ask: "Primary country?", default: AE, reversible: true}}]
+questions:
+  - {{id: region, rank: 1, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, uae, riyadh, saudi, karachi, pakistan], brief_hints: {{AE: [dubai, abu dhabi, sharjah, uae], SA: [riyadh, jeddah, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}}, maps_to: region.country}}
+  - {{id: offline, rank: 2, ask: "Must it keep working without internet?", answer_type: bool, default: false, reversible: false, skip_if_brief_mentions: [offline, without internet], maps_to: nfr.offline}}
 reference: {{screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}}
 """
 
@@ -476,6 +510,205 @@ def run_scaffold_pack(slug: str, root: Path = ROOT, force: bool = False) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- match
+MATCHER_VERSION = "1.0"
+ALIAS_W, KEYWORD_W, STEM_W = 3.0, 1.0, 0.5
+SATURATION_HITS = 3          # distinct matched terms for full confidence
+NO_QUESTION_PATTERNS = (r"\bno questions?\b", r"\bdon'?t ask\b", r"\bdo not ask\b", r"\bwithout asking\b", r"\bno need to ask\b")
+STOPWORDS = {
+    "a", "an", "the", "and", "or", "but", "for", "to", "of", "in", "on", "at", "by", "with", "from", "my", "our",
+    "we", "i", "it", "is", "are", "be", "me", "us", "they", "them", "their", "you", "your", "this", "that", "these",
+    "those", "want", "need", "needs", "build", "make", "get", "have", "has", "can", "must", "should", "will",
+    "would", "when", "where", "which", "who", "what", "how", "so", "if", "then", "than", "as", "up", "out",
+    "all", "any", "some", "one", "two", "three", "next", "year", "now", "maybe", "just", "very", "also", "not",
+    "do", "does", "did", "no", "yes", "into", "over", "before", "after", "see", "use", "run", "works", "working",
+    "keep", "keeps", "sometimes", "everything", "perfect", "please", "let", "like", "am", "was", "were", "its",
+    "dont", "ask", "questions", "shown", "open", "place", "get", "watch",
+}
+
+
+def _norm(text: str) -> str:
+    text = text.lower().replace("&", " & ")
+    text = re.sub(r"[^\w&\-']+", " ", text)
+    return " " + re.sub(r"\s+", " ", text.replace("-", " ").replace("'", "")).strip() + " "
+
+
+def _tokens(text: str) -> list[str]:
+    return [t for t in _norm(text).split() if t]
+
+
+def _stem(tok: str) -> str:
+    if tok.endswith("ies") and len(tok) > 4:
+        return tok[:-3] + "y"
+    for suf in ("ing", "ed"):
+        if tok.endswith(suf) and len(tok) - len(suf) >= 3:
+            return tok[: -len(suf)]
+    if tok.endswith("es") and len(tok) > 4 and tok[-3] in "sxz" or tok.endswith(("ches", "shes")):
+        return tok[:-2]
+    if tok.endswith("s") and not tok.endswith("ss") and len(tok) > 3:
+        return tok[:-1]
+    return tok
+
+
+def _phrase_in(phrase: str, norm_text: str) -> bool:
+    return f" {_norm(phrase).strip()} " in norm_text
+
+
+def _score_row(row: dict, norm_text: str, tokens: list[str]) -> tuple[float, list[str]]:
+    matched: list[str] = []
+    raw = 0.0
+    stems = {_stem(t) for t in tokens}
+    for alias in row["aliases"]:
+        if alias and _phrase_in(alias, norm_text):
+            raw += ALIAS_W
+            matched.append(alias)
+    seen: set[str] = set()
+    for kw in row["keywords"]:
+        nk = _norm(kw).strip()
+        if not nk or nk in seen:
+            continue
+        seen.add(nk)
+        if _phrase_in(kw, norm_text):
+            raw += KEYWORD_W
+            matched.append(kw)
+        elif " " not in nk and _stem(nk) in stems:
+            raw += STEM_W
+            matched.append(kw)
+    raw = raw / (1 + math.log(1 + len(row["keywords"])))
+    return raw, sorted(set(matched))
+
+
+def _load_index(packs_dir: Path) -> list[dict]:
+    rows = []
+    with (packs_dir / "index.csv").open(encoding="utf-8", newline="") as f:
+        for r in csv.DictReader(f):
+            rows.append({
+                "slug": r["slug"], "name": r["name"],
+                "aliases": [a.strip().lower() for a in r["aliases"].split(";") if a.strip()],
+                "keywords": [k.strip().lower() for k in r["keywords"].split(";") if k.strip()],
+                "threshold": float(r["confidence_threshold"]),
+            })
+    return rows
+
+
+def _nearest_choice(q: dict, matched_kw: str) -> Any:
+    for choice, kws in (q.get("brief_hints") or {}).items():
+        if matched_kw in [k.lower() for k in kws]:
+            return choice
+    choices = q.get("choices") or []
+    mk = _norm(matched_kw).strip()
+    for c in choices:
+        if _norm(str(c)).strip() == mk:
+            return c
+    mk_tokens = set(mk.split())
+    for c in choices:
+        if mk_tokens & set(_norm(str(c)).split()):
+            return c
+    return matched_kw
+
+
+def _prefill(pack: dict, norm_text: str) -> list[dict]:
+    out = []
+    for q in sorted(pack.get("questions") or [], key=lambda x: x.get("rank", 99)):
+        kws = [k.lower() for k in (q.get("skip_if_brief_mentions") or [])]
+        for choice_kws in (q.get("brief_hints") or {}).values():
+            kws += [k.lower() for k in choice_kws]
+        hit = next((k for k in sorted(set(kws), key=len, reverse=True) if _phrase_in(k, norm_text)), None)
+        if hit is None:
+            continue
+        at = q.get("answer_type")
+        if at == "choice":
+            value: Any = _nearest_choice(q, hit)
+        elif at == "bool":
+            value = True
+        else:
+            value = hit
+        item = {"question_id": q["id"], "value": value, "source": "brief", "matched": hit}
+        if q.get("maps_to"):
+            item["maps_to"] = q["maps_to"]
+        out.append(item)
+    return out
+
+
+def match_brief(brief: str, root: Path = ROOT) -> dict:
+    """Deterministic pack scorer. See docs/pipeline.md phase 1 for the confidence formula."""
+    packs_dir = root / "packs"
+    norm_text = _norm(brief)
+    tokens = _tokens(brief)
+    scored = []
+    for row in _load_index(packs_dir):
+        raw, matched = _score_row(row, norm_text, tokens)
+        scored.append({"slug": row["slug"], "raw": raw, "matched_terms": matched, "threshold": row["threshold"]})
+    max_raw = max((s["raw"] for s in scored), default=0.0) or 1.0
+    specific = [s for s in scored if s["slug"] != "generic"]
+    for s in scored:
+        rel = s["raw"] / max_raw
+        sat = min(1.0, len(s["matched_terms"]) / SATURATION_HITS)
+        others = [o["raw"] for o in specific if o["slug"] != s["slug"]]
+        overlap = 0.0
+        if s["slug"] != "generic" and others and s["raw"] > 0:
+            overlap = min(1.0, max(others) / s["raw"])
+        s["confidence"] = round(rel * sat * (1 - overlap ** 2), 3)
+    scored.sort(key=lambda s: (-s["confidence"], -s["raw"], s["slug"]))
+    flags: list[str] = []
+    flat = re.sub(r"\s+", " ", brief.lower())
+    if any(re.search(p, flat) for p in NO_QUESTION_PATTERNS):
+        flags.append("no-questions-requested")
+    top = scored[0]
+    if top["confidence"] < top["threshold"]:
+        flags.append("below-threshold")
+    if len(scored) > 1 and scored[0]["slug"] != "generic" and scored[1]["slug"] != "generic" \
+            and abs(scored[0]["confidence"] - scored[1]["confidence"]) <= 0.15 and scored[1]["confidence"] >= scored[1]["threshold"]:
+        flags.append("close-match")
+    if sum(1 for s in specific if len(s["matched_terms"]) >= 2) >= 2 and top["confidence"] < 0.5:
+        flags.append("scope-sprawl")
+    chosen = top["slug"] if top["confidence"] >= top["threshold"] else "generic"
+    prefilled: list[dict] = []
+    pack_path = packs_dir / chosen / "pack.yaml"
+    if pack_path.exists():
+        try:
+            prefilled = _prefill(parse_yaml(pack_path.read_text(encoding="utf-8")), norm_text)
+        except YamlError:
+            prefilled = []
+    matched_all: set[str] = set()
+    for s in scored:
+        for m in s["matched_terms"]:
+            matched_all.update(_norm(m).split())
+    for pf in prefilled:
+        matched_all.update(_norm(pf["matched"]).split())
+    matched_stems = {_stem(m) for m in matched_all}
+    unmatched = sorted({t for t in tokens if len(t) > 2 and t not in STOPWORDS and t not in matched_all and _stem(t) not in matched_stems})
+    return {
+        "matcher_version": MATCHER_VERSION,
+        "chosen": chosen,
+        "candidates": [{"slug": s["slug"], "confidence": s["confidence"], "threshold": s["threshold"],
+                        "matched_terms": s["matched_terms"]} for s in scored[:3]],
+        "unmatched_brief_terms": unmatched,
+        "prefilled": prefilled,
+        "flags": flags,
+    }
+
+
+def run_match(brief_arg: str, root: Path, as_json: bool) -> int:
+    text = sys.stdin.read() if brief_arg == "-" else Path(brief_arg).read_text(encoding="utf-8")
+    text = "\n".join(l for l in text.splitlines() if not l.startswith("# Brief:")).strip()
+    if not text:
+        print("match: brief is empty")
+        return 1
+    result = match_brief(text, root)
+    if as_json:
+        print(json.dumps(result, indent=2))
+        return 0
+    print(f"chosen: {result['chosen']}   flags: {', '.join(result['flags']) or '-'}")
+    for c in result["candidates"]:
+        print(f"  {c['slug']:<16} {c['confidence']:.3f} (threshold {c['threshold']})  {', '.join(c['matched_terms'])}")
+    for pf in result["prefilled"]:
+        print(f"  prefilled {pf['question_id']} = {pf['value']}  (matched '{pf['matched']}')")
+    if result["unmatched_brief_terms"]:
+        print(f"  unmatched: {', '.join(result['unmatched_brief_terms'])}")
+    return 0
+
+
 # --------------------------------------------------------------------------- main
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="foundry", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -487,6 +720,10 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("slug")
     s.add_argument("--root", type=Path, default=ROOT)
     s.add_argument("--force", action="store_true")
+    m = sub.add_parser("match", help="score a brief against packs/index.csv")
+    m.add_argument("--brief", required=True, help="path to brief, or - for stdin")
+    m.add_argument("--json", action="store_true")
+    m.add_argument("--root", type=Path, default=ROOT)
     for name in ("query", "metrics", "gate"):
         p = sub.add_parser(name, help="not implemented in P0")
         p.add_argument("args", nargs="*")
@@ -495,6 +732,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_validate(a.root.resolve(), a.quiet)
     if a.cmd == "scaffold-pack":
         return run_scaffold_pack(a.slug, a.root.resolve(), a.force)
+    if a.cmd == "match":
+        return run_match(a.brief, a.root.resolve(), a.json)
     print(f"foundry {a.cmd}: not implemented in P0")
     return 2
 

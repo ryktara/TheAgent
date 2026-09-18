@@ -30,3 +30,13 @@ MFA,A second sign-in factor such as a TOTP code,2FA;two-factor
 Soft delete,Marking a Record archived instead of removing the row,archive;tombstone
 Locale,Language and region settings that drive formatting and translations,language setting;i18n
 RTL,Right-to-left layout used for Arabic and Urdu,right-to-left;bidi
+Filter chip,A removable pill representing one active filter on a list screen,filter tag;facet
+Cursor pagination,Paging by an opaque cursor instead of page numbers so inserts never shift results,keyset pagination
+Idempotency key,A client-supplied key that makes a repeated write return the first result instead of acting twice,request id;dedupe key
+Webhook,An HTTP callback an Integration sends when something changes on its side,callback;event push
+API key,A long-lived secret that lets a machine client call the API as a Tenant,service token;integration key
+Feature flag,A switch that enables a capability per Tenant or per User without a deploy,toggle;kill switch
+Onboarding checklist,The first-run list of tasks shown on the Dashboard until each is done,getting started;setup guide
+Quiet hours,A per-user window during which notifications are held,do not disturb
+Owner transfer,Handing the Owner role to another User; requires the current Owner to confirm,ownership change
+Restore point,A tested backup from which the Tenant can be recovered to a point in time,backup;snapshot

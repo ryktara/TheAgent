@@ -293,7 +293,7 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  output: "standalone",
+  // standalone output is off: pnpm symlinks break its file copy on Windows; the image runs `next start` (see apps/web/Dockerfile).
   outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@__APP_NAME__/ui"],
   headers: async () => [

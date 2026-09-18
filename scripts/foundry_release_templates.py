@@ -26,20 +26,15 @@ HEALTHCHECK CMD wget -qO- http://127.0.0.1:3001/health || exit 1
 CMD ["pnpm", "--filter", "@__APP_NAME__/api", "run", "start"]
 """
 
-RELEASE_TEMPLATES["apps/web/Dockerfile"] = """# web: Next.js standalone output.
-FROM node:22-alpine AS build
+RELEASE_TEMPLATES["apps/web/Dockerfile"] = """# web: Next.js production server (`next start`). Standalone output is not used: pnpm symlinks break its copy step on Windows dev machines.
+FROM node:22-alpine
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 COPY . .
-RUN pnpm install --frozen-lockfile && pnpm --filter @__APP_NAME__/web run build
-FROM node:22-alpine
-WORKDIR /app
+RUN pnpm install --frozen-lockfile && pnpm --filter @__APP_NAME__/web run build && pnpm prune --prod
 ENV NODE_ENV=production PORT=3000
-COPY --from=build /app/apps/web/.next/standalone ./
-COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build /app/apps/web/public ./apps/web/public
 EXPOSE 3000
-CMD ["node", "apps/web/server.js"]
+CMD ["pnpm", "--filter", "@__APP_NAME__/web", "run", "start"]
 """
 
 RELEASE_TEMPLATES["compose.prod.yml"] = """# Production on one VPS (ADR 0007): Caddy terminates TLS, api + web behind it, managed or local Postgres.
@@ -185,8 +180,8 @@ const check = (name, ok, detail = "") => { checks.push({ name, ok, detail }); co
 
 try {
   if (args.includes("--start")) {
-    start("pnpm", ["--filter", "@__APP_NAME__/api", "run", "start"], { PORT: apiPort, API_PORT: apiPort, DEVICE_ENROL_CODE: enrolCode, WEB_ORIGIN: webUrl, NODE_ENV: "production" });
-    start("pnpm", ["--filter", "@__APP_NAME__/web", "run", "start", "--", "-p", webPort], { PORT: webPort, NEXT_PUBLIC_API_URL: apiUrl, NODE_ENV: "production" });
+    start("pnpm", ["--filter", "@__APP_NAME__/api", "exec", "tsx", "src/index.ts"], { PORT: apiPort, API_PORT: apiPort, DEVICE_ENROL_CODE: enrolCode, WEB_ORIGIN: webUrl, NODE_ENV: "production" });
+    start("pnpm", ["--filter", "@__APP_NAME__/web", "exec", "next", "start", "-p", webPort], { PORT: webPort, NEXT_PUBLIC_API_URL: apiUrl, NODE_ENV: "production" });
     await waitFor(`${apiUrl}/health`);
     await waitFor(`${webUrl}/`);
   }

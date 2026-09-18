@@ -1,0 +1,51 @@
+id,component,shadcn_name,radix_primitive,states,a11y_role,keyboard,rtl_notes,min_target
+button,Button,button,-,"default,hover,focus,active,disabled,loading,error",button,Enter Space,icon side mirrors,44
+icon-button,Icon button,button,-,"default,hover,focus,active,disabled,loading,error",button,Enter Space,directional icons mirror,44
+numpad,Numpad,-,-,"default,hover,focus,active,disabled,loading,error",group,0-9 Backspace Enter,stays LTR,64
+tender-keypad,Tender keypad,-,-,"default,hover,focus,active,disabled,loading,error",group,0-9 Enter Escape,stays LTR; tender list mirrors,64
+pin-pad,PIN pad,-,-,"default,hover,focus,active,disabled,loading,error",group,0-9 Backspace Enter,stays LTR,64
+quantity-stepper,Quantity stepper,-,-,"default,hover,focus,active,disabled,loading,error",spinbutton,ArrowUp ArrowDown,buttons mirror,44
+modifier-sheet,Modifier sheet,sheet,@radix-ui/react-dialog,"default,hover,focus,active,disabled,loading,error",dialog,Escape Tab,content mirrors,48
+data-table,Data table,table,-,"default,hover,focus,active,disabled,loading,error",table,ArrowKeys Enter,columns mirror; amounts right-aligned,36
+virtual-list,Virtual list,-,-,"default,hover,focus,active,disabled,loading,error",list,ArrowUp ArrowDown Home End,mirrors,44
+toast,Toast,sonner,-,"default,loading,error",status,Escape,position mirrors,0
+banner-offline,Offline banner,alert,-,"default,loading,error",status,-,text mirrors,0
+dialog,Dialog,dialog,@radix-ui/react-dialog,"default,hover,focus,active,disabled,loading,error",dialog,Escape Tab,actions mirror,44
+drawer,Drawer,drawer,vaul,"default,hover,focus,active,disabled,loading,error",dialog,Escape,opens from the end side,44
+bottom-sheet,Bottom sheet,drawer,vaul,"default,hover,focus,active,disabled,loading,error",dialog,Escape,content mirrors,48
+tabs,Tabs,tabs,@radix-ui/react-tabs,"default,hover,focus,active,disabled,loading,error",tablist,ArrowLeft ArrowRight Home End,order mirrors; arrow keys follow direction,44
+segmented,Segmented control,toggle-group,@radix-ui/react-toggle-group,"default,hover,focus,active,disabled,loading,error",radiogroup,ArrowKeys,mirrors,44
+select,Select,select,@radix-ui/react-select,"default,hover,focus,active,disabled,loading,error",combobox,ArrowKeys Enter Escape Type-ahead,chevron mirrors,44
+combobox,Combobox,command,cmdk,"default,hover,focus,active,disabled,loading,error",combobox,ArrowKeys Enter Escape,mirrors,44
+date-picker,Date picker,calendar,react-day-picker,"default,hover,focus,active,disabled,loading,error",grid,ArrowKeys PageUp PageDown Enter,calendar mirrors; numerals LTR,44
+kds-ticket,KDS ticket,-,-,"default,focus,active,error",article,1-9 bump R recall,text mirrors; timer LTR,56
+order-card,Order card / item tile,card,-,"default,hover,focus,active,disabled,loading,error",button,Enter,price stays right-aligned,72
+table-map-tile,Table map tile,-,-,"default,hover,focus,active,disabled,loading,error",button,Enter ContextMenu,canvas coordinates unchanged,56
+receipt-preview,Receipt preview,-,-,"default,loading,error",document,-,bilingual blocks,0
+chart-card,Chart card,card,-,"default,loading,error",figure,Tab to points,axes mirror; numerals LTR,0
+kpi-tile,KPI tile,card,-,"default,loading,error",group,-,delta icon mirrors,0
+empty-state,Empty state,-,-,default,region,Enter on action,mirrors,44
+skeleton,Skeleton,skeleton,-,loading,presentation,-,mirrors,0
+input,Text input,input,-,"default,hover,focus,active,disabled,loading,error",textbox,Type,text direction auto,44
+textarea,Textarea,textarea,-,"default,hover,focus,active,disabled,loading,error",textbox,Type,text direction auto,44
+checkbox,Checkbox,checkbox,@radix-ui/react-checkbox,"default,hover,focus,active,disabled,loading,error",checkbox,Space,label side mirrors,44
+radio,Radio group,radio-group,@radix-ui/react-radio-group,"default,hover,focus,active,disabled,loading,error",radiogroup,ArrowKeys,mirrors,44
+switch,Switch,switch,@radix-ui/react-switch,"default,hover,focus,active,disabled,loading,error",switch,Space,thumb direction mirrors,44
+badge,Badge,badge,-,default,status,-,mirrors,0
+chip,Chip / filter chip,badge,-,"default,hover,focus,active,disabled,loading,error",button,Enter Delete,close icon mirrors,32
+tooltip,Tooltip,tooltip,@radix-ui/react-tooltip,default,tooltip,Focus shows,position mirrors,0
+popover,Popover,popover,@radix-ui/react-popover,"default,hover,focus,active,disabled,loading,error",dialog,Escape,anchor side mirrors,44
+dropdown-menu,Dropdown menu,dropdown-menu,@radix-ui/react-dropdown-menu,"default,hover,focus,active,disabled,loading,error",menu,ArrowKeys Enter Escape,submenu opens to the end side,44
+breadcrumb,Breadcrumb,breadcrumb,-,default,navigation,Tab,separator mirrors,44
+sidebar,Sidebar,sidebar,-,"default,active",navigation,Tab ArrowKeys,docks on the end side,44
+bottom-tabs,Bottom tab bar,-,-,"default,active",tablist,ArrowKeys,order mirrors,48
+stepper,Stepper,-,-,"default,active,error",list,Tab,order mirrors,44
+progress,Progress,progress,@radix-ui/react-progress,"default,loading",progressbar,-,fills from the start side,0
+avatar,Avatar,avatar,@radix-ui/react-avatar,"default,loading",img,-,-,0
+search,Search field,input,cmdk,"default,hover,focus,active,disabled,loading,error",searchbox,Type Escape,icon mirrors,44
+customer-display,Customer display,-,-,"default,loading",region,-,mirrors per receipt language,0
+split-bill,Split bill board,-,-,"default,hover,focus,active,disabled,loading,error",group,Select then move; ArrowKeys,columns mirror,48
+floor-canvas,Floor canvas,-,-,"default,focus,active",application,ArrowKeys nudge,coordinates unchanged,56
+signature-pad,Signature pad,-,-,"default,active,error",application,-,-,44
+file-upload,File upload,input,-,"default,hover,focus,active,disabled,loading,error",button,Enter,mirrors,44
+pagination,Pagination,pagination,-,"default,hover,focus,active,disabled,loading,error",navigation,Tab Enter,arrows mirror,44

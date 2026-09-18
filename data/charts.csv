@@ -1,0 +1,28 @@
+id,chart,use_for,avoid_for,library_web,a11y_notes,mobile_fallback
+bar-vertical,Vertical bar,comparing categories (sales by item),more than 12 categories,recharts,zero baseline; labels on bars; table alternative,horizontal bar
+bar-horizontal,Horizontal bar,ranked lists with long labels,time series,recharts,labels readable; sorted,same
+bar-stacked,Stacked bar,composition per category (payment mix),more than 5 segments,recharts,legend with patterns; totals labelled,table
+line,Line,trend over time (sales by hour),categorical,recharts,direct labels at line end; markers on focus,sparkline
+area,Area,volume over time,multiple overlapping series,recharts,opacity 0.3; baseline zero,line
+sparkline,Sparkline,KPI tile trend,detailed analysis,recharts,aria-label with trend summary,same
+donut,Donut,share of a whole with 3 to 5 parts,more than 5 parts or precise comparison,recharts,centre label; legend with values,bar
+pie,Pie,avoid; use donut or bar,almost always,recharts,-,bar
+kpi-tile,KPI tile,single headline number with delta,trends,custom,"value, delta and period in text",same
+table,Data table,"exact values, many dimensions",quick trend reading,custom,sortable with announced state,same
+heatmap,Heatmap,hour by weekday intensity,phones,echarts,sequential palette; values on focus,table
+candlestick,Candlestick,price OHLC,non-financial,echarts,blue/orange option; values in table,line
+depth,Order book depth,bid/ask liquidity,non-trading,echarts,two colour-blind safe hues,table
+histogram,Histogram,distribution (ticket sizes),small samples,recharts,bins labelled,table
+scatter,Scatter,correlation of two measures,many points on phone,echarts,point labels on focus,table
+bullet,Bullet,target vs actual,many metrics,d3,target line labelled,kpi-tile
+gauge,Gauge,avoid; use bullet or KPI,almost always,echarts,-,kpi-tile
+funnel,Funnel,conversion stages,non-sequential data,echarts,stage labels with counts,bar-horizontal
+waterfall,Waterfall,P&L bridges,simple totals,echarts,running total labelled,table
+treemap,Treemap,hierarchical share (category > item),phones,echarts,labels only for large cells; table,bar
+gantt,Gantt,"schedules, reservations timeline",non-time data,d3,rows labelled; keyboard row navigation,list
+calendar-heat,Calendar heatmap,daily activity over months,hourly data,echarts,day values on focus,table
+map-choropleth,Choropleth map,values by region or branch,few regions,echarts,sequential palette; table,bar
+map-points,Point map,"locations (branches, riders)",no geography,maplibre,list alternative,list
+progress,Progress bar,completion of a bounded task,unbounded waits,custom,role progressbar with value,same
+stacked-area,Stacked area,composition over time,more than 4 series,recharts,legend with patterns,line
+radar,Radar,avoid; use bar,almost always,echarts,-,bar

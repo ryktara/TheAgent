@@ -1,0 +1,244 @@
+id,priority,category,platform,rule,anti_pattern,why,source,applies_to,check
+A11Y-01,1,accessibility,all,Text contrast at least 4.5:1 against its background (large text 3:1),Grey-on-grey helper text at 3:1,Readable in sunlight and for low vision,WCAG2.2 1.4.3,"text,button,input,badge",auto
+A11Y-02,1,accessibility,all,Non-text UI parts and state indicators at least 3:1 against adjacent colours,Light grey input borders on white,Controls must be findable,WCAG2.2 1.4.11,"input,button,icon,chip",auto
+A11Y-03,1,accessibility,all,"Pointer targets at least 24x24 CSS px, with 44 recommended for touch",20px close icons in a row,Mis-taps on tablets,WCAG2.2 2.5.8,"button,icon-button,chip,tab",auto
+A11Y-04,1,accessibility,all,"Focused element never fully hidden by sticky headers, footers or sheets",Focus lands under a sticky action bar,Keyboard users lose place,WCAG2.2 2.4.11,"sticky,dialog,sheet",review
+A11Y-05,1,accessibility,all,Do not ask for information already entered in the same flow; autofill or prefill it,Re-typing the phone number at checkout,Cognitive load and errors,WCAG2.2 3.3.7,form,review
+A11Y-06,1,accessibility,all,"No cognitive test for sign-in; PIN pads and passkeys allowed, no puzzles or transcription",CAPTCHA before staff login,Auth must be accessible,WCAG2.2 3.3.8,"pin-pad,login",review
+A11Y-07,1,accessibility,all,Drag operations have a single-pointer alternative (select then move),Drag-only split-bill assignment,Motor impairments,WCAG2.2 2.5.7,"drag,list,table-map",review
+A11Y-08,1,accessibility,all,Visible focus ring with 3:1 contrast and at least 2px thickness,outline: none without replacement,Keyboard navigation,WCAG2.2 2.4.7 2.4.13,"button,input,link",auto
+A11Y-09,1,accessibility,all,Every image and icon-only control has a text alternative,Icon buttons with no aria-label,Screen readers,WCAG2.2 1.1.1,"icon-button,image",auto
+A11Y-10,1,accessibility,all,Form fields have programmatic labels; placeholder is never the only label,Placeholder-as-label inputs,Labels vanish on entry,WCAG2.2 1.3.1 3.3.2,"input,select,textarea",auto
+A11Y-11,1,accessibility,all,Errors identified in text next to the field and announced,Red border only,Colour-blind users and screen readers,WCAG2.2 3.3.1,"form,input",auto
+A11Y-12,1,accessibility,all,Status messages announced via live regions without moving focus,Toast not announced,Screen readers miss results,WCAG2.2 4.1.3,"toast,banner,status",auto
+A11Y-13,1,accessibility,all,"Colour is never the only carrier of meaning; pair with icon, text or pattern",KDS age shown by colour alone,Colour-blind kitchen staff,WCAG2.2 1.4.1,"badge,chart,kds-ticket",review
+A11Y-14,1,accessibility,all,Content reflows at 320 CSS px width without horizontal scroll (tables may scroll),Fixed-width layouts,Zoom to 400%,WCAG2.2 1.4.10,layout,auto
+A11Y-15,1,accessibility,all,Text can scale to 200% without loss of content,Fixed px heights clipping text,Low vision,WCAG2.2 1.4.4,"text,card",review
+A11Y-16,1,accessibility,all,"Headings and landmarks structure every page (one h1, main, nav)",Divs with bold text as headings,Navigation by landmark,WCAG2.2 1.3.1 2.4.6,page,auto
+A11Y-17,1,accessibility,all,Keyboard operable everything; no keyboard traps,Custom dropdown without Escape,Keyboard users,WCAG2.2 2.1.1 2.1.2,"dialog,combobox,menu",auto
+A11Y-18,1,accessibility,all,Skip link to main content on web pages,No skip link on admin pages,Repeated navigation,WCAG2.2 2.4.1,page,auto
+A11Y-19,1,accessibility,all,Time limits can be extended or turned off; session warnings before expiry,Silent logout at 15 min,Staff mid-order,WCAG2.2 2.2.1,session,review
+A11Y-20,1,accessibility,all,"Motion, blinking and parallax respect prefers-reduced-motion",Auto-playing animations,Vestibular disorders,WCAG2.2 2.3.3,motion,auto
+A11Y-21,1,accessibility,all,Language of the page and of language switches is declared,Arabic text inside lang=en,Screen reader pronunciation,WCAG2.2 3.1.1 3.1.2,"page,receipt",auto
+A11Y-22,1,accessibility,all,Consistent navigation and identification across screens,Same action named differently per screen,Predictability,WCAG2.2 3.2.3 3.2.4,"nav,button",review
+A11Y-23,1,accessibility,all,Touch targets spaced so 24px circles do not overlap,Tightly packed icon rows,Adjacent mis-taps,WCAG2.2 2.5.8,"toolbar,icon-button",auto
+A11Y-24,1,accessibility,web,"Autocomplete attributes on personal fields (name, tel, email)",Missing autocomplete,Faster and accessible entry,WCAG2.2 1.3.5,input,auto
+A11Y-25,1,accessibility,all,"Pointer cancellation: actions on up event, not down",Fires on touchstart,Accidental triggers,WCAG2.2 2.5.2,button,review
+A11Y-26,1,accessibility,all,Help mechanism (support link) in the same place on every page,Help only on the dashboard,Findability,WCAG2.2 3.2.6,nav,review
+TCH-01,2,touch-interaction,ios,Controls at least 44x44 pt,Small toolbar buttons,HIG hit target,HIG,"button,icon-button",auto
+TCH-02,2,touch-interaction,android,Controls at least 48x48 dp with 8 dp spacing,Dense 32dp buttons,M3 touch target,M3,"button,icon-button,chip",auto
+TCH-03,2,touch-interaction,all,Primary action reachable by thumb on phones (bottom zone),Save button top-right only on phone,One-handed use,foundry,"sticky,button",review
+TCH-04,2,touch-interaction,all,Swipe gestures have a visible button alternative,Swipe-only delete,Discoverability,HIG,"list,swipe",review
+TCH-05,2,touch-interaction,all,Long-press reveals secondary actions with haptic or visual cue,Hidden long-press with no hint,Discoverability,M3,"table-map-tile,order-card",review
+TCH-06,2,touch-interaction,all,Touch feedback within 100 ms (pressed state),No pressed state,Feels dead,M3,button,auto
+TCH-07,2,touch-interaction,all,"Scrollable regions show scroll affordance (partial item, shadow)",Content clipped with no hint,Discoverability,HIG,"list,rail",review
+TCH-08,2,touch-interaction,all,Pull to refresh only on feeds; never on transactional screens,Pull to refresh on tender,Accidental reloads,foundry,list,review
+TCH-09,2,touch-interaction,all,Keyboard shows the right type (numeric for amounts) or use the app numpad,Text keyboard for quantities,Speed,HIG,"input,numpad",auto
+TCH-10,2,touch-interaction,all,"Destructive actions need a second step or undo, never a double tap",Delete on single tap,Irreversible loss,HIG,"button,dialog",review
+TCH-11,2,touch-interaction,all,Drag handles at least 44 px and visible,Invisible drag zones,Motor precision,foundry,drag,review
+TCH-12,2,touch-interaction,all,"Gestures never conflict with system edges (back swipe, home indicator)",Edge-swipe drawer on iOS,OS conflicts,HIG,drawer,review
+TCH-13,2,touch-interaction,all,Hover-only affordances have a touch equivalent,Row actions only on hover,Tablets have no hover,foundry,"table,card",review
+TCH-14,2,touch-interaction,all,Stylus and mouse supported alongside touch on Windows terminals,Touch-only handlers,POS terminals,foundry,"button,input",review
+PERF-01,3,performance,web,Largest Contentful Paint under 2.5 s on 4G,Hero image 2 MB,Perceived speed,CWV,"page,image",auto
+PERF-02,3,performance,web,Interaction to Next Paint under 200 ms,Heavy synchronous handlers,Tap responsiveness,CWV,"button,input",auto
+PERF-03,3,performance,web,Cumulative Layout Shift under 0.1; reserve space for images and ads,Late-loading banners,Mis-taps,CWV,"image,banner",auto
+PERF-04,3,performance,all,Skeletons for loads over 300 ms; spinners only for indeterminate short waits,Blank screen while loading,Perceived speed,foundry,"skeleton,list",review
+PERF-05,3,performance,all,Lists over 100 rows virtualised,Rendering 5000 rows,Jank,foundry,"virtual-list,data-table",auto
+PERF-06,3,performance,all,Debounce search input 200 to 300 ms,Request per keystroke,Load and jank,foundry,search,auto
+PERF-07,3,performance,all,Optimistic updates for toggles and state changes with rollback,Waiting for server on every tap,Speed,foundry,"toggle,button",review
+PERF-08,3,performance,web,Images served responsive with width/height set and lazy loading below the fold,Unsized images,CLS and bytes,CWV,image,auto
+PERF-09,3,performance,web,Code split by route; POS shell under 200 KB gzipped,One bundle,First load on tablets,foundry,page,auto
+PERF-10,3,performance,all,"Offline-first screens read from local store first, then reconcile",Network wait before render,Offline,foundry,"list,order-entry",review
+PERF-11,3,performance,all,Fonts preloaded with font-display swap; at most 2 families,Five webfonts,Layout shift,CWV,typography,auto
+PERF-12,3,performance,all,Animations use transform and opacity only,Animating height and top,Jank,M3,motion,auto
+STY-01,4,style-consistency,all,One accent colour; every other colour is neutral or semantic,Three brand colours competing,Hierarchy,foundry,palette,review
+STY-02,4,style-consistency,all,Radius scale of at most 3 values used consistently per component class,Random radii,Coherence,foundry,"button,card,input",auto
+STY-03,4,style-consistency,all,Shadows from a 3-step scale; flat by default on operational screens,Heavy drop shadows everywhere,Noise,foundry,"card,dialog",review
+STY-04,4,style-consistency,all,Icons from one set (Lucide) at 20 or 24 px; never emoji as icons,Emoji buttons,Consistency and a11y,foundry,icon,auto
+STY-05,4,style-consistency,all,Spacing from a 4 px scale,Arbitrary margins,Rhythm,M3,layout,auto
+STY-06,4,style-consistency,all,Buttons: one primary per view; secondary outlined; tertiary text,Three primary buttons,Decision clarity,HIG,button,review
+STY-07,4,style-consistency,all,"Semantic colours used only for meaning (success, warning, danger, info)",Red brand buttons,Meaning,foundry,"badge,button",review
+STY-08,4,style-consistency,all,"Component states defined for default, hover, focus, active, disabled, loading, error",Missing disabled state,Completeness,foundry,"button,input",review
+STY-09,4,style-consistency,all,Same term for the same thing in UI copy (CONTEXT.md glossary),Ticket vs order vs check,Language,foundry,copy,review
+STY-10,4,style-consistency,all,"Dark theme is a token swap, not a redesign",Separate dark layouts,Maintenance,M3,palette,auto
+STY-11,4,style-consistency,all,"Empty states share one pattern: illustration or icon, one line, one action",Blank tables,Guidance,foundry,empty-state,review
+STY-12,4,style-consistency,all,"Density set once per product (comfortable, high) and honoured by tables and lists",Mixed row heights,Coherence,foundry,"data-table,list",review
+LAY-01,5,layout-responsive,all,"Breakpoints: phone under 640, tablet 640 to 1024, desktop above; layouts defined for each",Desktop-only layout squeezed,Devices,foundry,layout,review
+LAY-02,5,layout-responsive,all,Content max width 1280 px for reading screens; operational screens use full width,Full-bleed forms,Line length and reach,foundry,page,review
+LAY-03,5,layout-responsive,all,Sidebar collapses to drawer under 1024 px,Sidebar covering content,Space,M3,nav,auto
+LAY-04,5,layout-responsive,all,Primary action in a sticky footer on long forms,Save at the bottom of a scroll,Reach,foundry,"form,sticky",review
+LAY-05,5,layout-responsive,all,"Tables: sticky header, horizontal scroll with pinned first column on phones",Squashed columns,Readability,foundry,data-table,review
+LAY-06,5,layout-responsive,all,Split layouts (list plus detail) become stacked with back navigation on phones,Two-pane on phone,Space,HIG,layout,review
+LAY-07,5,layout-responsive,all,"Safe areas respected (notch, home indicator, rounded corners)",Buttons under the home indicator,Reach,HIG,layout,auto
+LAY-08,5,layout-responsive,all,"Grid gutters 16 px on phone, 24 px on tablet and desktop",Cramped gutters,Breathing room,M3,layout,auto
+LAY-09,5,layout-responsive,all,Modal dialogs max 560 px wide; larger flows use a page or full-screen sheet,Giant modals,Focus,foundry,dialog,review
+LAY-10,5,layout-responsive,all,Line length 45 to 75 characters for body text,150-character lines,Readability,foundry,text,auto
+LAY-11,5,layout-responsive,all,"Operational screens: action bar fixed, content scrolls; never scroll the numpad",Numpad scrolls away,Speed,foundry,"numpad,tender-keypad",review
+LAY-12,5,layout-responsive,all,Landscape and portrait both supported on tablets,Portrait-only POS,Mounted tablets,foundry,layout,review
+TYP-01,6,typography-color,all,Base text 16 px; operational screens 16 to 18 px; never below 12 px,11 px captions,Legibility,foundry,text,auto
+TYP-02,6,typography-color,all,Type scale ratio between 1.125 and 1.333 with at most 7 steps,Ad-hoc font sizes,Hierarchy,foundry,typography,auto
+TYP-03,6,typography-color,all,"Line height 1.4 to 1.6 for body, 1.1 to 1.25 for headings",Cramped body text,Readability,foundry,text,auto
+TYP-04,6,typography-color,all,"Tabular numerals for money, quantities and timers",Proportional digits jumping,Alignment,foundry,"text,kpi-tile,data-table",auto
+TYP-05,6,typography-color,all,Money shows currency and minor units per region; right-aligned in tables,Left-aligned prices,Scanning,foundry,"data-table,receipt-preview",review
+TYP-06,6,typography-color,all,"Two weights carry hierarchy (regular, semibold); bold reserved for totals",Five weights,Clarity,foundry,typography,review
+TYP-07,6,typography-color,all,Muted text still 4.5:1,Muted at 3:1,Readability,WCAG2.2 1.4.3,text,auto
+TYP-08,6,typography-color,all,Links distinguishable without colour alone in body text (underline),Colour-only links,Colour-blind,WCAG2.2 1.4.1,link,auto
+TYP-09,6,typography-color,all,Dark theme text 7:1 on operational dark surfaces (KDS),Grey on black at 4.5,Kitchen glare,foundry,kds-ticket,auto
+TYP-10,6,typography-color,all,Truncate with ellipsis and full text on focus or tooltip; never clip silently,Clipped item names,Information loss,foundry,"text,card",review
+TYP-11,6,typography-color,all,"Uppercase only for short labels, with letter spacing",All-caps paragraphs,Readability,foundry,label,review
+TYP-12,6,typography-color,all,Avoid pure black on pure white for long text; use near-black on off-white,#000 on #fff body,Eye strain,foundry,palette,review
+MOT-01,7,motion,all,Durations 100 to 400 ms; enter shorter than exit,800 ms transitions,Speed,M3,motion,auto
+MOT-02,7,motion,all,"Easing: standard for movement, decelerate for enter, accelerate for exit",Linear everywhere,Naturalness,M3,motion,auto
+MOT-03,7,motion,all,"Reduced-motion variant removes movement, keeps state change",Motion ignored,Accessibility,WCAG2.2 2.3.3,motion,auto
+MOT-04,7,motion,all,"Motion communicates state (where it came from, where it went)",Decorative bounces,Purpose,HIG,motion,review
+MOT-05,7,motion,all,No looping or auto-playing motion on operational screens,Pulsing buttons,Distraction,foundry,motion,review
+MOT-06,7,motion,all,"Skeleton shimmer at most 1.5 s period, disabled under reduced motion",Fast shimmer,Distraction,foundry,skeleton,auto
+MOT-07,7,motion,all,New KDS ticket announces with a single chime plus a brief highlight,Continuous flashing,Attention,foundry,kds-ticket,review
+FRM-01,8,forms-feedback,all,"Validate on blur, re-validate on change after first error, summarise on submit",Validate on every keystroke,Calm feedback,foundry,"form,input",review
+FRM-02,8,forms-feedback,all,Error copy says what happened and how to fix it in one sentence,Invalid input,Actionability,WCAG2.2 3.3.3,form,review
+FRM-03,8,forms-feedback,all,Submit stays enabled; errors listed on attempt,Disabled submit until valid,Discoverability,foundry,"form,button",review
+FRM-04,8,forms-feedback,all,Success confirmation within 500 ms; toasts 4 s; errors persistent with an action,Errors auto-dismiss,Reliability,foundry,toast,auto
+FRM-05,8,forms-feedback,all,Unsaved changes guard on navigation,Silent loss,Data safety,foundry,form,review
+FRM-06,8,forms-feedback,all,Typed confirmation for irreversible deletes,One-click delete,Safety,foundry,dialog,review
+FRM-07,8,forms-feedback,all,Inline helper text below fields; never tooltips as the only help,Help hidden in tooltips,Touch has no hover,foundry,input,review
+FRM-08,8,forms-feedback,all,Required fields marked and stated once at the top (all required unless marked optional),Asterisk soup,Clarity,foundry,form,review
+FRM-09,8,forms-feedback,all,"Numeric inputs use numpad or stepper with min, max and step",Free text for quantity,Errors,foundry,"quantity-stepper,numpad",review
+FRM-10,8,forms-feedback,all,Progress for jobs over 2 s: determinate when count known,Indefinite spinner for exports,Trust,foundry,progress,review
+FRM-11,8,forms-feedback,all,Autosave drafts on long forms with visible saved-at status,Lost work,Data safety,foundry,form,review
+FRM-12,8,forms-feedback,all,Server errors map back to the field that caused them,Generic 400 banner,Actionability,foundry,form,review
+NAV-01,9,navigation,all,"Current location visible (active nav item, breadcrumb on detail)",No active state,Orientation,foundry,nav,auto
+NAV-02,9,navigation,all,Back is predictable: returns to the previous list with state preserved,Back resets filters,Orientation,HIG,nav,review
+NAV-03,9,navigation,all,At most 7 top-level destinations; the rest under More or settings,12 sidebar items,Choice overload,M3,nav,review
+NAV-04,9,navigation,all,Global search or command palette reachable with one shortcut,Search buried,Speed,foundry,search,review
+NAV-05,9,navigation,all,Tabs for sibling views; never for sequential steps,Tabs as wizard,Semantics,M3,tabs,review
+NAV-06,9,navigation,all,"URL holds list state (filters, page, sort) on web",State lost on refresh,Shareability,foundry,list,auto
+NAV-07,9,navigation,all,"Role-based navigation: items the role cannot use are hidden, not disabled",Disabled admin items for cashiers,Clarity,foundry,nav,review
+NAV-08,9,navigation,all,Bottom tab bar on phones for 3 to 5 destinations,Hamburger for everything,Reach,HIG,nav,review
+NAV-09,9,navigation,all,Modal flows have a visible close and Escape,Trapped modal,Escape hatch,WCAG2.2 2.1.2,dialog,auto
+NAV-10,9,navigation,all,"Deep links resolve to the screen with correct state (order id, branch)",Deep link to home,Support,foundry,nav,review
+CHT-01,10,charts-data,all,One chart per report view with a data table alternative,Dashboard of 12 charts,Focus and a11y,foundry,chart-card,review
+CHT-02,10,charts-data,all,"Categorical colours colour-blind safe (blue, orange, teal, purple); never red/green alone",Red and green series,Colour-blind,foundry,chart,review
+CHT-03,10,charts-data,all,Axes labelled with units; zero baseline for bars,Truncated bar axes,Honesty,foundry,chart,review
+CHT-04,10,charts-data,all,Time series default to the last 7 days with hour granularity for POS,Lifetime view by default,Relevance,foundry,chart,review
+CHT-05,10,charts-data,all,"KPI tiles: value, delta with direction icon, period; tabular numerals",Value only,Context,foundry,kpi-tile,review
+CHT-06,10,charts-data,all,Sortable tables announce sort state; sorted column marked,Silent sort,A11y,WCAG2.2 4.1.2,data-table,auto
+CHT-07,10,charts-data,all,Tooltips on charts keyboard reachable; values also in a table,Hover-only values,A11y,foundry,chart,review
+CHT-08,10,charts-data,all,Currency formatting per branch locale in every chart,Mixed formats,Trust,foundry,"chart,kpi-tile",auto
+CHT-09,10,charts-data,all,Empty and error states for charts with retry,Blank canvas,Guidance,foundry,chart-card,review
+CHT-10,10,charts-data,all,Mobile fallback: sparkline or table for complex charts,Unreadable heatmap on phone,Space,foundry,chart,review
+OPS-01,4,operational-ui,all,"Numpad first: 3x4 grid, 64 dp keys, 00 and backspace, value shown large above",Native keyboard for amounts,Speed at the till,foundry,"numpad,tender-keypad,pin-pad",auto
+OPS-02,4,operational-ui,all,Quantity chips 1 to 9 beside items; tap again increments,Typing quantities,Speed,foundry,quantity-stepper,review
+OPS-03,4,operational-ui,all,"Order-age colour: green under 5 min, amber under 10, red from 10, plus icon and timer text",Colour only,Kitchen priority,foundry,kds-ticket,auto
+OPS-04,4,operational-ui,all,"Bump bar keys 1 to 9 bump slot, R recall, S station; legend on screen",Mouse-only KDS,Kitchen hands,foundry,kds-ticket,review
+OPS-05,4,operational-ui,all,"Offline banner persistent, non-blocking, with queue count",Blocking offline modal,Keep selling,foundry,banner-offline,auto
+OPS-06,4,operational-ui,all,Manager PIN modal shows action summary and reason chips before the PIN,PIN with no context,Audit,foundry,"pin-pad,dialog",review
+OPS-07,4,operational-ui,all,Tabular numerals and right alignment for every amount,Proportional digits,Scanning totals,foundry,"data-table,receipt-preview",auto
+OPS-08,4,operational-ui,all,High-density tables at 36 px rows on operational screens with sticky totals,Comfortable 56 px rows,Screen real estate,foundry,data-table,review
+OPS-09,4,operational-ui,all,"Amount due at 48 px, top of the tender screen, live region",Small totals,Glanceable,foundry,tender-keypad,auto
+OPS-10,4,operational-ui,all,"Quick cash buttons: exact, next notes; change shown in 40 px",Typing tendered cash,Speed,foundry,tender-keypad,review
+OPS-11,4,operational-ui,all,Item grid tiles at least 96 x 72 dp with name and price,Text lists for items,Speed,foundry,order-card,review
+OPS-12,4,operational-ui,all,Modifier sheet opens automatically for required groups; Done shows running total,Hidden required modifiers,Errors,foundry,modifier-sheet,review
+OPS-13,4,operational-ui,all,"Table map tiles show number large, covers and minutes small, colour by state with icon",Number only,Floor awareness,foundry,table-map-tile,review
+OPS-14,4,operational-ui,all,"Card wait state: spinner, cancel after 5 s, timeout 60 s with retry or other tender",Infinite wait,Recovery,foundry,tender-keypad,review
+OPS-15,4,operational-ui,all,"Receipt preview at 80 mm with language toggle and print, e-receipt, no receipt",Print blindly,Choice,foundry,receipt-preview,review
+OPS-16,4,operational-ui,all,Split-bill remaining bar turns green at zero; Pay per column,Hidden remainder,Errors,foundry,split-bill,review
+OPS-17,4,operational-ui,all,Shift close blocked list links to each open order,Generic block message,Actionability,foundry,list,review
+OPS-18,4,operational-ui,all,"Sync status icon in header with synced, queued n, conflict states",No sync visibility,Trust,foundry,banner-offline,auto
+OPS-19,4,operational-ui,all,Dark theme for KDS with 7:1 text; light for cashier,Same theme everywhere,Glare,foundry,kds-ticket,auto
+OPS-20,4,operational-ui,all,"Undo for 10 s after merge, transfer and void",No undo,Safety,foundry,toast,review
+OPS-21,4,operational-ui,all,Sold-out items greyed with 86 tag and still visible,Hidden sold-out items,Staff answers,foundry,order-card,review
+OPS-22,4,operational-ui,all,Customer display mirrors lines and total; tip prompt only during tender,Blank customer display,Trust,foundry,customer-display,review
+OPS-23,4,operational-ui,all,"Printer status chip: ready, paper low, offline; print queues when offline",Silent print failure,Recovery,foundry,banner-offline,review
+OPS-24,4,operational-ui,all,Search field accepts PLU digits and text; scanner input lands here,Separate PLU field,Speed,foundry,search,review
+OPS-25,4,operational-ui,all,Dashboard KPIs limited to four with one activity feed,Twelve tiles,Focus,foundry,kpi-tile,review
+OPS-26,4,operational-ui,all,Reports default to today and this branch,All time all branches,Relevance,foundry,chart-card,review
+RTL-01,1,rtl-i18n,all,"Layout, navigation, tabs, lists and swipe directions mirror in RTL",LTR layout with Arabic text,Reading order,foundry,"layout,nav",auto
+RTL-02,1,rtl-i18n,all,"Numerals, prices, phone numbers, QR codes and numpads stay LTR in RTL",Mirrored numpad,Muscle memory,foundry,"numpad,receipt-preview",auto
+RTL-03,1,rtl-i18n,all,Use logical CSS properties (margin-inline-start) everywhere,margin-left hard-coded,Mirroring,foundry,layout,auto
+RTL-04,1,rtl-i18n,all,Arabic fonts with Naskh or Kufi fallback at 18 px minimum; Urdu Nastaliq at 20 px,Latin fallback boxes,Legibility,foundry,typography,auto
+RTL-05,1,rtl-i18n,all,Bidi isolation for mixed runs (unicode-bidi: isolate) in names and addresses,Scrambled mixed text,Correctness,foundry,text,auto
+RTL-06,1,rtl-i18n,all,"Icons with direction (arrows, back) mirror; icons without (clock, search) do not",Mirrored search icon,Semantics,M3,icon,review
+RTL-07,1,rtl-i18n,all,"Dates and numbers formatted per locale with Western numerals by default, Arabic-Indic as a branch option",Hard-coded formats,Locale,foundry,text,auto
+RTL-08,1,rtl-i18n,all,Language switch persists per user and per receipt,Resets each session,Convenience,foundry,nav,review
+RTL-09,1,rtl-i18n,all,Text expansion allowance of 30% for Arabic and Urdu in buttons and tables,Clipped Arabic labels,Layout,foundry,"button,data-table",review
+RTL-10,1,rtl-i18n,all,Pseudo-localisation test in CI for length and RTL,Untested RTL,Regression,foundry,page,auto
+RTL-11,1,rtl-i18n,all,Right-aligned amounts in both directions,Amounts flip alignment,Scanning,foundry,data-table,auto
+RTL-12,1,rtl-i18n,all,Bilingual receipts carry identical totals in both blocks,Different rounding per language,Trust,foundry,receipt-preview,auto
+PRT-01,5,print,all,"80 mm receipt: 72 mm printable width, 42 columns at font A, 56 at font B",Overflowing lines,Thermal fit,foundry,receipt-preview,auto
+PRT-02,5,print,all,"Thermal contrast: no greys, no thin lines under 2 px, bold for totals",Grey text on thermal,Legibility,foundry,receipt-preview,auto
+PRT-03,5,print,all,QR code at least 25 mm square with quiet zone; one per receipt,Tiny QR,Scannability,foundry,receipt-preview,auto
+PRT-04,5,print,all,"Header: branch name, address, tax number; footer: receipt number, date, device",Missing tax number,Compliance,foundry,receipt-preview,review
+PRT-05,5,print,all,"Bilingual receipt: Arabic block first for SA, English first for AE unless toggled",English only,Compliance,foundry,receipt-preview,review
+PRT-06,5,print,all,"Kitchen tickets: item names 2x size, modifiers indented, seat and course tags",Small kitchen tickets,Readability at the pass,foundry,kds-ticket,review
+PRT-07,5,print,all,Reprint stamped REPRINT; voided receipts print VOID,Silent reprints,Audit,foundry,receipt-preview,auto
+PRT-08,5,print,all,Cut and drawer commands only after successful render,Drawer opens on failure,Cash safety,foundry,receipt-preview,review
+PRT-09,5,print,all,Print jobs queue when the printer is offline with a visible count,Lost print jobs,Recovery,foundry,banner-offline,auto
+PRT-10,5,print,all,"A4 reports: page numbers, generated-at, branch filter in header",Unlabelled printouts,Traceability,foundry,chart-card,review
+A11Y-27,1,accessibility,all,Reading order matches visual order; no CSS order tricks that break tab order,Grid reorder breaking focus order,Keyboard and screen readers,WCAG2.2 1.3.2 2.4.3,layout,auto
+A11Y-28,1,accessibility,all,"Custom controls expose name, role and value (aria) and reflect state changes",Div buttons without role,Assistive tech,WCAG2.2 4.1.2,"button,tabs,switch",auto
+A11Y-29,1,accessibility,all,Error prevention on financial actions: review step or undo for payments and refunds,One-tap refund,Legal and financial,WCAG2.2 3.3.4,"tender-keypad,dialog",review
+A11Y-30,1,accessibility,all,"Instructions never rely on shape, size or location alone",Tap the round button on the right,Screen readers,WCAG2.2 1.3.3,copy,review
+A11Y-31,1,accessibility,all,Audio cues paired with visual cues and can be muted,Sound-only KDS alert,Deaf staff and noisy kitchens,WCAG2.2 1.2.1,kds-ticket,review
+A11Y-32,1,accessibility,all,"Content on hover or focus is dismissible, hoverable and persistent",Tooltips vanish on move,Magnifier users,WCAG2.2 1.4.13,"tooltip,popover",auto
+A11Y-33,1,accessibility,all,"Text spacing adjustable (line height 1.5, paragraph 2x) without clipping",Fixed-height cards,Dyslexia,WCAG2.2 1.4.12,"card,text",auto
+A11Y-34,1,accessibility,all,Page titles describe the screen and current record,Every page titled App,Orientation,WCAG2.2 2.4.2,page,auto
+A11Y-35,1,accessibility,all,Link and button text describes the destination or action,Click here,Screen readers,WCAG2.2 2.4.4,"link,button",review
+A11Y-36,1,accessibility,all,No content flashes more than three times per second,Flashing alerts,Seizures,WCAG2.2 2.3.1,"motion,banner",auto
+A11Y-37,1,accessibility,all,Orientation not locked unless essential,Portrait-only lock,Mounted devices,WCAG2.2 1.3.4,layout,auto
+A11Y-38,1,accessibility,all,"Motion actuation (shake, tilt) has a UI alternative and can be disabled",Shake to undo only,Motor,WCAG2.2 2.5.4,motion,review
+TCH-15,2,touch-interaction,all,Primary tap targets on kiosks at least 64 dp,Phone-sized buttons on a kiosk,Standing users,foundry,"button,numpad",auto
+TCH-16,2,touch-interaction,all,Confirm sheets slide from the bottom and are dismissible by drag and by button,Centered modals on phones,Reach,M3,bottom-sheet,review
+TCH-17,2,touch-interaction,all,"Selection mode entered by long-press or a Select button, with a clear exit",Checkboxes always visible,Clarity,M3,"list,data-table",review
+TCH-18,2,touch-interaction,all,Numeric entry commits on Enter and on tapping outside; no accidental submit on scroll,Submit on blur while scrolling,Errors,foundry,"input,numpad",review
+TCH-19,2,touch-interaction,all,Rapid repeated taps are debounced on money actions,Double charge on double tap,Money safety,foundry,"tender-keypad,button",auto
+TCH-20,2,touch-interaction,all,Gloved and wet-hand operation: no pressure or multi-touch gestures required,Pinch-only zoom on floor map,Kitchen conditions,foundry,"floor-canvas,kds-ticket",review
+PERF-13,3,performance,all,Order entry add-line renders within 100 ms locally,Server round trip per line,Speed at the till,foundry,"order-entry,order-card",auto
+PERF-14,3,performance,all,KDS ticket appears within 1 s of firing over websocket,Polling every 10 s,Kitchen timing,foundry,kds-ticket,auto
+PERF-15,3,performance,all,Background sync never blocks the UI thread; workers for queue drain,Sync freezes the screen,Responsiveness,foundry,banner-offline,review
+PERF-16,3,performance,all,Cache menu and floor data locally; refresh on version change,Refetch menu per screen,Speed and offline,foundry,"order-card,table-map-tile",review
+PERF-17,3,performance,all,Report queries paginate or aggregate server-side; never render raw rows over 1000,Full table to browser,Memory,foundry,"data-table,chart-card",auto
+PERF-18,3,performance,all,Print rendering under 300 ms; queue prints without blocking tender completion,Wait for printer before Complete,Throughput,foundry,receipt-preview,review
+STY-13,4,style-consistency,all,"Copy tone: short, present tense, no exclamation marks on operational screens",Great job!,Calm,foundry,copy,review
+STY-14,4,style-consistency,all,Numbers formatted once (helper) and used everywhere,Ad-hoc toFixed,Consistency,foundry,text,auto
+STY-15,4,style-consistency,all,Status badges use the same five colours and words across screens,Six shades of amber,Meaning,foundry,badge,review
+STY-16,4,style-consistency,all,Illustrations only in empty states and onboarding; none on operational screens,Illustrated KDS,Focus,foundry,empty-state,review
+STY-17,4,style-consistency,all,"Logo appears once (sign-in and receipts), never on every screen",Logo in every header,Space,foundry,"nav,receipt-preview",review
+LAY-13,5,layout-responsive,all,"Two-column tender: totals left, keypad right; stacked on phone with keypad bottom",Keypad above totals on phone,Reach,foundry,tender-keypad,review
+LAY-14,5,layout-responsive,all,KDS shows 4 to 6 tickets per row on a 15-inch screen; never fewer than 3,Two giant tickets,Throughput,foundry,kds-ticket,review
+LAY-15,5,layout-responsive,all,"Item grid 4 columns on tablet landscape, 3 portrait, 2 phone",Fixed 6 columns,Fit,foundry,order-card,auto
+LAY-16,5,layout-responsive,all,Sticky totals row in tables with money,Totals scroll away,Scanning,foundry,data-table,review
+LAY-17,5,layout-responsive,all,"Settings pages single column, max 720 px",Wide settings forms,Readability,foundry,form,review
+LAY-18,5,layout-responsive,all,Floor map fits the zone without scrolling on tablet; zoom on phone,Scrolling floor plans,Awareness,foundry,floor-canvas,review
+TYP-13,6,typography-color,all,Order numbers and table numbers in the largest weight on their screens,Small ticket numbers,Call-out,foundry,"kds-ticket,table-map-tile",review
+TYP-14,6,typography-color,all,"Negative amounts show a minus sign, never colour alone; refunds in parentheses on receipts",Red-only negatives,Colour-blind,foundry,"data-table,receipt-preview",review
+TYP-15,6,typography-color,all,Currency symbol or code once per column header in tables,Symbol on every cell,Noise,foundry,data-table,review
+TYP-16,6,typography-color,all,Kitchen screens use 20 px minimum with high x-height fonts,Thin fonts on KDS,Distance reading,foundry,kds-ticket,auto
+FRM-13,8,forms-feedback,all,Manager PIN prompt states the action and amount before asking,PIN with no context,Audit,foundry,pin-pad,review
+FRM-14,8,forms-feedback,all,Void and comp require a reason chip; free text optional,Free text reasons,Reporting,foundry,dialog,review
+FRM-15,8,forms-feedback,all,Quantity edits show the resulting line total instantly,Total updates on save,Confidence,foundry,quantity-stepper,auto
+FRM-16,8,forms-feedback,all,Search shows result count and highlights the match,Silent filtering,Feedback,foundry,search,review
+FRM-17,8,forms-feedback,all,Long-running exports notify on completion with a link,User waits on the page,Flow,foundry,toast,review
+NAV-11,9,navigation,all,"Cashier screens reachable in one tap from order entry (tender, table map, search)",Menu diving,Speed,foundry,nav,review
+NAV-12,9,navigation,all,Manager and owner areas behind a PIN with a visible locked icon,Hidden admin,Clarity,foundry,"nav,pin-pad",review
+NAV-13,9,navigation,all,Branch switcher only for owner roles and only when more than one branch,Switcher for all,Noise,foundry,nav,review
+NAV-14,9,navigation,all,Escape and Back always cancel the current sheet without side effects,Back saves partial edits,Predictability,foundry,"dialog,bottom-sheet",review
+CHT-11,10,charts-data,all,"Hourly sales chart marks service periods (breakfast, lunch, dinner)",Unmarked hours,Context,foundry,chart-card,review
+CHT-12,10,charts-data,all,"Payment mix as stacked bar with labels, never a pie",Pie of tenders,Comparability,foundry,chart-card,review
+CHT-13,10,charts-data,all,Voids and discounts charted against sales as a percentage,Absolute voids only,Insight,foundry,chart-card,review
+CHT-14,10,charts-data,all,P&L deltas use blue/orange in colour-blind mode,Red/green only,Colour-blind,foundry,"kpi-tile,chart",auto
+OPS-27,4,operational-ui,all,Order entry keeps the ticket visible while browsing categories,Ticket hidden behind menu,Confidence,foundry,order-card,review
+OPS-28,4,operational-ui,all,Seat and course tags visible on every ticket line,Untagged lines,Service accuracy,foundry,order-card,review
+OPS-29,4,operational-ui,all,Delivery inbox plays a distinct sound and shows platform logo and ETA,Silent platform orders,Missed orders,foundry,order-card,review
+OPS-30,4,operational-ui,all,End-of-day checklist blocks with links to each unresolved item,Generic failure,Actionability,foundry,list,review
+OPS-31,4,operational-ui,all,Receipt reprint and void receipts clearly stamped,Identical reprints,Audit,foundry,receipt-preview,auto
+OPS-32,4,operational-ui,all,Reservation timeline scrolls horizontally with now-line and 15-minute grid,List-only bookings,Floor planning,foundry,data-table,review
+OPS-33,4,operational-ui,all,Inventory low-stock badge on the item tile and the inventory list,Only in reports,Timeliness,foundry,"order-card,badge",review
+OPS-34,4,operational-ui,all,Staff PIN entry never echoes digits; shows count only,Visible PIN,Security,foundry,pin-pad,auto
+RTL-13,1,rtl-i18n,all,Floor canvas and seat numbers never mirror; labels do,Mirrored floor plan,Physical mapping,foundry,floor-canvas,auto
+RTL-14,1,rtl-i18n,all,"Receipt currency symbol position per locale (AED before, د.إ after)",Wrong symbol side,Trust,foundry,receipt-preview,review
+RTL-15,1,rtl-i18n,all,"Item names entered in both languages; fallback shows the other language, never blank",Blank Arabic names,Completeness,foundry,"order-card,input",auto
+RTL-16,1,rtl-i18n,all,"Urdu digits and Arabic-Indic digits are a branch setting, default Western",Mixed digit systems,Consistency,foundry,text,auto
+PRT-11,5,print,all,"Receipt totals block: subtotal, discounts, service charge, tax lines, total, tenders, change",Missing tax line,Compliance,foundry,receipt-preview,review
+PRT-12,5,print,all,"Kitchen ticket header shows table, covers, server, time in 2x font",Tiny header,Pass speed,foundry,kds-ticket,review
+PRT-13,5,print,all,Barcode or QR on receipts encodes receipt number for refund lookup,No lookup code,Speed,foundry,receipt-preview,review
+PRT-14,5,print,all,Paper-low warning at 20% with reorder link,Runs out mid-service,Continuity,foundry,banner-offline,review

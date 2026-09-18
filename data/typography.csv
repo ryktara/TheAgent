@@ -1,0 +1,33 @@
+id,heading_font,body_font,mono_font,arabic_font,urdu_font,scale_ratio,base_px,weights,mood,use_case,google_fonts_url
+inter-system,Inter,Inter,JetBrains Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,600,700","neutral, operational","pos,admin,saas",https://fonts.google.com/specimen/Inter
+plex-arabic,IBM Plex Sans,IBM Plex Sans,IBM Plex Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,600","technical, bilingual","pos,erp,fintech",https://fonts.google.com/specimen/IBM+Plex+Sans+Arabic
+cairo-pair,Cairo,Cairo,JetBrains Mono,Cairo,Noto Nastaliq Urdu,1.25,16,"400,600,700","Arabic-first, friendly","retail,marketplace,gcc",https://fonts.google.com/specimen/Cairo
+tajawal-pair,Tajawal,Tajawal,JetBrains Mono,Tajawal,Noto Nastaliq Urdu,1.25,16,"400,500,700","Arabic-first, modern","saas,landing,gcc",https://fonts.google.com/specimen/Tajawal
+almarai-pair,Almarai,Almarai,JetBrains Mono,Almarai,Noto Nastaliq Urdu,1.2,16,"400,700","Arabic-first, clean","retail,hospitality",https://fonts.google.com/specimen/Almarai
+noto-naskh,Inter,Inter,JetBrains Mono,Noto Naskh Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,600,700","formal, receipts","receipts,legal,hms",https://fonts.google.com/specimen/Noto+Naskh+Arabic
+noto-kufi,Inter,Inter,JetBrains Mono,Noto Kufi Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,700",geometric Arabic headings,"landing,marketplace",https://fonts.google.com/specimen/Noto+Kufi+Arabic
+gulzar-urdu,Inter,Inter,JetBrains Mono,Noto Naskh Arabic,Gulzar,1.2,16,"400,500,600",Urdu-first,"edtech,pk",https://fonts.google.com/specimen/Gulzar
+manrope-modern,Manrope,Manrope,JetBrains Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.25,16,"400,500,700",modern saas,"saas,landing",https://fonts.google.com/specimen/Manrope
+dm-sans-soft,DM Sans,DM Sans,DM Mono,Tajawal,Noto Nastaliq Urdu,1.2,16,"400,500,700","soft, friendly","booking,hospitality",https://fonts.google.com/specimen/DM+Sans
+space-grotesk-tech,Space Grotesk,Inter,Space Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.25,16,"400,500,700","technical, expressive","fintech,dev tools",https://fonts.google.com/specimen/Space+Grotesk
+source-sans-enterprise,Source Sans 3,Source Sans 3,Source Code Pro,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,600,700",enterprise,"erp,crm,admin",https://fonts.google.com/specimen/Source+Sans+3
+public-sans-gov,Public Sans,Public Sans,JetBrains Mono,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,700","civic, plain","gov,hms,forms",https://fonts.google.com/specimen/Public+Sans
+roboto-flex-ops,Roboto Flex,Roboto Flex,Roboto Mono,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,700",android-native operational,"pos,kds,android",https://fonts.google.com/specimen/Roboto+Flex
+sf-like-hig,Inter,Inter,JetBrains Mono,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,17,"400,500,600",HIG-like sizing,"ios,mobile",https://fonts.google.com/specimen/Inter
+fraunces-editorial,Fraunces,Inter,JetBrains Mono,Noto Naskh Arabic,Noto Nastaliq Urdu,1.333,18,"400,600","editorial, warm","landing,content",https://fonts.google.com/specimen/Fraunces
+playfair-luxury,Playfair Display,Source Sans 3,Source Code Pro,Amiri,Noto Nastaliq Urdu,1.333,17,"400,700","luxury, fine dining","hospitality,fine dining",https://fonts.google.com/specimen/Playfair+Display
+amiri-classic,Amiri,Inter,JetBrains Mono,Amiri,Noto Nastaliq Urdu,1.25,17,"400,700",classic Arabic,"hospitality,editorial",https://fonts.google.com/specimen/Amiri
+readex-pro,Readex Pro,Readex Pro,JetBrains Mono,Readex Pro,Noto Nastaliq Urdu,1.2,16,"400,500,700","bilingual, legible","edtech,hms,gcc",https://fonts.google.com/specimen/Readex+Pro
+vazirmatn-bi,Vazirmatn,Vazirmatn,JetBrains Mono,Vazirmatn,Noto Nastaliq Urdu,1.2,16,"400,500,700","bilingual, neutral","saas,admin,gcc",https://fonts.google.com/specimen/Vazirmatn
+rubik-rounded,Rubik,Rubik,JetBrains Mono,Rubik,Noto Nastaliq Urdu,1.2,16,"400,500,700","rounded, bilingual","retail,consumer",https://fonts.google.com/specimen/Rubik
+nunito-friendly,Nunito,Nunito,JetBrains Mono,Tajawal,Noto Nastaliq Urdu,1.2,16,"400,600,700","friendly, consumer","edtech,booking",https://fonts.google.com/specimen/Nunito
+figtree-startup,Figtree,Figtree,JetBrains Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.25,16,"400,500,700","startup, clean","saas,landing",https://fonts.google.com/specimen/Figtree
+geist-dev,Geist,Geist,Geist Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,600","developer, sharp","dev tools,dashboard",https://fonts.google.com/specimen/Geist
+work-sans-retail,Work Sans,Work Sans,JetBrains Mono,Almarai,Noto Nastaliq Urdu,1.2,16,"400,500,700",retail signage,"retail,pos",https://fonts.google.com/specimen/Work+Sans
+barlow-industrial,Barlow,Barlow,JetBrains Mono,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,700","industrial, condensed headings","logistics,warehouse,kds",https://fonts.google.com/specimen/Barlow
+archivo-dense,Archivo,Archivo,JetBrains Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.125,15,"400,500,700","dense, data","trading,analytics",https://fonts.google.com/specimen/Archivo
+lexend-readable,Lexend,Lexend,JetBrains Mono,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,500,700",readability-focused,"edtech,hms,accessibility",https://fonts.google.com/specimen/Lexend
+atkinson-a11y,Atkinson Hyperlegible,Atkinson Hyperlegible,JetBrains Mono,Noto Sans Arabic,Noto Nastaliq Urdu,1.2,16,"400,700",hyperlegible,"hms,accessibility,kiosk",https://fonts.google.com/specimen/Atkinson+Hyperlegible
+outfit-display,Outfit,Inter,JetBrains Mono,Cairo,Noto Nastaliq Urdu,1.25,16,"400,600,700",display headings,"landing,marketing",https://fonts.google.com/specimen/Outfit
+sora-fintech,Sora,Inter,JetBrains Mono,IBM Plex Sans Arabic,Noto Nastaliq Urdu,1.25,16,"400,600,700","fintech, modern","fintech,wallet",https://fonts.google.com/specimen/Sora
+montserrat-brand,Montserrat,Inter,JetBrains Mono,Tajawal,Noto Nastaliq Urdu,1.25,16,"400,600,700",brand-led,"marketplace,retail",https://fonts.google.com/specimen/Montserrat

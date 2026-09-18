@@ -1,28 +1,21 @@
 # Data files
 
-Reference is data, not prose. Every CSV here is queried by `scripts/foundry.py query` (P5),
-which returns at most 20 rows. No data file enters an agent context whole.
+Reference is data, not prose. Every CSV here is queried by `python scripts/foundry.py query <name>
+--<col> <value> [--n 20] [--json]` (exact or substring match, at most 20 rows by default). No data
+file enters an agent context whole. Sources and verification status: [SOURCES.md](SOURCES.md).
 
-## Planned CSVs and columns
+| File | Rows | Columns | Consumed by |
+|------|-----:|---------|-------------|
+| ux-rules.csv | 243 | id, priority, category, platform, rule, anti_pattern, why, source, applies_to, check | design-skeleton (do/avoid), screens-skeleton (a11y and RTL rule ids), gate screens |
+| palettes.csv | 60 | id, name, mood, industry_tags, primary, primary_fg, secondary, accent, bg, surface, surface_alt, text, text_muted, border, success, warning, danger, info, dark_bg, dark_surface, dark_text | design-skeleton; `design-check` fails CI on any contrast pair below target |
+| typography.csv | 32 | id, heading_font, body_font, mono_font, arabic_font, urdu_font, scale_ratio, base_px, weights, mood, use_case, google_fonts_url | design-skeleton |
+| styles.csv | 26 | id, name, description, density, radius, shadow, border, motion_level, best_for, avoid_for, css_keywords | design-skeleton |
+| product-types.csv | 64 | id, name, tags, default_style, default_palette_tag, default_typography_tag, density, nav_pattern, key_screens, anti_patterns | design-skeleton, screens-skeleton |
+| charts.csv | 27 | id, chart, use_for, avoid_for, library_web, a11y_notes, mobile_fallback | screen-spec (reports), P7 implement |
+| components.csv | 50 | id, component, shadcn_name, radix_primitive, states, a11y_role, keyboard, rtl_notes, min_target | design-skeleton inventory, screens-skeleton, gate screens |
+| stacks.csv | 14 | stack_id, layer, package, scaffold_cmd, test_cmd, typecheck_cmd, lint_cmd, a11y_cmd, notes | architecture, data-model, P7 implement |
 
-| File | Columns |
-|------|---------|
-| ux-rules.csv | id, priority (1–10), category, rule, must_have, anti_pattern, source (HIG/M3/WCAG2.2), applies_to |
-| palettes.csv | id, name, mood, primary, secondary, accent, bg, surface, text, contrast_ratio_min, product_types |
-| typography.csv | id, heading_font, body_font, mono_font, scale_ratio, base_px, line_height, use_case, source_url |
-| styles.csv | id, name, description, keywords, density, radius, shadow, motion, best_for, avoid_for |
-| product-types.csv | id, name, keywords, default_style, default_palette, default_typography, density, touch_target, charts |
-| charts.csv | id, chart_type, best_for, data_shape, min_points, max_series, a11y_notes, library_hint |
-| security-controls.csv | id, framework (ASVS/OWASP-Agentic-Top10), level, category, control, verification, applies_to |
-| stacks.csv | id, name, scaffold_cmd, typecheck_cmd, test_cmd, lint_cmd, a11y_cmd, sast_cmd, deploy_target |
-
-Priority order for ux-rules (1 = highest): Accessibility, Touch, Performance, Style, Layout,
-Typography/Color, Animation, Forms, Navigation, Charts.
-
-## Query contract (P5)
-
-```
-python scripts/foundry.py query <file> --where col=value [--limit 20] [--columns a,b]
-```
-
-Output is a markdown table. Rows above the limit are counted, not printed.
+ux-rules priority order (1 = highest): accessibility and rtl-i18n, touch-interaction, performance,
+style-consistency and operational-ui, layout-responsive and print, typography-color, motion,
+forms-feedback, navigation, charts-data. Palette contrast targets: text/bg 4.5, text_muted/bg 4.5,
+primary_fg/primary 4.5, border/bg 3, semantics/bg 3, dark_text/dark_bg 4.5.

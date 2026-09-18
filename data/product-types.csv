@@ -1,0 +1,65 @@
+id,name,tags,default_style,default_palette_tag,default_typography_tag,density,nav_pattern,key_screens,anti_patterns
+restaurant-pos,Restaurant POS,"pos,restaurant,operational,food",high-contrast-operational,pos,operational,high,action-bar,"table-map,order-entry,tender,kds,shift-close,reports","modal-per-action,small-targets,hover-only"
+kds,Kitchen Display,"kds,kitchen,operational,dark",high-contrast-operational,kds,operational,high,station-tabs,"kds,delivery-inbox","light-theme,small-text,colour-only"
+retail-pos,Retail POS,"pos,retail,operational",retail-bright,retail,retail,high,action-bar,"checkout,product-search,inventory,returns,z-report","hover-only,small-targets"
+supermarket-pos,Supermarket POS,"pos,retail,grocery,operational",operational-flat,retail,operational,high,action-bar,"checkout,product-search,z-report",image-heavy-tiles
+pharmacy-pos,Pharmacy POS,"pos,retail,pharmacy,health",clinical-calm,hms,readability,high,action-bar,"checkout,product-search,inventory",playful-colour
+trading-app,Trading App,"trading,fintech,dark,operational",fintech-dark,trading,dense,high,bottom-tabs,"watchlist,instrument,order-ticket,portfolio,pnl,kyc","light-only,animated-prices,red-green-only"
+fintech-wallet,Fintech Wallet,"fintech,wallet,mobile",mobile-native,fintech,fintech,medium,bottom-tabs,"home,send,receive,history,kyc","dense-tables,jargon"
+neobank,Neobank,"fintech,banking,mobile",mobile-native,fintech,fintech,medium,bottom-tabs,"accounts,transfer,cards,statements",clutter
+erp-core,ERP Core,"erp,admin,dense",enterprise-dense,erp,enterprise,high,sidebar,"dashboard,list,detail,edit,reports,settings","marketing-chrome,large-whitespace"
+erp-construction,Construction ERP,"erp,construction,projects",enterprise-dense,erp,enterprise,high,sidebar,"projects,boq,procurement,timesheets,reports",consumer-styling
+erp-manufacturing,Manufacturing ERP,"erp,manufacturing,inventory",enterprise-dense,erp,enterprise,high,sidebar,"work-orders,bom,inventory,quality,reports",consumer-styling
+crm,CRM,"crm,sales,admin",soft-saas,saas,saas,medium,sidebar,"pipeline,contacts,deals,activities,reports",dense-only
+crm-whatsapp,WhatsApp CRM,"crm,whatsapp,messaging,saas",messaging-chat,whatsapp,saas,medium,sidebar,"inbox,contacts,templates,broadcasts,analytics",email-metaphors
+whatsapp-saas,WhatsApp Business SaaS,"whatsapp,messaging,saas",messaging-chat,whatsapp,saas,medium,sidebar,"inbox,flows,templates,billing",clutter
+hms,Hospital Management,"hms,health,clinical",clinical-calm,hms,readability,medium,sidebar,"patients,appointments,emr,billing,pharmacy,lab","playful,dark-only"
+clinic,Clinic Management,"hms,health,clinic,booking",clinical-calm,hms,readability,medium,sidebar,"appointments,patients,billing",playful
+property-management,Property Management,"property,real-estate,admin",property-showcase,property,saas,medium,sidebar,"units,tenants,leases,maintenance,payments",dense-only
+real-estate-listing,Real Estate Listings,"property,marketplace,consumer",property-showcase,property,saas,low,top-nav,"search,listing,map,contact",dense-tables
+edtech-k12,EdTech K-12,"edtech,school,lms",edtech-playful,edtech,readability,medium,sidebar,"classes,attendance,grades,parents,timetable","dark-only,dense"
+lms,Learning Platform,"edtech,lms,courses",soft-saas,edtech,readability,medium,top-nav,"catalog,course,lesson,progress,certificates",dense
+marketplace,Marketplace,"marketplace,ecommerce,consumer",marketplace-vivid,marketplace,brand,medium,top-nav,"home,search,listing,cart,checkout,orders",enterprise-chrome
+ecommerce-store,E-commerce Store,"ecommerce,retail,consumer",marketplace-vivid,retail,brand,medium,top-nav,"home,category,product,cart,checkout",dense-tables
+booking-appointments,Appointment Booking,"booking,scheduling,consumer",soft-saas,booking,friendly,medium,top-nav,"services,calendar,booking,confirmation",dense
+hotel-pms,Hotel PMS,"hotel,hospitality,admin",hospitality-warm,hospitality,hospitality,high,sidebar,"front-desk,reservations,housekeeping,folio,reports",playful
+restaurant-reservations,Restaurant Reservations,"restaurant,booking,hospitality",hospitality-warm,hospitality,hospitality,medium,top-nav,"availability,booking,waitlist,guests",dense
+logistics-dispatch,Logistics Dispatch,"logistics,fleet,operational",logistics-industrial,logistics,industrial,high,sidebar,"dispatch,map,drivers,orders,reports",consumer-styling
+warehouse-wms,Warehouse WMS,"logistics,warehouse,inventory,operational",logistics-industrial,logistics,industrial,high,action-bar,"receive,putaway,pick,pack,ship,count","hover-only,small-targets"
+delivery-rider-app,Delivery Rider App,"logistics,delivery,mobile",mobile-native,logistics,operational,medium,bottom-tabs,"tasks,map,proof-of-delivery,earnings",dense-tables
+admin-dashboard,Admin Dashboard,"admin,analytics,dashboard",dashboard-analytic,admin,saas,medium,sidebar,"dashboard,list,detail,settings",twelve-charts
+owner-dashboard,Owner Dashboard,"analytics,owner,mobile",dashboard-analytic,admin,saas,low,bottom-tabs,"today,sales,staff,alerts",dense
+landing-page,Landing Page,"landing,marketing,web",soft-saas,landing,brand,low,top-nav,"hero,features,pricing,faq,cta","app-chrome,dense"
+saas-onboarding,SaaS Onboarding,"onboarding,saas,wizard",wizard-guided,saas,saas,low,stepper,"welcome,setup,invite,done",dense
+support-helpdesk,Helpdesk,"support,tickets,saas",table-first,saas,saas,high,sidebar,"inbox,ticket,kb,reports",playful
+hr-payroll,HR and Payroll,"hr,payroll,admin",enterprise-dense,erp,enterprise,medium,sidebar,"employees,attendance,payroll,leave,documents",playful
+accounting,Accounting,"accounting,finance,admin",table-first,fintech,enterprise,high,sidebar,"ledger,invoices,bills,bank,reports",playful
+invoicing-sme,SME Invoicing,"invoicing,finance,saas",soft-saas,fintech,saas,medium,sidebar,"invoices,customers,payments,reports",dense-only
+inventory-simple,Simple Inventory,"inventory,retail,saas",table-first,retail,saas,high,sidebar,"items,stock,movements,suppliers",playful
+fleet-tracking,Fleet Tracking,"logistics,fleet,map",map-centric,logistics,industrial,medium,sidebar,"map,vehicles,trips,alerts",dense-tables
+field-service,Field Service,"service,mobile,operational",mobile-native,logistics,operational,medium,bottom-tabs,"jobs,checklist,photos,signature",desktop-only
+gym-membership,Gym Membership,"membership,booking,consumer",soft-saas,booking,friendly,medium,sidebar,"members,plans,check-in,classes",dense
+salon-booking,Salon Booking,"booking,beauty,consumer",soft-saas,booking,friendly,medium,top-nav,"services,staff,calendar,booking",dense
+car-rental,Car Rental,"booking,mobility,consumer",soft-saas,booking,saas,medium,top-nav,"search,vehicle,booking,contract",dense
+parking-kiosk,Parking Kiosk,"kiosk,payments,operational",kiosk-large,pos,operational,low,single-task,"plate,pay,receipt",small-targets
+self-order-kiosk,Self-order Kiosk,"kiosk,restaurant,self-order",kiosk-large,pos,operational,low,single-task,"menu,cart,pay,number","small-targets,dense"
+queue-management,Queue Management,"queue,kiosk,operational",kiosk-large,pos,operational,low,single-task,"ticket,display,counter",dense
+event-ticketing,Event Ticketing,"events,ticketing,consumer",marketplace-vivid,marketplace,brand,medium,top-nav,"events,seat-map,checkout,tickets",dense
+membership-loyalty,Loyalty Program,"loyalty,retail,consumer",mobile-native,retail,friendly,medium,bottom-tabs,"card,points,offers,history",dense
+school-erp,School ERP,"edtech,school,erp",enterprise-dense,edtech,readability,high,sidebar,"students,fees,timetable,exams,transport",playful-only
+telehealth,Telehealth,"health,video,consumer",clinical-calm,hms,readability,medium,bottom-tabs,"book,consult,prescriptions,records",dense
+pharmacy-chain,Pharmacy Chain Back Office,"pharmacy,retail,erp",enterprise-dense,hms,enterprise,high,sidebar,"products,batches,expiry,branches,reports",playful
+charity-donations,Donations Platform,"nonprofit,payments,consumer",soft-saas,saas,friendly,low,top-nav,"campaigns,donate,receipt,impact",dense
+govt-services,Government Services Portal,"gov,forms,consumer",government-plain,admin,civic,low,top-nav,"services,form,status,documents",decoration
+dev-tools-dashboard,Developer Dashboard,"dev tools,saas,dashboard",minimal-mono,admin,developer,medium,sidebar,"projects,logs,keys,billing",playful
+iot-monitoring,IoT Monitoring,"iot,analytics,operational",dashboard-analytic,admin,dense,high,sidebar,"devices,telemetry,alerts,map",consumer-styling
+cloud-kitchen-ops,Cloud Kitchen Ops,"kds,restaurant,delivery,operational",high-contrast-operational,kds,operational,high,station-tabs,"delivery-inbox,kds,brands,reports",light-only
+food-court-pos,Food Court POS,"pos,restaurant,kiosk",high-contrast-operational,pos,operational,high,action-bar,"order-entry,tender,qr-self-order,number-display",hover-only
+hotel-fnb-pos,Hotel F&B POS,"pos,restaurant,hotel,hospitality",hospitality-warm,hospitality,hospitality,high,action-bar,"table-map,order-entry,tender,room-charge,reports",playful
+cafe-pos,Cafe POS,"pos,cafe,restaurant",retail-bright,pos,operational,high,action-bar,"order-entry,tender,shift-close,reports",dense-tables-only
+bakery-pos,Bakery POS,"pos,bakery,retail",retail-bright,retail,retail,high,action-bar,"order-entry,tender,production-list",dark-only
+catering-manager,Catering Manager,"catering,events,restaurant",soft-saas,hospitality,hospitality,medium,sidebar,"events,menus,quotes,kitchen-plan",kiosk
+inventory-restaurant,Restaurant Inventory,"inventory,restaurant,admin",table-first,pos,operational,high,sidebar,"inventory,recipe-editor,purchasing,wastage",playful
+trading-admin,Brokerage Back Office,"trading,fintech,admin,compliance",table-first,trading,dense,high,sidebar,"accounts,orders,settlements,compliance,reports",playful
+crypto-exchange,Crypto Exchange,"trading,crypto,dark",fintech-dark,trading,dense,high,top-nav,"markets,trade,wallet,history",light-only
+insurance-portal,Insurance Portal,"insurance,forms,consumer",government-plain,fintech,civic,low,top-nav,"quote,policy,claim,documents",dense

@@ -15,6 +15,7 @@ Subcommands:
   domain-skeleton / arch-skeleton / schema-skeleton / api-skeleton   phases 4-6 (see foundry_phases.py)
   design-skeleton / screens-skeleton / design-check                  phases 7-8 (see foundry_design.py)
   threat-skeleton / tickets-skeleton / tickets next                  phases 9-10 (see foundry_security.py)
+  build activate|complete|index|status / dod --ticket / scaffold     phase 11 machinery (see foundry_build.py)
   metrics        append a phase record to .foundry/metrics.jsonl (implemented)
   query          query data/*.csv                         (P5)
 """
@@ -560,7 +561,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.6"
+PACK_TEMPLATE = """version: "1.7"
 complete: false
 threshold: 0.7
 slug: {slug}
@@ -1555,7 +1556,8 @@ def main(argv: list[str] | None = None) -> int:
     ps.add_argument("--out", type=Path, help="write to this path (default: stdout)")
     ps.add_argument("--dir", type=Path, default=Path.cwd())
     ps.add_argument("--root", type=Path, default=ROOT)
-    sub.add_parser("doctor", help="check python, node, npm, git, codebase-memory-mcp, docker")
+    dr = sub.add_parser("doctor", help="check python, node, npm, git, codebase-memory-mcp, docker")
+    dr.add_argument("--build", action="store_true", help="codebase-memory-mcp and its MCP registration become required")
     qy = sub.add_parser("query", help="query data/<csv>: query stacks --layer api [--n 20] [--json]")
     qy.add_argument("csv")
     qy.add_argument("--n", type=int, default=20)
@@ -1580,6 +1582,21 @@ def main(argv: list[str] | None = None) -> int:
     tk.add_argument("--done", default="", help="comma-separated ticket ids already done")
     tk.add_argument("--dir", type=Path, default=Path.cwd())
     tk.add_argument("--root", type=Path, default=ROOT)
+    bd = sub.add_parser("build", help="build activate|complete|index|status")
+    bd.add_argument("action", choices=("activate", "complete", "index", "status"))
+    bd.add_argument("--ticket")
+    bd.add_argument("--name", help="cbm project name (index)")
+    bd.add_argument("--dir", type=Path, default=Path.cwd())
+    dd = sub.add_parser("dod", help="run the ticket's definition-of-done steps")
+    dd.add_argument("--ticket", required=True)
+    dd.add_argument("--only", help="comma-separated step names")
+    dd.add_argument("--dir", type=Path, default=Path.cwd())
+    dd.add_argument("--root", type=Path, default=ROOT)
+    sc = sub.add_parser("scaffold", help="execute T-000: monorepo scaffold for the chosen stack")
+    sc.add_argument("--stack", default="nextjs-pwa")
+    sc.add_argument("--no-install", action="store_true")
+    sc.add_argument("--dir", type=Path, default=Path.cwd())
+    sc.add_argument("--root", type=Path, default=ROOT)
     dc2 = sub.add_parser("design-check", help="WCAG contrast on data/palettes.csv and token checks on design-system/tokens.json")
     dc2.add_argument("--palettes-only", action="store_true")
     dc2.add_argument("--dir", type=Path, default=Path.cwd())
@@ -1604,7 +1621,7 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(f"unrecognized arguments: {' '.join(extra)}")
     if a.cmd == "doctor":
         import foundry_phases as P
-        return P.run_doctor()
+        return P.run_doctor(require_cbm=a.build)
     if a.cmd == "validate":
         return run_validate(a.root.resolve(), a.quiet)
     if a.cmd == "scaffold-pack":
@@ -1641,6 +1658,13 @@ def main(argv: list[str] | None = None) -> int:
             return D.run_screens_skeleton(a.dir.resolve(), a.root.resolve())
         if a.cmd == "design-check":
             return D.run_design_check(a.root.resolve(), None if a.palettes_only else a.dir.resolve(), a.palettes_only)
+        import foundry_build as B
+        if a.cmd == "build":
+            return B.run_build(a, a.dir.resolve())
+        if a.cmd == "dod":
+            return B.run_dod(a.dir.resolve(), a.root.resolve(), a.ticket, [x.strip() for x in a.only.split(",")] if a.only else None)
+        if a.cmd == "scaffold":
+            return B.run_scaffold(a.dir.resolve(), a.root.resolve(), a.stack, install=not a.no_install)
         import foundry_security as X
         if a.cmd == "threat-skeleton":
             return X.run_threat_skeleton(a.dir.resolve(), a.root.resolve())
@@ -1656,4 +1680,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     sys.exit(main())

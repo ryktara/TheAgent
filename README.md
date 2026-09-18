@@ -35,7 +35,7 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 |------|-------------|--------|
 | P0 | Scaffold + house style, validate, scaffold-pack, tests, CI | done |
 | P1 | Pack schema 1.1 + generic pack + pack-match skill + deterministic matcher | done |
-| P2 | Bounded grilling + decision ledger + /foundry phases 0–3 | planned |
+| P2 | Bounded grilling + decision ledger + PRD + /foundry phases 0–3 | done |
 | P3 | restaurant-pos pack (full reference) | planned |
 | P4 | Domain model, architecture, data-model, api-contract skills | planned |
 | P5 | Design layer: data CSVs, design-system, screen-spec, `foundry.py query` | planned |

@@ -5,9 +5,12 @@ Subcommands:
   validate       lint skills, packs, schemas, index.csv  (implemented)
   scaffold-pack  create packs/<slug>/ from the pack schema (implemented)
   match          score a brief against packs/index.csv   (implemented)
+  sync-index     regenerate packs/index.csv from packs    (implemented)
+  grill-plan     compute the round 1 / round 2 question list (implemented)
+  decide         append or update .foundry/decisions.yaml  (implemented)
+  gate           run a phase gate: pack-match, grill, prd  (implemented for 0-3)
+  metrics        append a phase record to .foundry/metrics.jsonl (implemented)
   query          query data/*.csv                         (P5)
-  metrics        summarise .foundry/metrics.jsonl          (P7)
-  gate           run a phase gate                          (P7)
 """
 from __future__ import annotations
 
@@ -17,6 +20,9 @@ import json
 import math
 import re
 import sys
+import hashlib
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +40,7 @@ TRIGGER_WORDS = {
     "draft", "model", "design", "specify", "spec", "threat", "map", "split", "release",
     "hand", "handoff", "generate", "create", "validate", "audit", "plan", "run", "scaffold",
     "produce", "derive", "check", "convert", "extract", "compile", "verify", "record",
-    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score",
+    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask",
     # trigger nouns
     "brief", "pack", "prd", "domain", "architecture", "adr", "schema", "api", "openapi",
     "tokens", "screen", "screens", "ticket", "tickets", "wizard", "metrics", "gate",
@@ -385,6 +391,14 @@ def validate_pack(path: Path, schema: dict) -> list[FoundryError]:
         for hint_key in (q.get("brief_hints") or {}):
             if q.get("choices") and hint_key not in q["choices"]:
                 errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: brief_hints key '{hint_key}' not in choices"))
+    ids = {q.get("id") for q in data.get("questions") or [] if isinstance(q, dict)}
+    for q in data.get("questions") or []:
+        for fu in (q.get("followups") or []) if isinstance(q, dict) else []:
+            for target in fu.get("ask", []):
+                if target not in ids:
+                    errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: followup target '{target}' is not a question id"))
+                if target == q.get("id"):
+                    errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: followup targets itself"))
     return errs
 
 
@@ -445,6 +459,11 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
         checked += 1
         errs += validate_pack(p, pack_schema)
     errs += validate_index(packs_dir / "index.csv")
+    if not errs:
+        expected = build_index_text(packs_dir)
+        actual = (packs_dir / "index.csv").read_text(encoding="utf-8").replace("\r\n", "\n")
+        if expected != actual:
+            errs.append(FoundryError(packs_dir / "index.csv", 1, "index.csv differs from packs/*/pack.yaml; run: python scripts/foundry.py sync-index"))
     selection = Path.cwd() / ".foundry" / "pack.yaml"
     if selection.exists():
         checked += 1
@@ -457,7 +476,8 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.1"
+PACK_TEMPLATE = """version: "1.2"
+threshold: 0.7
 slug: {slug}
 name: {title}
 aliases: [{title_lower}]
@@ -511,7 +531,7 @@ def run_scaffold_pack(slug: str, root: Path = ROOT, force: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- match
-MATCHER_VERSION = "1.0"
+MATCHER_VERSION = "1.1"
 ALIAS_W, KEYWORD_W, STEM_W = 3.0, 1.0, 0.5
 SATURATION_HITS = 3          # distinct matched terms for full confidence
 NO_QUESTION_PATTERNS = (r"\bno questions?\b", r"\bdon'?t ask\b", r"\bdo not ask\b", r"\bwithout asking\b", r"\bno need to ask\b")
@@ -630,6 +650,18 @@ def _prefill(pack: dict, norm_text: str) -> list[dict]:
     return out
 
 
+def _must_have_overlap(pack_path: Path, tokens: list[str]) -> int:
+    """Count brief tokens (stemmed) that appear in a pack's must_have ids."""
+    try:
+        pack = parse_yaml(pack_path.read_text(encoding="utf-8"))
+    except (OSError, YamlError):
+        return 0
+    vocab: set[str] = set()
+    for item in pack.get("must_have") or []:
+        vocab.update(_stem(t) for t in _norm(item).split())
+    return len({_stem(t) for t in tokens if t not in STOPWORDS} & vocab)
+
+
 def match_brief(brief: str, root: Path = ROOT) -> dict:
     """Deterministic pack scorer. See docs/pipeline.md phase 1 for the confidence formula."""
     packs_dir = root / "packs"
@@ -663,6 +695,13 @@ def match_brief(brief: str, root: Path = ROOT) -> dict:
     if sum(1 for s in specific if len(s["matched_terms"]) >= 2) >= 2 and top["confidence"] < 0.5:
         flags.append("scope-sprawl")
     chosen = top["slug"] if top["confidence"] >= top["threshold"] else "generic"
+    chosen_by = "keywords" if chosen != "generic" else "fallback"
+    if "close-match" in flags:
+        a, b = scored[0], scored[1]
+        ov_a = _must_have_overlap(packs_dir / a["slug"] / "pack.yaml", tokens)
+        ov_b = _must_have_overlap(packs_dir / b["slug"] / "pack.yaml", tokens)
+        chosen = b["slug"] if ov_b > ov_a else a["slug"]
+        chosen_by = "must-have-overlap"
     prefilled: list[dict] = []
     pack_path = packs_dir / chosen / "pack.yaml"
     if pack_path.exists():
@@ -681,6 +720,9 @@ def match_brief(brief: str, root: Path = ROOT) -> dict:
     return {
         "matcher_version": MATCHER_VERSION,
         "chosen": chosen,
+        "chosen_by": chosen_by,
+        "threshold": next(s["threshold"] for s in scored if s["slug"] == chosen),
+        "confidence": next(s["confidence"] for s in scored if s["slug"] == chosen),
         "candidates": [{"slug": s["slug"], "confidence": s["confidence"], "threshold": s["threshold"],
                         "matched_terms": s["matched_terms"]} for s in scored[:3]],
         "unmatched_brief_terms": unmatched,
@@ -689,13 +731,38 @@ def match_brief(brief: str, root: Path = ROOT) -> dict:
     }
 
 
-def run_match(brief_arg: str, root: Path, as_json: bool) -> int:
+def selection_from_match(result: dict) -> dict:
+    """Shape a match result into schemas/pack-selection.schema.json."""
+    chosen = result["chosen"]
+    top = [c for c in result["candidates"] if c["slug"] == chosen]
+    return {
+        "chosen": chosen,
+        "confidence": result["confidence"],
+        "threshold": result["threshold"],
+        "chosen_by": result["chosen_by"],
+        "matched_terms": top[0]["matched_terms"] if top else [],
+        "alternates": [{"slug": c["slug"], "confidence": c["confidence"], "matched_terms": c["matched_terms"]}
+                       for c in result["candidates"] if c["slug"] != chosen],
+        "unmatched_aspects": result["unmatched_brief_terms"],
+        "prefilled": result["prefilled"],
+        "flags": result["flags"],
+        "matcher_version": result["matcher_version"],
+    }
+
+
+def run_match(brief_arg: str, root: Path, as_json: bool, write_dir: Path | None = None) -> int:
     text = sys.stdin.read() if brief_arg == "-" else Path(brief_arg).read_text(encoding="utf-8")
-    text = "\n".join(l for l in text.splitlines() if not l.startswith("# Brief:")).strip()
+    text = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#")).strip()
     if not text:
         print("match: brief is empty")
         return 1
     result = match_brief(text, root)
+    if write_dir is not None:
+        out = write_dir / ".foundry" / "pack.yaml"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(dump_yaml(selection_from_match(result)), encoding="utf-8", newline="\n")
+        if not as_json:
+            print(f"match: wrote {out}")
     if as_json:
         print(json.dumps(result, indent=2))
         return 0
@@ -706,6 +773,437 @@ def run_match(brief_arg: str, root: Path, as_json: bool) -> int:
         print(f"  prefilled {pf['question_id']} = {pf['value']}  (matched '{pf['matched']}')")
     if result["unmatched_brief_terms"]:
         print(f"  unmatched: {', '.join(result['unmatched_brief_terms'])}")
+    return 0
+
+
+# --------------------------------------------------------------------------- YAML emit (subset)
+def _yq(v: Any) -> str:
+    if v is None:
+        return "null"
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return repr(v)
+    if isinstance(v, list):
+        return "[" + ", ".join(_yq(x) for x in v) + "]"
+    if isinstance(v, dict):
+        return "{" + ", ".join(f"{k}: {_yq(x)}" for k, x in v.items()) + "}"
+    text = str(v).replace("\\", "/").replace('"', "'").replace("\n", " ")
+    return '"' + text + '"'
+
+
+def dump_yaml(data: dict) -> str:
+    """Emit the Foundry YAML subset: top-level keys; lists of dicts as block lists of flow maps."""
+    out = []
+    for k, v in data.items():
+        if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+            out.append(f"{k}:")
+            out.extend(f"  - {_yq(x)}" for x in v)
+        elif isinstance(v, list) and not v:
+            out.append(f"{k}: []")
+        elif isinstance(v, dict):
+            out.append(f"{k}:")
+            out.extend(f"  {kk}: {_yq(vv)}" for kk, vv in v.items())
+        else:
+            out.append(f"{k}: {_yq(v)}")
+    return "\n".join(out) + "\n"
+
+
+# --------------------------------------------------------------------------- sync-index
+def build_index_text(packs_dir: Path) -> str:
+    rows = []
+    for p in sorted(packs_dir.glob("*/pack.yaml")):
+        d = parse_yaml(p.read_text(encoding="utf-8"))
+        thr = d.get("threshold", 0.0 if d.get("slug") == "generic" else 0.7)
+        rows.append([d["slug"], d["name"], ";".join(d.get("aliases") or []), ";".join(d.get("confidence_keywords") or []), f"{float(thr):g}"])
+    import io as _io
+    buf = _io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(INDEX_HEADER)
+    w.writerows(rows)
+    return buf.getvalue()
+
+
+def run_sync_index(root: Path) -> int:
+    packs_dir = root / "packs"
+    text = build_index_text(packs_dir)
+    (packs_dir / "index.csv").write_text(text, encoding="utf-8", newline="\n")
+    print(f"sync-index: wrote {text.count(chr(10)) - 1} rows to packs/index.csv")
+    return 0
+
+
+# --------------------------------------------------------------------------- ledger helpers
+ROUND1_MAX, ROUND2_MAX = 7, 3
+DECIDED_SOURCES = {"human", "timeout-default", "pack-default", "agent-fact"}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def load_pack(root: Path, slug: str) -> dict:
+    return parse_yaml((root / "packs" / slug / "pack.yaml").read_text(encoding="utf-8"))
+
+
+def load_selection(project: Path) -> dict:
+    p = project / ".foundry" / "pack.yaml"
+    if not p.exists():
+        raise FileNotFoundError(f"{p} missing; run pack-match first")
+    return parse_yaml(p.read_text(encoding="utf-8"))
+
+
+def empty_ledger(slug: str, mode: str = "attended", flags: list[str] | None = None) -> dict:
+    return {"pack": slug, "mode": mode, "budget": {"round1_max": ROUND1_MAX, "round2_max": ROUND2_MAX, "round1_used": 0, "round2_used": 0},
+            "flags": flags or [], "decisions": []}
+
+
+def load_ledger(project: Path, slug: str | None = None) -> dict:
+    p = project / ".foundry" / "decisions.yaml"
+    if p.exists():
+        d = parse_yaml(p.read_text(encoding="utf-8"))
+        d.setdefault("flags", [])
+        d.setdefault("decisions", [])
+        return d
+    flags: list[str] = []
+    if (project / ".foundry" / "pack.yaml").exists():
+        sel = load_selection(project)
+        slug = slug or sel["chosen"]
+        flags = list(sel.get("flags") or [])
+    if slug is None:
+        raise FileNotFoundError(f"{project / '.foundry' / 'pack.yaml'} missing; run pack-match first")
+    mode = "unattended" if (os.environ.get("FOUNDRY_UNATTENDED") == "1" or "no-questions-requested" in flags) else "attended"
+    return empty_ledger(slug, mode, flags)
+
+
+def save_ledger(project: Path, ledger: dict) -> Path:
+    p = project / ".foundry" / "decisions.yaml"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    order = ["pack", "mode", "budget", "flags", "decisions"]
+    p.write_text(dump_yaml({k: ledger[k] for k in order if k in ledger}), encoding="utf-8", newline="\n")
+    return p
+
+
+def _ledger_index(ledger: dict) -> dict[str, dict]:
+    return {d["id"]: d for d in ledger.get("decisions", [])}
+
+
+def _is_decided(entry: dict | None, q: dict) -> bool:
+    if entry is None:
+        return False
+    if entry["source"] in DECIDED_SOURCES:
+        return True
+    return entry["source"] == "brief" and q.get("reversible", True)
+
+
+def _match_when(when: Any, value: Any) -> bool:
+    if when == "*":
+        return True
+    return str(when).lower() == str(value).lower()
+
+
+# --------------------------------------------------------------------------- grill-plan
+def grill_plan(pack: dict, ledger: dict, prefilled: list[dict], round_no: int) -> list[dict]:
+    """Pure: the exact questions to ask in the given round."""
+    questions = sorted(pack.get("questions") or [], key=lambda q: q["rank"])
+    by_id = {q["id"]: q for q in questions}
+    followup_only = {t for q in questions for fu in q.get("followups") or [] for t in fu["ask"]}
+    idx = _ledger_index(ledger)
+    pre = {p["question_id"]: p for p in prefilled}
+
+    def item(q: dict, why: str, default: Any = None, ask: str | None = None) -> dict:
+        return {"id": q["id"], "ask": ask or q["ask"], "answer_type": q["answer_type"], "choices": q.get("choices"),
+                "default": q["default"] if default is None else default, "reversible": q.get("reversible", True), "rank": q["rank"], "why": why}
+
+    plan: list[dict] = []
+    if round_no == 1:
+        for q in questions:
+            if q["id"] in pre and not q.get("reversible", True) and not _is_decided(idx.get(q["id"]), q):
+                v = pre[q["id"]]["value"]
+                plan.append(item(q, "confirm-prefill", v, f"Brief suggests {q['id']} = {_yq(v)} (matched '{pre[q['id']]['matched']}'). Confirm?"))
+        for q in questions:
+            if q["id"] in followup_only or q["id"] in pre or _is_decided(idx.get(q["id"]), q):
+                continue
+            if any(p["id"] == q["id"] for p in plan):
+                continue
+            plan.append(item(q, "pack-rank"))
+        return plan[:ROUND1_MAX]
+    if round_no == 2:
+        unlocked: list[str] = []
+        for q in questions:
+            entry = idx.get(q["id"])
+            value = entry["value"] if entry else (pre[q["id"]]["value"] if q["id"] in pre else None)
+            if value is None:
+                continue
+            for fu in q.get("followups") or []:
+                if _match_when(fu["when"], value):
+                    unlocked.extend(t for t in fu["ask"] if t not in unlocked)
+        for t in sorted(unlocked, key=lambda i: by_id[i]["rank"]):
+            q = by_id[t]
+            if not _is_decided(idx.get(t), q) and t not in pre:
+                plan.append(item(q, "followup"))
+        return plan[:ROUND2_MAX]
+    raise ValueError("round must be 1 or 2")
+
+
+def run_grill_plan(project: Path, root: Path, round_no: int, as_json: bool) -> int:
+    sel = load_selection(project)
+    pack = load_pack(root, sel["chosen"])
+    ledger = load_ledger(project, sel["chosen"])
+    plan = grill_plan(pack, ledger, sel.get("prefilled") or [], round_no)
+    if as_json:
+        print(json.dumps(plan, indent=2))
+        return 0
+    if not plan:
+        print(f"round {round_no}: no questions")
+        return 0
+    for n, q in enumerate(plan, 1):
+        choices = f"  choices: {', '.join(map(str, q['choices']))}" if q.get("choices") else ""
+        print(f"Q{n} [{q['why']}] {q['id']}: {q['ask']}{choices}  -> default {q['default']}")
+    return 0
+
+
+# --------------------------------------------------------------------------- decide
+def decide(ledger: dict, pack: dict, qid: str, value: Any, source: str, rationale: str | None = None, round_no: int | None = None) -> dict:
+    q = next((x for x in pack.get("questions") or [] if x["id"] == qid), None)
+    if q is None:
+        raise KeyError(f"unknown question id '{qid}' for pack {pack['slug']}")
+    value = _coerce(q, value)
+    if q["answer_type"] == "choice" and value not in (q.get("choices") or []) and q["id"] != "payment-provider-name":
+        raise ValueError(f"{qid}: '{value}' not in choices {q.get('choices')}")
+    entry = {"id": qid, "question": q["ask"], "value": value, "source": source, "reversible": q.get("reversible", True)}
+    if rationale:
+        entry["rationale"] = rationale
+    if round_no is not None:
+        entry["round"] = round_no
+    entry["asked_at"] = _now()
+    if q.get("maps_to"):
+        entry["maps_to"] = q["maps_to"]
+    decisions = ledger.setdefault("decisions", [])
+    for i, d in enumerate(decisions):
+        if d["id"] == qid:
+            decisions[i] = entry
+            break
+    else:
+        decisions.append(entry)
+    return entry
+
+
+def _coerce(q: dict, value: Any) -> Any:
+    at = q["answer_type"]
+    if at == "bool":
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in ("1", "true", "yes", "y")
+    if at == "number":
+        if isinstance(value, (int, float)):
+            return value
+        try:
+            return int(str(value))
+        except ValueError:
+            return float(value)
+    return str(value) if not isinstance(value, str) else value
+
+
+def _bump_budget(ledger: dict, round_no: int | None, n: int = 1) -> None:
+    if round_no in (1, 2):
+        key = f"round{round_no}_used"
+        cap = ROUND1_MAX if round_no == 1 else ROUND2_MAX
+        ledger["budget"][key] = min(cap, ledger["budget"].get(key, 0) + n)
+
+
+def run_decide(a, project: Path, root: Path) -> int:
+    sel = load_selection(project)
+    pack = load_pack(root, sel["chosen"])
+    ledger = load_ledger(project, sel["chosen"])
+    if a.unattended:
+        ledger["mode"] = "unattended"
+    prefilled = sel.get("prefilled") or []
+    n = 0
+    if a.apply_prefilled:
+        for pf in prefilled:
+            decide(ledger, pack, pf["question_id"], pf["value"], "brief", f"brief matched '{pf['matched']}'", 0)
+            n += 1
+    if a.auto_unattended:
+        ledger["mode"] = "unattended"
+        for rnd in (1, 2):
+            plan = grill_plan(pack, ledger, prefilled, rnd)
+            for q in plan:
+                why = "unattended: brief prefill accepted" if q["why"] == "confirm-prefill" else "unattended: pack default taken"
+                decide(ledger, pack, q["id"], q["default"], "timeout-default", why, rnd)
+                n += 1
+            _bump_budget(ledger, rnd, len(plan))
+    if a.apply_defaults:
+        idx = _ledger_index(ledger)
+        for q in pack.get("questions") or []:
+            if not _is_decided(idx.get(q["id"]), q):
+                pf = next((p for p in prefilled if p["question_id"] == q["id"]), None)
+                decide(ledger, pack, q["id"], pf["value"] if pf else q["default"], a.source or "pack-default",
+                       "brief prefill kept" if pf else "pack default", None)
+                n += 1
+    if a.id:
+        if a.value is None:
+            print("decide: --value is required with --id")
+            return 1
+        decide(ledger, pack, a.id, a.value, a.source or "human", a.rationale, a.round)
+        _bump_budget(ledger, a.round)
+        n += 1
+    path = save_ledger(project, ledger)
+    print(f"decide: {n} entr{'y' if n == 1 else 'ies'} written to {path}")
+    return 0
+
+
+# --------------------------------------------------------------------------- gates
+PHASE_ALIASES = {"0": "intake", "intake": "intake", "1": "pack-match", "pack-match": "pack-match",
+                 "2": "grill", "grill": "grill", "3": "prd", "prd": "prd"}
+
+
+def gate_intake(project: Path, root: Path) -> list[str]:
+    p = project / ".foundry" / "brief.md"
+    if not p.exists():
+        return [f"{p} missing"]
+    body = "\n".join(l for l in p.read_text(encoding="utf-8").splitlines() if not l.startswith("#")).strip()
+    return [] if body else [f"{p} is empty"]
+
+
+def gate_pack_match(project: Path, root: Path) -> list[str]:
+    p = project / ".foundry" / "pack.yaml"
+    if not p.exists():
+        return [f"{p} missing"]
+    errs = [e.msg for e in validate_selection(p, load_schema("pack-selection.schema.json", root / "schemas"))]
+    if not errs:
+        sel = parse_yaml(p.read_text(encoding="utf-8"))
+        if not (root / "packs" / sel["chosen"] / "pack.yaml").exists():
+            errs.append(f"chosen pack '{sel['chosen']}' does not exist")
+    return errs
+
+
+def gate_grill(project: Path, root: Path) -> list[str]:
+    errs = gate_pack_match(project, root)
+    if errs:
+        return errs
+    p = project / ".foundry" / "decisions.yaml"
+    if not p.exists():
+        return [f"{p} missing"]
+    ledger = parse_yaml(p.read_text(encoding="utf-8"))
+    errs = [f"decisions.yaml: {m}" for m in validate_schema(ledger, load_schema("decisions.schema.json", root / "schemas"))]
+    if errs:
+        return errs
+    sel = load_selection(project)
+    pack = load_pack(root, sel["chosen"])
+    if ledger["pack"] != sel["chosen"]:
+        errs.append(f"ledger pack '{ledger['pack']}' != selection '{sel['chosen']}'")
+    idx = _ledger_index(ledger)
+    for q in pack.get("questions") or []:
+        if q["id"] not in idx:
+            errs.append(f"no ledger entry for question '{q['id']}'")
+    for rnd in (1, 2):
+        plan = grill_plan(pack, ledger, sel.get("prefilled") or [], rnd)
+        if plan:
+            errs.append(f"round {rnd} still has {len(plan)} question(s): {', '.join(q['id'] for q in plan)}")
+    return errs
+
+
+def _prd_sections(text: str) -> dict[str, str]:
+    sections: dict[str, str] = {}
+    current = "_head"
+    for line in text.splitlines():
+        m = re.match(r"^##\s+(\d+)[\.\)]?\s*(.*)$", line)
+        if m:
+            current = m.group(1)
+            sections[current] = ""
+        else:
+            sections[current] = sections.get(current, "") + line + "\n"
+    return sections
+
+
+def gate_prd(project: Path, root: Path) -> list[str]:
+    errs = gate_grill(project, root)
+    if errs:
+        return errs
+    p = project / ".foundry" / "prd.md"
+    if not p.exists():
+        return [f"{p} missing"]
+    text = p.read_text(encoding="utf-8")
+    try:
+        fm_text, _, body = split_frontmatter(text)
+        fm = parse_yaml(fm_text)
+    except YamlError as e:
+        return [f"prd.md frontmatter: {e}"]
+    for key in ("pack", "version", "decisions_hash"):
+        if key not in fm:
+            errs.append(f"prd.md frontmatter missing '{key}'")
+    sel = load_selection(project)
+    pack = load_pack(root, sel["chosen"])
+    if fm.get("pack") != sel["chosen"]:
+        errs.append(f"prd.md pack '{fm.get('pack')}' != chosen '{sel['chosen']}'")
+    ledger = load_ledger(project, sel["chosen"])
+    if fm.get("decisions_hash") != decisions_hash(ledger):
+        errs.append("prd.md decisions_hash is stale; regenerate from the current ledger")
+    sec = _prd_sections(body)
+    scope_in, scope_out, assumptions, nfr = sec.get("4", ""), sec.get("5", ""), sec.get("10", ""), sec.get("6", "")
+    for fid in pack.get("must_have") or []:
+        if not re.search(rf"`{re.escape(fid)}`", scope_in):
+            errs.append(f"must_have `{fid}` not in Scope IN (section 4)")
+    for fid in pack.get("should_have") or []:
+        if not (re.search(rf"`{re.escape(fid)}`", scope_in) or re.search(rf"`{re.escape(fid)}`", scope_out)):
+            errs.append(f"should_have `{fid}` in neither Scope IN nor Scope OUT")
+    for d in ledger.get("decisions", []):
+        cited = f"[D:{d['id']}]" in body
+        assumed = f"`{d['id']}`" in assumptions or f"[D:{d['id']}]" in assumptions
+        if not (cited or assumed):
+            errs.append(f"decision '{d['id']}' neither cited as [D:{d['id']}] nor listed in Open assumptions")
+        if d["source"] in ("pack-default", "timeout-default") and not assumed:
+            errs.append(f"decision '{d['id']}' ({d['source']}) must be listed in Open assumptions (section 10)")
+    for word in ("offline", "latency", "devices", "languages"):
+        if word not in nfr.lower():
+            errs.append(f"NFR section (6) does not name '{word}'")
+    return errs
+
+
+def decisions_hash(ledger: dict) -> str:
+    canon = json.dumps([(d["id"], d["value"], d["source"]) for d in sorted(ledger.get("decisions", []), key=lambda d: d["id"])], sort_keys=True)
+    return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:12]
+
+
+GATES = {"intake": gate_intake, "pack-match": gate_pack_match, "grill": gate_grill, "prd": gate_prd}
+
+
+def run_gate(phase: str, project: Path, root: Path) -> int:
+    name = PHASE_ALIASES.get(phase)
+    if name is None:
+        print(f"gate {phase}: not implemented in P2 (phases 0-3 only)")
+        return 2
+    errs = GATES[name](project, root)
+    if errs:
+        for e in errs:
+            print(f"gate {name}: FAIL: {e}")
+        return 1
+    print(f"gate {name}: pass")
+    return 0
+
+
+# --------------------------------------------------------------------------- metrics
+def run_metrics(a, project: Path, root: Path) -> int:
+    p = project / ".foundry" / "metrics.jsonl"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    now = _now()
+    records = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()] if p.exists() else []
+    if a.start:
+        rec = {"ts": now, "phase": a.phase, "event": "phase-start", "started": now}
+    else:
+        started = next((r["ts"] for r in reversed(records) if r.get("phase") == a.phase and r.get("event") == "phase-start"), None)
+        wall = None
+        if started:
+            wall = int((datetime.fromisoformat(now) - datetime.fromisoformat(started)).total_seconds() * 1000)
+        rec = {"ts": now, "phase": a.phase, "event": "phase-end", "started": started, "ended": now, "wall_ms": wall,
+               "tool_calls_estimate": a.tool_calls, "tokens_in": None, "tokens_out": None, "note": a.note or ""}
+    errs = validate_schema(rec, load_schema("metrics.schema.json", root / "schemas"))
+    if errs:
+        print("metrics: " + "; ".join(errs))
+        return 1
+    with p.open("a", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(rec) + "\n")
+    print(f"metrics: {rec['event']} phase {a.phase}" + (f" wall_ms={rec['wall_ms']}" if rec.get("wall_ms") is not None else ""))
     return 0
 
 
@@ -723,9 +1221,41 @@ def main(argv: list[str] | None = None) -> int:
     m = sub.add_parser("match", help="score a brief against packs/index.csv")
     m.add_argument("--brief", required=True, help="path to brief, or - for stdin")
     m.add_argument("--json", action="store_true")
+    m.add_argument("--write", action="store_true", help="write .foundry/pack.yaml under --dir")
+    m.add_argument("--dir", type=Path, default=Path.cwd())
     m.add_argument("--root", type=Path, default=ROOT)
-    for name in ("query", "metrics", "gate"):
-        p = sub.add_parser(name, help="not implemented in P0")
+    si = sub.add_parser("sync-index", help="regenerate packs/index.csv from packs/*/pack.yaml")
+    si.add_argument("--root", type=Path, default=ROOT)
+    gp = sub.add_parser("grill-plan", help="compute the question list for a round")
+    gp.add_argument("--round", type=int, choices=(1, 2), required=True)
+    gp.add_argument("--json", action="store_true")
+    gp.add_argument("--dir", type=Path, default=Path.cwd(), help="project dir holding .foundry/")
+    gp.add_argument("--root", type=Path, default=ROOT)
+    dc = sub.add_parser("decide", help="write entries to .foundry/decisions.yaml")
+    dc.add_argument("--id")
+    dc.add_argument("--value")
+    dc.add_argument("--source", choices=("human", "brief", "pack-default", "timeout-default", "agent-fact"))
+    dc.add_argument("--rationale")
+    dc.add_argument("--round", type=int, choices=(0, 1, 2))
+    dc.add_argument("--apply-defaults", action="store_true")
+    dc.add_argument("--apply-prefilled", action="store_true")
+    dc.add_argument("--auto-unattended", action="store_true", help="answer rounds 1 and 2 with defaults, source timeout-default")
+    dc.add_argument("--unattended", action="store_true", help="mark the ledger mode unattended")
+    dc.add_argument("--dir", type=Path, default=Path.cwd())
+    dc.add_argument("--root", type=Path, default=ROOT)
+    gt = sub.add_parser("gate", help="run a phase gate (0|intake, 1|pack-match, 2|grill, 3|prd)")
+    gt.add_argument("phase")
+    gt.add_argument("--dir", type=Path, default=Path.cwd())
+    gt.add_argument("--root", type=Path, default=ROOT)
+    mt = sub.add_parser("metrics", help="append a phase record to .foundry/metrics.jsonl")
+    mt.add_argument("--phase", type=int, required=True)
+    mt.add_argument("--start", action="store_true")
+    mt.add_argument("--note")
+    mt.add_argument("--tool-calls", type=int, default=None)
+    mt.add_argument("--dir", type=Path, default=Path.cwd())
+    mt.add_argument("--root", type=Path, default=ROOT)
+    for name in ("query",):
+        p = sub.add_parser(name, help="not implemented yet")
         p.add_argument("args", nargs="*")
     a = ap.parse_args(argv)
     if a.cmd == "validate":
@@ -733,8 +1263,22 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "scaffold-pack":
         return run_scaffold_pack(a.slug, a.root.resolve(), a.force)
     if a.cmd == "match":
-        return run_match(a.brief, a.root.resolve(), a.json)
-    print(f"foundry {a.cmd}: not implemented in P0")
+        return run_match(a.brief, a.root.resolve(), a.json, a.dir.resolve() if a.write else None)
+    if a.cmd == "sync-index":
+        return run_sync_index(a.root.resolve())
+    try:
+        if a.cmd == "grill-plan":
+            return run_grill_plan(a.dir.resolve(), a.root.resolve(), a.round, a.json)
+        if a.cmd == "decide":
+            return run_decide(a, a.dir.resolve(), a.root.resolve())
+        if a.cmd == "gate":
+            return run_gate(a.phase, a.dir.resolve(), a.root.resolve())
+        if a.cmd == "metrics":
+            return run_metrics(a, a.dir.resolve(), a.root.resolve())
+    except (FileNotFoundError, KeyError, ValueError, YamlError) as e:
+        print(f"foundry {a.cmd}: {e}")
+        return 1
+    print(f"foundry {a.cmd}: not implemented yet (P5)")
     return 2
 
 

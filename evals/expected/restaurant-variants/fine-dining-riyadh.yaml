@@ -1,0 +1,6 @@
+brief: restaurant-variants/fine-dining-riyadh
+expected_pack: restaurant-pos
+min_confidence: 0.8
+max_questions: 7
+required_artifacts:
+  - .foundry/pack.yaml

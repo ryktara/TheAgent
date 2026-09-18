@@ -1,4 +1,5 @@
-version: "1.2"
+version: "1.3"
+complete: true
 threshold: 0.0
 slug: generic
 name: Generic Business App
@@ -6,12 +7,12 @@ aliases: [business app, internal tool, admin panel, back office, crud app, manag
 confidence_keywords: [app, application, software, system, platform, portal, dashboard, tool, records, admin, database, manage, management, workflow, forms, reports, users, roles, login, web app, mobile app, saas]
 personas: [owner, admin, staff, customer]
 jobs:
-  - {id: sign-in, must: true, screens: [auth]}
-  - {id: manage-records, must: true, screens: [list, detail, edit]}
-  - {id: see-overview, must: true, screens: [dashboard]}
-  - {id: run-reports, must: true, screens: [reports]}
-  - {id: administer, must: true, screens: [settings, users-roles]}
-  - {id: audit-activity, must: false, screens: [audit-log]}
+  - {id: sign-in, persona: staff, must: true, screens: [auth]}
+  - {id: manage-records, persona: staff, must: true, screens: [list, detail, edit]}
+  - {id: see-overview, persona: admin, must: true, screens: [dashboard]}
+  - {id: run-reports, persona: admin, must: true, screens: [reports]}
+  - {id: administer, persona: owner, must: true, screens: [settings, users-roles]}
+  - {id: audit-activity, persona: owner, must: false, screens: [audit-log]}
 must_have: [auth, roles, records-crud, search-filter, dashboard, reports, settings, audit-log, data-export, notifications]
 should_have: [multi-tenant, file-attachments, bulk-import, api-keys, mobile-companion, i18n]
 entities:
@@ -23,6 +24,8 @@ entities:
   Notification: {states: [pending, sent, read]}
 invariants:
   - "Every Record belongs to exactly one Tenant"
+  - "Every Notification targets one User and one Tenant"
+  - "A Role belongs to one Tenant"
   - "Every User has at least one Role within a Tenant"
   - "Every state transition on Record writes one AuditEvent"
   - "Archived Records are read-only"
@@ -33,7 +36,8 @@ regional:
   SA: {tax: "VAT 15%", privacy_law: "KSA PDPL", languages: [ar, en]}
   PK: {tax: "GST varies by province", privacy_law: "PDPB (draft)", languages: [en, ur]}
   EU: {tax: "VAT by member state", privacy_law: "GDPR", languages: [en]}
-compliance_must: [password policy per NIST 800-63B, audit log on every write, data export and deletion on request, TLS everywhere, secrets outside source]
+compliance_must: [AUT-01, AUT-05, AUD-01, PRV-04, PRV-05, SEC-01, SEC-02]
+compliance_should: [AUT-08, AZ-02, SEC-03, SEC-06]
 nfr_defaults: {offline: optional, p95_list_ms: 300, p95_save_ms: 500, uptime: "99.5%", backups: daily, rls: required-when-multi-tenant}
 stack_default: {web: nextjs, api: hono, db: postgres, orm: drizzle, auth: better-auth, mobile: expo, hosting: vercel}
 ui_profile: {style: clean-operational, density: medium, touch: 44dp, nav: sidebar, fonts: [Inter], dark: optional, rtl: when-ar}

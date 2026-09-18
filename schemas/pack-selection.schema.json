@@ -104,7 +104,8 @@
           "no-questions-requested",
           "close-match",
           "below-threshold",
-          "scope-sprawl"
+          "scope-sprawl",
+          "rematched"
         ]
       }
     },

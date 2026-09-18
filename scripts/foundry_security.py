@@ -459,6 +459,9 @@ def run_tickets_skeleton(project: Path, root: Path) -> int:
     tickets = tickets_skeleton(project, root)
     out = project / ".foundry" / "tickets"
     out.mkdir(parents=True, exist_ok=True)
+    # Re-runs re-number job tickets when priorities change; purge stale generated files (status.yaml files are kept).
+    for stale in out.glob("T-*.md"):
+        stale.unlink()
     for old in out.glob("T-*.md"):
         old.unlink()
     for t in tickets:

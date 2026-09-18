@@ -1,11 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://foundry.dev/schemas/pack.schema.json",
-  "title": "Foundry domain pack (pack.yaml)",
+  "title": "Foundry domain pack (pack.yaml) v1.1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["slug", "name", "aliases", "confidence_keywords", "personas", "jobs", "must_have", "should_have", "entities", "invariants", "integrations", "regional", "compliance_must", "nfr_defaults", "stack_default", "ui_profile", "questions", "reference"],
+  "required": ["version", "slug", "name", "aliases", "confidence_keywords", "personas", "jobs", "must_have", "should_have", "entities", "invariants", "integrations", "regional", "compliance_must", "nfr_defaults", "stack_default", "ui_profile", "questions", "reference"],
   "properties": {
+    "version": { "type": "string", "const": "1.1" },
     "slug": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
     "name": { "type": "string", "minLength": 1 },
     "aliases": { "type": "array", "items": { "type": "string" } },
@@ -43,16 +44,22 @@
     "ui_profile": { "type": "object" },
     "questions": {
       "type": "array",
-      "maxItems": 7,
+      "maxItems": 12,
       "items": {
         "type": "object",
-        "required": ["id", "ask", "default"],
+        "required": ["id", "rank", "ask", "answer_type", "default"],
         "additionalProperties": false,
         "properties": {
           "id": { "type": "string" },
+          "rank": { "type": "integer", "minimum": 1, "maximum": 12 },
           "ask": { "type": "string" },
+          "answer_type": { "type": "string", "enum": ["choice", "text", "number", "bool"] },
+          "choices": { "type": "array", "minItems": 2, "items": { "type": "string" } },
           "default": {},
-          "reversible": { "type": "boolean" }
+          "reversible": { "type": "boolean" },
+          "skip_if_brief_mentions": { "type": "array", "items": { "type": "string" } },
+          "brief_hints": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
+          "maps_to": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$" }
         }
       }
     },

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foundry.dev/schemas/pack-selection.schema.json",
+  "title": "Foundry pack selection (.foundry/pack.yaml)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["chosen", "confidence", "alternates", "unmatched_aspects", "prefilled", "flags", "matcher_version"],
+  "properties": {
+    "chosen": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+    "alternates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slug", "confidence"],
+        "additionalProperties": false,
+        "properties": {
+          "slug": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "matched_terms": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "matched_terms": { "type": "array", "items": { "type": "string" } },
+    "unmatched_aspects": { "type": "array", "items": { "type": "string" } },
+    "prefilled": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question_id", "value", "source", "matched"],
+        "additionalProperties": false,
+        "properties": {
+          "question_id": { "type": "string" },
+          "value": {},
+          "source": { "type": "string", "const": "brief" },
+          "matched": { "type": "string" },
+          "maps_to": { "type": "string" }
+        }
+      }
+    },
+    "flags": { "type": "array", "items": { "type": "string", "enum": ["no-questions-requested", "close-match", "below-threshold", "scope-sprawl"] } },
+    "matcher_version": { "type": "string" },
+    "chosen_by": { "type": "string", "enum": ["matcher", "must-have-overlap", "fallback"] }
+  }
+}

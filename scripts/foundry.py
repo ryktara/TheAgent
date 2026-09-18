@@ -13,6 +13,7 @@ Subcommands:
   doctor         check toolchain (python, node, npm, git, codebase-memory-mcp, docker)
   query          query data/<csv> with --col value filters
   domain-skeleton / arch-skeleton / schema-skeleton / api-skeleton   phases 4-6 (see foundry_phases.py)
+  design-skeleton / screens-skeleton / design-check                  phases 7-8 (see foundry_design.py)
   metrics        append a phase record to .foundry/metrics.jsonl (implemented)
   query          query data/*.csv                         (P5)
 """
@@ -440,6 +441,12 @@ def lint_complete_pack(path: Path, data: dict) -> list[FoundryError]:
             if sc.lower() not in headings:
                 errs.append(FoundryError(path, 1, f"complete pack: job '{job.get('id')}' screen '{sc}' has no '## {sc}' heading in screens.md"))
     entities = set((data.get("entities") or {}).keys())
+    for job in data.get("jobs") or []:
+        ent = job.get("entity")
+        if not ent:
+            errs.append(FoundryError(path, 1, f"complete pack: job '{job.get('id')}' has no entity (use none when no entity applies)"))
+        elif ent != "none" and ent not in entities:
+            errs.append(FoundryError(path, 1, f"complete pack: job '{job.get('id')}' entity '{ent}' is not an entity"))
     inv_text = " ".join(data.get("invariants") or [])
     for tok in set(ENTITY_TOKEN.findall(inv_text)):
         if tok not in entities and not (tok.endswith("s") and tok[:-1] in entities):
@@ -552,7 +559,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.4"
+PACK_TEMPLATE = """version: "1.5"
 complete: false
 threshold: 0.7
 slug: {slug}
@@ -1186,7 +1193,8 @@ def run_decide(a, project: Path, root: Path) -> int:
 # --------------------------------------------------------------------------- gates
 PHASE_ALIASES = {"0": "intake", "intake": "intake", "1": "pack-match", "pack-match": "pack-match",
                  "2": "grill", "grill": "grill", "3": "prd", "prd": "prd", "4": "domain", "domain": "domain",
-                 "5": "architecture", "architecture": "architecture", "6": "data", "data": "data", "api": "api"}
+                 "5": "architecture", "architecture": "architecture", "6": "data", "data": "data", "api": "api",
+                 "7": "design", "design": "design", "8": "screens", "screens": "screens"}
 
 
 def gate_intake(project: Path, root: Path) -> list[str]:
@@ -1311,10 +1319,13 @@ GATES = {"intake": gate_intake, "pack-match": gate_pack_match, "grill": gate_gri
 def run_gate(phase: str, project: Path, root: Path) -> int:
     name = PHASE_ALIASES.get(phase)
     if name is None:
-        print(f"gate {phase}: not implemented yet (phases 0-6 only)")
+        print(f"gate {phase}: not implemented yet (phases 0-8 only)")
         return 2
     if name in GATES:
         errs = GATES[name](project, root)
+    elif name in ("design", "screens"):
+        import foundry_design as D
+        errs = D.GATES[name](project, root)
     else:
         import foundry_phases as P
         errs = P.GATES[name](project, root)
@@ -1550,6 +1561,14 @@ def main(argv: list[str] | None = None) -> int:
         sk = sub.add_parser(name, help=helptext)
         sk.add_argument("--dir", type=Path, default=Path.cwd())
         sk.add_argument("--root", type=Path, default=ROOT)
+    for name, helptext in (("design-skeleton", "emit design-system/MASTER.md, tokens.json, tailwind.tokens.css"), ("screens-skeleton", "emit .foundry/screens/<id>.md per in-scope screen")):
+        sk = sub.add_parser(name, help=helptext)
+        sk.add_argument("--dir", type=Path, default=Path.cwd())
+        sk.add_argument("--root", type=Path, default=ROOT)
+    dc2 = sub.add_parser("design-check", help="WCAG contrast on data/palettes.csv and token checks on design-system/tokens.json")
+    dc2.add_argument("--palettes-only", action="store_true")
+    dc2.add_argument("--dir", type=Path, default=Path.cwd())
+    dc2.add_argument("--root", type=Path, default=ROOT)
     ss = sub.add_parser("schema-skeleton", help="emit prisma/schema.prisma (or db/schema.ts)")
     ss.add_argument("--orm", choices=("prisma", "drizzle"), default="prisma")
     ss.add_argument("--dir", type=Path, default=Path.cwd())
@@ -1600,6 +1619,13 @@ def main(argv: list[str] | None = None) -> int:
             return P.run_schema_skeleton(a.dir.resolve(), a.root.resolve(), a.orm)
         if a.cmd == "api-skeleton":
             return P.run_api_skeleton(a.dir.resolve(), a.root.resolve())
+        import foundry_design as D
+        if a.cmd == "design-skeleton":
+            return D.run_design_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "screens-skeleton":
+            return D.run_screens_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "design-check":
+            return D.run_design_check(a.root.resolve(), None if a.palettes_only else a.dir.resolve(), a.palettes_only)
     except (FileNotFoundError, KeyError, ValueError, YamlError) as e:
         print(f"foundry {a.cmd}: {e}")
         return 1

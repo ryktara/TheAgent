@@ -212,7 +212,7 @@ def domain_skeleton(pack: dict, ledger: dict, project: Path) -> tuple[dict, str]
         if not invs:
             invs = [f"{name} has exactly one state at a time"]
         ctx = _context_for(name)
-        entities.append({"name": name, "fields": fields, "states": states, "transitions": transitions, "invariants": invs, "owned_by": ctx})
+        entities.append({"name": name, "fields": fields, "states": states, "transitions": transitions, "invariants": invs, "owned_by": ctx, "exposure": spec.get("exposure", "public")})
         for t in transitions:
             ev = f"{name}{_camel_state(t['to'])}"
             consumers = ["reporting"]
@@ -277,6 +277,7 @@ def _dump_domain(domain: dict) -> str:
     for e in domain["entities"]:
         out.append(f"  - name: {F._yq(e['name'])}")
         out.append(f"    owned_by: {F._yq(e['owned_by'])}")
+        out.append(f"    exposure: {F._yq(e.get('exposure', 'public'))}")
         out.append(f"    fields: {F._yq(e['fields'])}")
         out.append(f"    states: {F._yq(e['states'])}")
         out.append(f"    invariants: {F._yq(e['invariants'])}")
@@ -732,21 +733,10 @@ def _job_op(job: dict, entity_for_job: str | None) -> tuple[str, str]:
     return f"/jobs/{jid}", f"job_{jid.replace('-', '_')}"
 
 
-def _entity_for_job(jid: str, entity_names: list[str]) -> str | None:
-    toks = set(jid.split("-"))
-    hints = {"order": "Order", "orders": "Order", "kds": "KitchenTicket", "bump": "KitchenTicket", "kitchen": "KitchenTicket", "payment": "Payment", "refund": "Refund",
-             "receipt": "Receipt", "shift": "Shift", "menu": "MenuItem", "table": "Table", "tables": "Table", "floor": "Table", "reservations": "Reservation",
-             "inventory": "InventoryItem", "purchasing": "InventoryItem", "delivery": "Order", "reports": "Order", "staff": "Staff", "branch": "Branch",
-             "loyalty": "Customer", "offline": "SyncEvent", "sync": "SyncEvent", "discount": "Discount", "tips": "Payment", "split": "Order", "merge": "Table",
-             "hold": "OrderLine", "void": "OrderLine", "comp": "OrderLine", "modify": "OrderLine", "send": "Order", "take": "Order", "end": "Shift", "day": "Shift",
-             "print": "Receipt", "record": "Record", "records": "Record", "sign": "User", "administer": "Role", "audit": "AuditEvent", "overview": "Record", "run": "Record",
-             "onboard": "Account", "fund": "Transaction", "trade": "Order", "monitor": "Position", "comply": "Account", "sell": "Sale", "stock": "Variant", "return": "Return", "close": "Shift"}
-    for t in jid.split("-"):
-        if t in hints and hints[t] in entity_names:
-            return hints[t]
-    for e in entity_names:
-        if set(F._norm(_kebab(e)).split()) & toks:
-            return e
+def _entity_for_job(job: dict, entity_names: list[str]) -> str | None:
+    ent = job.get("entity")
+    if ent and ent != "none" and ent in entity_names:
+        return ent
     return None
 
 
@@ -768,6 +758,7 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
 
     minor = _minor_units(ledger, pack)
     for e in domain["entities"]:
+        exposure = e.get("exposure", "public")
         props: dict[str, Any] = {"id": {"type": "string", "format": "uuid"}}
         for f in e["fields"]:
             t, _ = _prisma_type(f, set(names), minor)
@@ -783,6 +774,15 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
         offline = e["owned_by"] in ("ordering", "kitchen", "menu")
         actor = next((t["by"] for t in e["transitions"]), personas[0])
         xf = lambda job, authz, idem, audit: {"job": job, "personas": [actor, admin] if actor != admin else [admin], "authz": authz, "idempotent": idem, "offline_capable": offline, "audit": audit}
+        if exposure == "derived":
+            continue
+        if exposure == "internal":
+            abase = f"/admin{base}"
+            paths[abase] = {"get": {"operationId": f"{sn}_list", "summary": f"List {e['name']} (internal)", "parameters": [{"name": "cursor", "in": "query", "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 25, "maximum": 200}}],
+                                    "responses": responses("200", f"{e['name']}Page"), "x-foundry": xf("read", f"role == {admin}", True, False)}}
+            paths[f"{abase}/{{id}}"] = {"get": {"operationId": f"{sn}_get", "summary": f"Get {e['name']} (internal)", "parameters": [{"name": "id", "in": "path", "required": True, "schema": {"type": "string", "format": "uuid"}}],
+                                                "responses": responses("200", e["name"], etag=True), "x-foundry": xf("read", f"role == {admin}", True, False)}}
+            continue
         paths[base] = {
             "get": {"operationId": f"{sn}_list", "summary": f"List {e['name']}", "parameters": [{"name": "cursor", "in": "query", "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 25, "maximum": 200}}, {"name": "branch_id", "in": "query", "schema": {"type": "string", "format": "uuid"}}],
                     "responses": responses("200", f"{e['name']}Page"), "x-foundry": xf("read", f"role in [{actor}, {admin}] and branch scope", True, False)},
@@ -801,7 +801,7 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
         }
     job_ops = 0
     for j in pack.get("jobs") or []:
-        ent = _entity_for_job(j["id"], names)
+        ent = _entity_for_job(j, names)
         path, opid = _job_op(j, ent)
         params = [{"name": "id", "in": "path", "required": True, "schema": {"type": "string", "format": "uuid"}}] if "{id}" in path else []
         params.append({"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}})
@@ -915,9 +915,14 @@ def gate_api(project: Path, root: Path) -> list[str]:
         if n > 1:
             errs.append(f"operationId '{oid}' used {n} times")
     for e in domain["entities"]:
+        exposure = e.get("exposure", "public")
+        if exposure == "derived":
+            continue
         base = f"/{_plural(_kebab(e['name']))}"
+        if exposure == "internal":
+            base = "/admin" + base
         if not any(str(p).startswith(base) for p in paths):
-            errs.append(f"entity {e['name']} has no path under {base}")
+            errs.append(f"entity {e['name']} ({exposure}) has no path under {base}")
     for j in pack.get("jobs") or []:
         if j["id"] not in jobs_seen:
             errs.append(f"job {j['id']} has no operation (x-foundry.job)")

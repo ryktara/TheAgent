@@ -2,6 +2,22 @@
 
 One entry per build step. Newest first.
 
+## P6 — Security, compliance, tickets (2026-09-18)
+
+- fix: palettes.csv carries a full dark role set and design-check validates dark pairs;
+  tokens.json dark theme complete; MASTER.md palette table has a Use column; gate design
+  rejects non-text-only roles used as text.
+- schema 1.6: `ui_profile.palette / typography / style / themes`; restaurant-pos pinned to
+  ember-kitchen (cashier) and kds-dark (kitchen).
+- data: security-controls.csv (ASVS 5.0, OWASP API Top 10, PCI-DSS 4.0, OWASP Agentic Top 10 on
+  the build process), threat-patterns.csv (STRIDE per boundary type), copy.csv (en/ar/ur, all
+  rows reviewed=false); screens-skeleton fills Arabic and Urdu from copy.csv.
+- scripts/foundry_security.py: `threat-skeleton`, `tickets-skeleton`, `tickets next`; gates
+  security and tickets.
+- Skills: threat-model, compliance, to-tickets; /foundry and /foundry-resume cover 0–10 and end
+  with "Run /foundry-build to implement".
+- Evals: stages security and tickets; fixture through phase 10.
+
 ## P5 — Design layer and screens (2026-09-18)
 
 - fix: schema 1.5 `entities[].exposure` (public|internal|derived) prunes the API to 87 operations

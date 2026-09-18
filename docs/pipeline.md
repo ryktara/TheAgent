@@ -14,15 +14,15 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | 6 | Data + API | data-model (`schema-skeleton`), api-contract (`api-skeleton`) | domain, architecture | prisma/schema.prisma, openapi.yaml, .foundry/events.yaml | `gate 6`: model per entity and enum per state list (`npx prisma validate` when available); OpenAPI 3.1 with unique operationIds, x-foundry.authz and 2xx/4xx on every operation, a path per entity, an operation per job; events.yaml validates |
 | 7 | Design system | design-system (`design-skeleton`) | pack ui_profile, product-types.csv, palettes/typography/styles/components/ux-rules.csv, brand answers | design-system/MASTER.md, tokens.json, tailwind.tokens.css, pages/README.md | `gate 7`: files exist; `design-check` passes (palette contrast, token scales); MASTER.md has Intent, Palette, Typography, Scales, Components, Do and avoid, RTL, Print; every component in components.csv |
 | 8 | Screens | screen-spec (`screens-skeleton`) | PRD §3, pack screens.md sections, openapi.yaml, components.csv, ux-rules.csv | .foundry/screens/<id>.md | `gate 8`: every PRD job has a screen; six states with copy; components, operationIds and rule ids exist; ≥3 a11y rules and ≥1 RTL rule (RTL regions); unique routes |
-| 9 | Security | threat-model, compliance | architecture, api, pack compliance | .foundry/threats.md, .foundry/compliance.yaml | every endpoint mapped to a control |
-| 10 | Tickets | to-tickets | all | .foundry/tickets/*.md | DAG acyclic; every feature covered |
+| 9 | Security | threat-model, compliance (`threat-skeleton`) | architecture.md boundaries, openapi.yaml, decisions, threat-patterns.csv, security-controls.csv | .foundry/threats.md, compliance.yaml, compliance-evidence-plan.md | `gate 9`: ≥4 STRIDE rows per boundary; authz row per operation; money operations carry access, business-logic and error-log controls and never 'any authenticated'; PRD §8 controls in compliance.yaml; pci_scope set; no high threat without a control |
+| 10 | Tickets | to-tickets (`tickets-skeleton`) | all phase 0–9 artifacts, stacks.csv | .foundry/tickets/T-*.md, compliance.yaml owners | `gate 10`: DAG acyclic; every must-have job, public job operation and screen covered; every planned control owned; ≥3 acceptance tests per ticket; T-000 unblocked; ≤60 tickets |
 | 11 | Implement | /foundry-build → implement-ticket | ticket, code graph | code, tests, .foundry/metrics.jsonl | typecheck+tests+lint+semgrep+axe green; screenshot captured |
 | 12 | Review | code-review, ui-review, security-review | diff, spec | .foundry/reviews/*.md | zero blocking findings |
 | 13 | Human-only | wizard | architecture | .foundry/wizard/*.ps1 and *.sh | human confirms |
 | 14 | Release | release | all | CHANGELOG.md, deploy config, runbook | smoke test on deployed URL |
 | 15 | Handoff | handoff | .foundry/ | .foundry/handoff.md | fresh session resumes from file alone |
 
-Gates 0–8 are enforced by `scripts/foundry.py gate <phase>` (number or name). `doctor` runs before phase 4; `design-check` runs inside gate 7. Later gates arrive with
+Gates 0–10 are enforced by `scripts/foundry.py gate <phase>` (number or name). `doctor` runs before phase 4; `design-check` runs inside gate 7; `tickets next` feeds phase 11. Later gates arrive with
 their phases; until then each skill states its gate in frontmatter.
 
 ## Phase 2 mechanics

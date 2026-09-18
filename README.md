@@ -39,7 +39,7 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | P3 | restaurant-pos pack (full reference), prd-skeleton, rematch, pack lint | done |
 | P4 | Domain model, architecture + 9 ADRs, data model, API contract, doctor, query | done |
 | P5 | Design layer: 7 data CSVs, design-check, design-system, screen specs | done |
-| P6 | Security controls, threat-model, compliance, to-tickets | planned |
+| P6 | Security controls, threat model, compliance, tickets; /foundry ends at phase 10 | done |
 | P7 | Implementation loop: /foundry-build, implement-ticket, review subagents, hooks | planned |
 | P8 | Wizard, release, handoff, /foundry-resume | planned |
 | P9 | Evals runner, metrics report, dogfood run | planned |

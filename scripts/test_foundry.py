@@ -28,7 +28,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.6"
+PACK_EXAMPLE = """version: "1.7"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
@@ -735,6 +735,76 @@ class P6Tests(unittest.TestCase):
         p.write_text(s[:j] + 'authz: "any authenticated"' + s[k:], encoding="utf-8")
         errs = self.X.gate_security(self.tmp, REPO)
         self.assertTrue(any("any authenticated" in e for e in errs), errs)
+
+
+class P7Tests(unittest.TestCase):
+    def setUp(self):
+        import foundry_build as B
+        self.B = B
+        self.tmp = Path(tempfile.mkdtemp())
+        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        shutil.copytree(fx / ".foundry", self.tmp / ".foundry")
+        for name in ("CONTEXT.md", "openapi.yaml"):
+            shutil.copy(fx / name, self.tmp / name)
+        for d in ("prisma", "migrations", "design-system"):
+            shutil.copytree(fx / d, self.tmp / d)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_priority_order_first_feature_ticket(self):
+        import foundry_security as X
+        tickets = X.load_tickets(self.tmp)
+        t6 = next(t for t in tickets if t["id"] == "T-006")
+        self.assertEqual(t6["jobs"], ["take-order-table"])
+        t7 = next(t for t in tickets if t["id"] == "T-007")
+        self.assertIn(t7["jobs"][0], ("take-order-counter", "take-order-qr"))
+
+    def test_build_activate_complete(self):
+        code, out = run(foundry.main, ["build", "activate", "--ticket", "T-000", "--dir", str(self.tmp)])
+        self.assertEqual(code, 0)
+        self.assertIn("T-000", out)
+        self.assertLessEqual(len(out.splitlines()), 80)
+        self.assertEqual(self.B.load_build(self.tmp)["active_ticket"], "T-000")
+        code, out = run(foundry.main, ["build", "complete", "--dir", str(self.tmp)])
+        self.assertEqual(code, 0)
+        st = self.B.load_build(self.tmp)
+        self.assertEqual(st["done"], ["T-000"])
+        self.assertIsNone(st["active_ticket"])
+        code, out = run(foundry.main, ["build", "activate", "--ticket", "T-999", "--dir", str(self.tmp)])
+        self.assertEqual(code, 1)
+
+    def test_dod_runner_with_stub_scripts(self):
+        pkg = {"name": "x", "scripts": {"typecheck": "node -e \"process.exit(0)\"", "lint": "node -e \"console.log('lint ok')\"", "test:unit": "node -e \"process.exit(2)\""}}
+        (self.tmp / "package.json").write_text(json.dumps(pkg), encoding="utf-8")
+        (self.tmp / ".foundry" / "reviews").mkdir(exist_ok=True)
+        (self.tmp / ".foundry" / "reviews" / "T-000.changes.json").write_text(json.dumps({"risk": "low"}), encoding="utf-8")
+        code, out = run(self.B.run_dod, self.tmp, REPO, "T-000")
+        self.assertEqual(code, 1, out)
+        self.assertIn("unit", out)
+        st = foundry.parse_yaml((self.tmp / ".foundry" / "tickets" / "T-000.status.yaml").read_text(encoding="utf-8"))
+        self.assertFalse(st["last"]["passed"])
+        self.assertEqual(st["last"]["failed_steps"], ["unit"])
+        names = {s["name"]: s for s in st["attempts"][-1]["steps"]}
+        self.assertTrue(names["e2e-smoke"]["skipped"])
+        self.assertEqual(names["detect_changes_risk"]["exit"], 0)
+        self.assertTrue(names["spec-review"]["skipped"])
+        code, out = run(self.B.run_dod, self.tmp, REPO, "T-000", ["typecheck", "lint"])
+        self.assertEqual(code, 0, out)
+        lines = (self.tmp / ".foundry" / "metrics.jsonl").read_text(encoding="utf-8").splitlines()
+        self.assertTrue(any('"dod:typecheck"' in l for l in lines))
+
+    def test_scaffold_writes_files_without_install(self):
+        code, out = run(self.B.run_scaffold, self.tmp, REPO, "nextjs-pwa", False)
+        self.assertEqual(code, 0, out)
+        for rel in ("package.json", "apps/web/app/page.tsx", "apps/api/src/app.ts", "packages/db/prisma/schema.prisma", "packages/ui/src/numpad.tsx", "tests/e2e/a11y.spec.ts", "docker-compose.yml", ".env.example", ".github/workflows/ci.yml"):
+            self.assertTrue((self.tmp / rel).exists(), rel)
+        self.assertIn("model Order", (self.tmp / "packages/db/prisma/schema.prisma").read_text(encoding="utf-8"))
+        self.assertEqual(run(self.B.run_scaffold, self.tmp, REPO, "expo", False)[0], 2)
+
+    def test_unreviewed_marker_in_screens(self):
+        oe = (self.tmp / ".foundry" / "screens" / "order-entry.md").read_text(encoding="utf-8")
+        self.assertIn("<!-- unreviewed -->", oe)
 
 
 class GateTests(unittest.TestCase):

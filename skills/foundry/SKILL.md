@@ -1,18 +1,18 @@
 ---
 name: foundry
-description: Build an app from a one-line brief. Run phases 0–3 (intake, pack match, bounded grill, PRD) with at most 7 questions; use --unattended for zero questions; continue with /foundry-continue; resume with /foundry-resume.
+description: Build an app from a one-line brief. Run phases 0–6 (intake, pack match, bounded grill, PRD, domain model, architecture, data and API) with at most 7 questions; use --unattended for zero questions; continue with /foundry-continue; resume with /foundry-resume.
 invocation: user
 model: opus
 reads: [brief]
-writes: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, .foundry/prd.md, .foundry/metrics.jsonl]
-gate: python scripts/foundry.py gate prd
+writes: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, .foundry/prd.md, .foundry/domain.yaml, CONTEXT.md, .foundry/architecture.md, .foundry/adr/*.md, prisma/schema.prisma, openapi.yaml, .foundry/events.yaml, .foundry/metrics.jsonl]
+gate: python scripts/foundry.py gate api
 ---
 
-# /foundry — orchestrator, phases 0–3
+# /foundry — orchestrator, phases 0–6
 
 Argument: the brief in quotes, optionally followed by `--unattended`. Run every command from
 the project root (the folder that will hold the app); `scripts/foundry.py` resolves to the
-plugin. Phases 4–10 are P4+ pointers: docs/pipeline.md.
+plugin. Phases 7–10 are P5+ pointers: docs/pipeline.md.
 
 ## Steps
 
@@ -28,29 +28,43 @@ plugin. Phases 4–10 are P4+ pointers: docs/pipeline.md.
 
    Done when: gate 0 prints `pass`.
 
-1. **Pack match.** `metrics --phase 1 --start`; invoke the pack-match skill; then
-   `gate 1`; `metrics --phase 1 --note "<slug> <confidence> <chosen_by>"`.
+1. **Pack match.** `metrics --phase 1 --start`; invoke pack-match; `gate 1`;
+   `metrics --phase 1 --note "<slug> <confidence> <chosen_by>"`.
    Done when: gate 1 prints `pass`.
 
-2. **Bounded grill.** `metrics --phase 2 --start`; invoke the bounded-grilling skill; then
-   `gate 2`; `metrics --phase 2 --note "asked <n>/7 + <m>/3, mode <attended|unattended>"`.
+2. **Bounded grill.** `metrics --phase 2 --start`; invoke bounded-grilling; `gate 2`;
+   `metrics --phase 2 --note "asked <n>/7 + <m>/3, mode <mode>"`.
    Done when: gate 2 prints `pass`.
 
-3. **PRD.** `metrics --phase 3 --start`; invoke the prd skill; then `gate 3`;
+3. **PRD.** `metrics --phase 3 --start`; invoke prd; `gate 3`;
    `metrics --phase 3 --note "prd <n> assumptions"`.
    Done when: gate 3 prints `pass`.
 
-4. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the
+4. **Doctor, then domain model.** `python scripts/foundry.py doctor` (stop on FAIL and print
+   the table). `metrics --phase 4 --start`; invoke domain-model; `gate 4`;
+   `metrics --phase 4 --note "<entities> entities, <transitions> transitions"`.
+   Done when: doctor is ok and gate 4 prints `pass`.
+
+5. **Architecture.** `metrics --phase 5 --start`; invoke architecture; `gate 5`;
+   `metrics --phase 5 --note "9 ADRs; CBM <present|absent>"`.
+   Done when: gate 5 prints `pass`.
+
+6. **Data and API.** `metrics --phase 6 --start`; invoke data-model, then api-contract;
+   `gate 6`; `metrics --phase 6 --note "<models> models, <operations> operations"`.
+   Done when: gate 6 prints `pass`.
+
+7. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the
    fix list. A second failure stops the run; print the gate output verbatim.
    Done when: every phase passed, or the run stopped with the failing gate printed.
 
-5. **Report.** Final message to the human, six lines at most:
+8. **Report.** Final message to the human, seven lines at most:
 
    ```
    Pack: <slug> (confidence <c>, chosen by <chosen_by>)
    Questions: <round1_used>/7 + <round2_used>/3, mode <mode>
-   Assumptions: <count of pack-default + timeout-default entries> (see prd.md section 10)
-   PRD: .foundry/prd.md
+   Assumptions: <count of pack-default + timeout-default entries> (prd.md §10)
+   Model: <entities> entities, 9 ADRs, <operations> API operations
+   Artifacts: .foundry/prd.md, .foundry/domain.yaml, .foundry/architecture.md, openapi.yaml
    Next: /foundry-continue
    ```
 
@@ -64,8 +78,10 @@ plugin. Phases 4–10 are P4+ pointers: docs/pipeline.md.
 | 1 | pack-match | `gate 1` | .foundry/pack.yaml |
 | 2 | bounded-grilling | `gate 2` | .foundry/decisions.yaml |
 | 3 | prd | `gate 3` | .foundry/prd.md |
-| 4–10 | P4+ | docs/pipeline.md | |
+| 4 | domain-model | `gate 4` | .foundry/domain.yaml, CONTEXT.md |
+| 5 | architecture | `gate 5` | .foundry/architecture.md, .foundry/adr/ |
+| 6 | data-model, api-contract | `gate 6` | prisma/schema.prisma, openapi.yaml, .foundry/events.yaml |
+| 7–10 | P5+ | docs/pipeline.md | |
 
-Ledger counts for the report come from `.foundry/decisions.yaml` (`budget`, `mode`, and
-`source` values). Assumption count = entries whose source is `pack-default` or
-`timeout-default`.
+Counts for the report: ledger `budget` and `source` values; entity count from domain.yaml;
+operations = methods under `paths` in openapi.yaml.

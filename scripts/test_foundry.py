@@ -28,7 +28,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.5"
+PACK_EXAMPLE = """version: "1.6"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
@@ -230,7 +230,7 @@ class ScaffoldPackTests(unittest.TestCase):
         self.assertEqual(run(foundry.run_scaffold_pack, "Bad Slug", self.root)[0], 1)
 
     def test_unimplemented_commands_exit_2(self):
-        code, out = run(foundry.main, ["gate", "9"])
+        code, out = run(foundry.main, ["gate", "11"])
         self.assertEqual(code, 2)
         self.assertIn("not implemented", out)
 
@@ -644,6 +644,97 @@ class P5Tests(unittest.TestCase):
         self.assertNotIn("/kitchen-tickets", spec["paths"])
         self.assertIn("/admin/receipts", spec["paths"])
         self.assertIn("/order-lines/{id}/modify-order", spec["paths"])
+
+
+class P6Tests(unittest.TestCase):
+    def setUp(self):
+        import foundry_security as X
+        import foundry_design as D
+        self.X, self.D = X, D
+        self.tmp = Path(tempfile.mkdtemp())
+        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        shutil.copytree(fx / ".foundry", self.tmp / ".foundry")
+        for name in ("CONTEXT.md", "openapi.yaml"):
+            shutil.copy(fx / name, self.tmp / name)
+        for d in ("prisma", "migrations", "design-system"):
+            shutil.copytree(fx / d, self.tmp / d)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_data_files(self):
+        import csv
+        with (REPO / "data" / "security-controls.csv").open(encoding="utf-8", newline="") as fh:
+            rows = list(csv.DictReader(fh))
+        self.assertGreaterEqual(len(rows), 180)
+        self.assertTrue(any(r["family"] == "agentic" for r in rows))
+        self.assertTrue(any("ASVS-5.0" in r["source"] for r in rows))
+        with (REPO / "data" / "copy.csv").open(encoding="utf-8", newline="") as fh:
+            crows = list(csv.DictReader(fh))
+        self.assertGreaterEqual(len(crows), 120)
+        self.assertTrue(all(r["ar"] and r["ur"] and r["reviewed"] == "false" for r in crows))
+        n, errs = self.D.check_palettes(REPO / "data" / "palettes.csv")
+        self.assertEqual(errs, [])
+        self.assertIn("dark_primary", open(REPO / "data" / "palettes.csv", encoding="utf-8").readline())
+
+    def test_screens_arabic_from_copy(self):
+        self.D.run_screens_skeleton(self.tmp, REPO)
+        oe = (self.tmp / ".foundry" / "screens" / "order-entry.md").read_text(encoding="utf-8")
+        self.assertIn("اضغط على صنف", oe)
+        self.assertNotIn("ar: translate", oe)
+
+    def test_master_use_column_and_text_role_gate(self):
+        master = (self.tmp / "design-system" / "MASTER.md").read_text(encoding="utf-8")
+        self.assertIn("| Use |", master)
+        self.assertIn("text-safe", master)
+        tokens = json.loads((self.tmp / "design-system" / "tokens.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(tokens["color"]["dark"]), set(tokens["color"]["light"]))
+        tokens["foundry"]["text_roles"] = ["text", "accent"]
+        tokens["foundry"]["non_text_only"] = ["accent"]
+        (self.tmp / "design-system" / "tokens.json").write_text(json.dumps(tokens), encoding="utf-8")
+        errs = self.D.gate_design(self.tmp, REPO)
+        self.assertTrue(any("non-text-only" in e for e in errs), errs)
+
+    def test_threat_and_tickets_skeletons_pass_gates(self):
+        self.D.run_screens_skeleton(self.tmp, REPO)
+        self.X.run_threat_skeleton(self.tmp, REPO)
+        self.assertEqual(self.X.gate_security(self.tmp, REPO), [])
+        comp = foundry.parse_yaml((self.tmp / ".foundry" / "compliance.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(comp["pci_scope"], "SAQ-A")
+        threats = (self.tmp / ".foundry" / "threats.md").read_text(encoding="utf-8")
+        self.assertIn("## Top 10 risks", threats)
+        self.assertIn("`payment_create`", threats)
+        self.X.run_tickets_skeleton(self.tmp, REPO)
+        self.assertEqual(self.X.gate_tickets(self.tmp, REPO), [])
+        tickets = self.X.load_tickets(self.tmp)
+        self.assertTrue(35 <= len(tickets) <= 60, len(tickets))
+        order, errs = self.X.topo(tickets)
+        self.assertEqual(errs, [])
+        self.assertEqual(order[0], "T-000")
+        t6 = next(t for t in tickets if t["id"] == "T-006")
+        self.assertEqual(t6["type"], "feature")
+        self.assertGreaterEqual(len(t6["acceptance_tests"]), 3)
+        code, out = run(foundry.main, ["tickets", "next", "--n", "3", "--dir", str(self.tmp)])
+        self.assertEqual(code, 0)
+        self.assertTrue(out.startswith("T-000"))
+
+    def test_tickets_gate_catches_cycle(self):
+        self.D.run_screens_skeleton(self.tmp, REPO); self.X.run_threat_skeleton(self.tmp, REPO); self.X.run_tickets_skeleton(self.tmp, REPO)
+        p = next((self.tmp / ".foundry" / "tickets").glob("T-000-*.md"))
+        p.write_text(p.read_text(encoding="utf-8").replace("blockedBy: []", 'blockedBy: ["T-001"]'), encoding="utf-8")
+        errs = self.X.gate_tickets(self.tmp, REPO)
+        self.assertTrue(any("cycle" in e for e in errs), errs)
+
+    def test_security_gate_catches_any_authenticated(self):
+        self.D.run_screens_skeleton(self.tmp, REPO); self.X.run_threat_skeleton(self.tmp, REPO)
+        p = self.tmp / "openapi.yaml"
+        s = p.read_text(encoding="utf-8")
+        i = s.index('operationId: "payment_create"')
+        j = s.index('authz: ', i)
+        k = s.index("\n", j)
+        p.write_text(s[:j] + 'authz: "any authenticated"' + s[k:], encoding="utf-8")
+        errs = self.X.gate_security(self.tmp, REPO)
+        self.assertTrue(any("any authenticated" in e for e in errs), errs)
 
 
 class GateTests(unittest.TestCase):

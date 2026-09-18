@@ -12,22 +12,24 @@ Density high; navigation action-bar; touch targets 48px.
 
 ## Palette
 
-| Role | Light | Dark | Contrast vs bg (light) |
-|------|-------|------|------------------------|
-| primary | `#ca4c16` | `#ca4c16` | 4.61:1 |
-| primary_fg | `#ffffff` | `-` | 1.00:1 |
-| secondary | `#ab922b` | `-` | 3.05:1 |
-| accent | `#0b92cb` | `-` | 3.51:1 |
-| bg | `#ffffff` | `#1a1614` | 1.00:1 |
-| surface | `#fbf9f9` | `#25201d` | 1.05:1 |
-| surface_alt | `#f4f1f0` | `-` | 1.12:1 |
-| text | `#261c17` | `#eceae9` | 16.65:1 |
-| text_muted | `#72615a` | `-` | 5.88:1 |
-| border | `#a48d84` | `-` | 3.12:1 |
-| success | `#279b57` | `-` | 3.55:1 |
-| warning | `#b36f0f` | `-` | 4.04:1 |
-| danger | `#aa1818` | `-` | 7.36:1 |
-| info | `#1d78a5` | `-` | 4.90:1 |
+| Role | Light | Dark | Contrast vs bg (light) | Use |
+|------|-------|------|------------------------|-----|
+| primary | `#ca4c16` | `#eb7847` | 4.61:1 | text-safe |
+| primary_fg | `#ffffff` | `#1a1614` | 1.00:1 | text on primary |
+| secondary | `#ab922b` | `#d6be5c` | 3.05:1 | non-text-only (fills, borders, icons) |
+| accent | `#0b92cb` | `#47c1f5` | 3.51:1 | non-text-only (fills, borders, icons) |
+| bg | `#ffffff` | `#1a1614` | 1.00:1 | surface |
+| surface | `#fbf9f9` | `#25201d` | 1.05:1 | surface |
+| surface_alt | `#f4f1f0` | `#25201d` | 1.12:1 | surface |
+| text | `#261c17` | `#eceae9` | 16.65:1 | text-safe |
+| text_muted | `#72615a` | `#b9b0ac` | 5.88:1 | text-safe |
+| border | `#a48d84` | `#70625c` | 3.12:1 | non-text-only (fills, borders, icons) |
+| success | `#279b57` | `#64d894` | 3.55:1 | non-text-only (fills, borders, icons) |
+| warning | `#b36f0f` | `#f0ac4c` | 4.04:1 | non-text-only (fills, borders, icons) |
+| danger | `#aa1818` | `#e75555` | 7.36:1 | text-safe |
+| info | `#1d78a5` | `#5ab5e2` | 4.90:1 | text-safe |
+
+Themes: default → `ember-kitchen`, kds → `kds-dark`. Each theme is a palettes.csv row applied as a token swap.
 
 ## Typography
 
@@ -53,6 +55,8 @@ Heading Inter · body Inter · mono JetBrains Mono · Arabic IBM Plex Sans Arabi
 - Touch: minimum 48px; numpad keys 64px
 
 ## Components
+
+Text-safe roles for any component label: text, text_muted, primary_fg. Non-text-only roles: secondary, accent, border, success, warning (fills, borders, icons only).
 
 | Id | Component | shadcn | States | Min target |
 |----|-----------|--------|--------|------------|

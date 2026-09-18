@@ -46,7 +46,17 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --color-bg: #1a1614;
   --color-surface: #25201d;
+  --color-surface-alt: #25201d;
   --color-text: #eceae9;
-  --color-primary: #ca4c16;
+  --color-text-muted: #b9b0ac;
+  --color-primary: #eb7847;
+  --color-primary-fg: #1a1614;
+  --color-secondary: #d6be5c;
+  --color-accent: #47c1f5;
+  --color-border: #70625c;
+  --color-success: #64d894;
+  --color-warning: #f0ac4c;
+  --color-danger: #e75555;
+  --color-info: #5ab5e2;
 } }
 @media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; animation: none !important; } }

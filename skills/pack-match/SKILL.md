@@ -5,58 +5,45 @@ invocation: model
 model: haiku
 reads: [.foundry/brief.md, packs/index.csv]
 writes: [.foundry/pack.yaml]
-gate: python scripts/foundry.py validate
+gate: python scripts/foundry.py gate pack-match
 ---
 
 # pack-match — phase 1
 
-Deterministic first, judgement only on a tie. Pack vocabulary comes from the matcher output;
-`pack.yaml` bodies stay closed except in the tie branch. Reference folders stay closed here.
+Fully deterministic: the matcher scores, resolves ties by must_have overlap, and writes the
+selection. This skill opens no pack.yaml and no reference/ file.
 
 ## Steps
 
-1. **Score.** Run:
+1. **Score and write.**
 
    ```
-   python scripts/foundry.py match --brief .foundry/brief.md --json
+   python scripts/foundry.py match --brief .foundry/brief.md --write
    ```
 
-   Done when: JSON with `candidates` (top 3), `prefilled`, `flags`, `unmatched_brief_terms`
-   is in hand.
+   Done when: `.foundry/pack.yaml` exists and the command printed `chosen:`.
 
-2. **Choose.** Let `top` be `candidates[0]` and `threshold` its index.csv value.
-   - `top.confidence >= threshold` and no other candidate within 0.15 → accept `top`,
-     `chosen_by: matcher`.
-   - Two candidates within 0.15 of each other and both at or above their thresholds → open
-     ONLY `name`, `personas`, `must_have` of those two `packs/<slug>/pack.yaml`; count brief
-     nouns that overlap each `must_have` list; the larger overlap wins, `chosen_by:
-     must-have-overlap`, flag `close-match`.
-   - `top.confidence < threshold` → `chosen: generic`, `chosen_by: fallback`, flag
-     `below-threshold`.
+2. **Gate.**
 
-   Done when: exactly one `chosen` slug and one `chosen_by` value are decided.
+   ```
+   python scripts/foundry.py gate pack-match
+   ```
 
-3. **Write.** Emit `.foundry/pack.yaml` with: `chosen`, `confidence`, `threshold`,
-   `alternates` (the other candidates with slug and confidence), `matched_terms`,
-   `unmatched_aspects` (every brief noun the matcher listed as unmatched), `prefilled`
-   (copied from the matcher, only for the chosen pack), `flags`, `matcher_version`,
-   `chosen_by`. Schema: schemas/pack-selection.schema.json.
+   Done when: the gate prints `pass`.
 
-   Done when: `python scripts/foundry.py validate` passes with the file present.
-
-4. **Account for every noun.** Each brief noun appears in `matched_terms` or in
-   `unmatched_aspects`.
-
-   Done when: the two lists together cover every noun in `unmatched_brief_terms` plus the
-   matcher's matched terms, and the file re-validates.
+3. **Report one line** for the orchestrator's metrics note: `<slug> <confidence> <chosen_by>`
+   plus any flags.
+   Done when: the line is emitted.
 
 ## Reference
 
 | Flag | Meaning for phase 2 |
 |------|---------------------|
-| no-questions-requested | brief asks for zero questions; grill still asks anything without a pack default |
-| close-match | tie resolved by must_have overlap; the alternate pack is a candidate for round 2 |
-| below-threshold | generic chosen; round 1 spends its first question on product category |
+| no-questions-requested | brief asks for zero questions; grilling runs unattended |
+| close-match | tie resolved by must_have overlap; alternates carry the runner-up |
+| below-threshold | generic chosen; round 1 opens with the product-summary question |
 | scope-sprawl | brief names many modules; PRD scopes one first slice, lists the rest as later |
 
-Prefilled answers carry `source: brief`; phase 2 logs them in the ledger without asking.
+`chosen_by`: `keywords` (top score at or above threshold), `must-have-overlap` (tie within
+0.15), `fallback` (generic). Prefilled answers carry `source: brief`; phase 2 seeds the ledger
+from them and asks a confirm only for irreversible ones.

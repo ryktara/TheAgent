@@ -40,3 +40,43 @@ Onboarding checklist,The first-run list of tasks shown on the Dashboard until ea
 Quiet hours,A per-user window during which notifications are held,do not disturb
 Owner transfer,Handing the Owner role to another User; requires the current Owner to confirm,ownership change
 Restore point,A tested backup from which the Tenant can be recovered to a point in time,backup;snapshot
+Dashboard widget,One tile on the dashboard bound to a KPI or a list,card;tile
+Global search,Search across records users and settings from the header,command palette;ctrl-k
+Column chooser,Control to show or hide table columns,field picker
+Density toggle,Switch between compact and comfortable row heights,row height
+Pagination cursor,Opaque token marking the position in a result set,page token
+Debounce,Delay before a search runs after typing stops,typing delay
+Optimistic update,UI applies a change before the server confirms then rolls back on failure,optimistic UI
+Skeleton,Grey placeholder matching the final layout while loading,loading placeholder
+Toast,Short transient message after an action,snackbar;notification bar
+Dirty guard,Prompt that stops navigation with unsaved changes,unsaved changes warning
+Autosave,Draft saved automatically at an interval,draft save
+Bulk import,Loading many records from a CSV with validation report,CSV import
+Data export,Download of records or reports as CSV XLSX or PDF,export
+Scheduled report,Report emailed on a cadence to chosen users,report schedule
+Tenant switcher,Control to change the active tenant for multi-tenant users,workspace switcher
+Owner transfer confirmation,Step where the current owner confirms handing over ownership,ownership handoff
+Invite token,Signed single-use token embedded in an invite link,invite link
+Verification code,Six digit code sent to prove email or phone ownership,OTP;one-time code
+Lockout,Temporary block after repeated failed sign-ins,account lock
+Rate limit,Cap on requests per account or IP in a window,throttle
+Session revoke,Ending a session from the sessions list or on password reset,log out everywhere
+Recovery code,One-time backup code for MFA,backup code
+Password strength meter,Indicator of password quality shown at sign-up,strength bar
+Breached password check,Rejecting passwords found in known breach lists,pwned check
+Argon2id,Password hashing algorithm recommended by the baseline,password hash
+CSP,Content Security Policy header limiting script sources,security header
+HSTS,Header forcing HTTPS on future visits,strict transport security
+Upload allow-list,Permitted file types for attachments,file type whitelist
+Virus scan,Malware check on uploaded files,AV scan
+Retention purge,Job that deletes data past its retention period,purge job
+Grace period,Days between a deletion request and erasure,cooling-off
+Pseudonymisation,Replacing identifiers so audit rows no longer name a person,anonymised audit
+Data residency,Region where tenant data is stored,hosting region
+DPA,Data processing agreement with a processor,processor agreement
+Processor,Third party that handles personal data for the tenant,sub-processor
+Consent record,Timestamped record of an optional processing consent,consent log
+Privacy notice,Document explaining data use shown at sign-up,privacy policy
+Breach runbook,Steps and deadlines for notifying regulators and users,incident plan
+Restore drill,Test that a backup restores correctly,DR test
+Uptime target,Availability promise such as 99.5% per month,SLA;SLO

@@ -24,7 +24,7 @@ Data bindings: User, Session. Analytics: sign_in_success, sign_in_failure(reason
 - Quick actions: "New record", "Run report", role-gated.
 - Empty state on first login explains the three things to do first.
 
-## list (records)
+## list
 
 - Table with sticky header, column chooser, saved views, row density toggle.
 - Toolbar: search (debounced 250 ms), filter chips, sort, export CSV, bulk actions.
@@ -39,7 +39,7 @@ Data bindings: User, Session. Analytics: sign_in_success, sign_in_failure(reason
 - Side panel: metadata (created by, updated by, owner, tags).
 - Danger zone at the bottom: archive, delete (role-gated, confirm by typing the name).
 
-## edit (create and update share one form)
+## edit
 
 - Sections with sticky section nav on wide screens.
 - Field types: text, long text, number, money, date, select, multi-select, toggle, file.
@@ -72,3 +72,17 @@ Data bindings: User, Session. Analytics: sign_in_success, sign_in_failure(reason
 
 - Bell dropdown with unread count, mark all read, link to full page.
 - Preferences per channel (in-app, email) per event type.
+
+## users-roles
+
+- Users table: name, email, role, status, last active; invite button; row actions resend, disable.
+- Roles tab: permission matrix (rows permissions, columns roles); custom roles when enabled.
+- Guard: the last owner cannot be demoted or disabled.
+- States: empty (invite your first teammate), loading skeleton, error retry.
+
+## audit-log
+
+- AuditEvent table: time, actor, action, object, before/after diff on expand.
+- Filters: actor, object type, action, date range; export CSV.
+- Append-only; no edit or delete actions exist on this screen.
+- States: empty (no activity yet), loading, error.

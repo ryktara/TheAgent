@@ -2,6 +2,21 @@
 
 One entry per build step. Newest first.
 
+## P4 — Domain, architecture, data, API (2026-09-18)
+
+- fix: schema 1.4 `questions[].enables` replaces the should-have token heuristic; region-scoped
+  `regional[R].compliance_must/should` and gate prd rejects controls of a non-decided region;
+  `regional.PK.tax_by_province` table rendered in PRD §8; sources.md statuses updated.
+- `foundry.py doctor`, `query <csv> --col value`, data/stacks.csv (14 rows).
+- scripts/foundry_phases.py: `domain-skeleton` (domain.yaml + CONTEXT.md), `arch-skeleton`
+  (9 ADRs + architecture.md), `schema-skeleton --orm prisma|drizzle`, `api-skeleton`
+  (openapi.yaml 3.1 + events.yaml); gates domain, architecture, data, api.
+- YAML subset parser reads block mappings inside lists (nested OpenAPI output).
+- Schemas: domain, adr, events, architecture-frontmatter.
+- Skills: domain-model, architecture (+ ADR-TEMPLATE), data-model, api-contract; /foundry and
+  /foundry-resume cover phases 0–6.
+- Evals: stages domain, architecture, data, api on the restaurant fixture; fixture extended.
+
 ## P3 — restaurant-pos pack, prd-skeleton, fixes (2026-09-18)
 
 - fix: `followups[].when` accepts a list (schema 1.3); `derive_from` resolves a question from its

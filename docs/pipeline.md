@@ -9,9 +9,9 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | 1 | Pack match | pack-match | brief, packs/index.csv | .foundry/pack.yaml | `gate 1`: selection validates; top confidence ≥ pack threshold (0.7 domain, 0.0 generic) else generic; ties within 0.15 resolved by must_have overlap inside `match` |
 | 2 | Bounded grill | bounded-grilling | .foundry/pack.yaml, packs/<slug>/pack.yaml | .foundry/decisions.yaml | `gate 2`: `grill-plan` rounds 1 and 2 empty, ledger validates, every pack question has an entry; budget 7 (round 1, confirms first) / 3 (round 2 followups) |
 | 3 | PRD | prd (`prd-skeleton` + model sections 1 and 9) | decisions, pack, brief | .foundry/prd.md | `gate 3`: no unfilled model block; frontmatter hash matches ledger; every must_have in Scope IN; every should_have in IN or OUT; every decision cited [D:id] or in Open assumptions; NFR names offline, latency, devices, languages |
-| 4 | Domain model | domain-model | prd, pack entities | CONTEXT.md, .foundry/domain.yaml | every PRD noun in glossary; every entity has invariants |
-| 5 | Architecture | architecture | domain, nfrs | .foundry/architecture.md, .foundry/adr/*.md | ADRs for stack, auth, tenancy, data store, offline, integrations, deployment |
-| 6 | Data + API | data-model, api-contract | domain, architecture | schema, openapi.yaml, .foundry/events.yaml | schema compiles; every endpoint has authz rule |
+| 4 | Domain model | domain-model (`domain-skeleton` + workflow walk) | prd, pack entities, workflows.md sections in scope | CONTEXT.md, .foundry/domain.yaml | `gate 4`: schema; every PRD job and feature id resolves in CONTEXT.md; every entity has an invariant and a transition; every transition names a persona; every event has a consumer or is external |
+| 5 | Architecture | architecture (`arch-skeleton`) | domain, ledger, stacks.csv | .foundry/architecture.md, .foundry/adr/0001–0009 | `gate 5`: nine ADRs exist, validate, accepted, cite [D:] or pack-default, ≤60 lines; architecture.md frontmatter validates, ≥5 trust boundaries, stack_id in stacks.csv |
+| 6 | Data + API | data-model (`schema-skeleton`), api-contract (`api-skeleton`) | domain, architecture | prisma/schema.prisma, openapi.yaml, .foundry/events.yaml | `gate 6`: model per entity and enum per state list (`npx prisma validate` when available); OpenAPI 3.1 with unique operationIds, x-foundry.authz and 2xx/4xx on every operation, a path per entity, an operation per job; events.yaml validates |
 | 7 | Design system | design-system | pack ui_profile, brand answers | design-system/MASTER.md, tokens.json | contrast/type/spacing validator passes |
 | 8 | Screens | screen-spec | prd, domain, design system | .foundry/screens/*.md | every job has a screen; every screen has empty/loading/error states |
 | 9 | Security | threat-model, compliance | architecture, api, pack compliance | .foundry/threats.md, .foundry/compliance.yaml | every endpoint mapped to a control |
@@ -22,7 +22,7 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | 14 | Release | release | all | CHANGELOG.md, deploy config, runbook | smoke test on deployed URL |
 | 15 | Handoff | handoff | .foundry/ | .foundry/handoff.md | fresh session resumes from file alone |
 
-Gates 0–3 are enforced by `scripts/foundry.py gate <phase>` (number or name). Later gates arrive with
+Gates 0–6 are enforced by `scripts/foundry.py gate <phase>` (number or name). `doctor` runs before phase 4. Later gates arrive with
 their phases; until then each skill states its gate in frontmatter.
 
 ## Phase 2 mechanics

@@ -27,7 +27,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.2"
+PACK_EXAMPLE = """version: "1.3"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
@@ -329,11 +329,11 @@ class GrillTests(unittest.TestCase):
         self.assertEqual(plan[0]["default"], "dine-in")
         self.assertNotIn("region", [q["id"] for q in plan], "reversible prefill is not re-asked")
         self.assertNotIn("central-menu-sync", [q["id"] for q in plan], "followup-only question stays out of round 1")
-        self.assertEqual(foundry.grill_plan(pack, ledger, sel["prefilled"], 2), [], "round 2 empty before round 1 answers")
+        self.assertEqual([q["id"] for q in foundry.grill_plan(pack, ledger, sel["prefilled"], 2)], ["reservations"], "prefilled dine-in unlocks only reservations before round 1")
         for q in plan:
             foundry.decide(ledger, pack, q["id"], "multi" if q["id"] == "branches" else (True if q["id"] == "delivery" else q["default"]), "human", None, 1)
         r2 = foundry.grill_plan(pack, ledger, sel["prefilled"], 2)
-        self.assertEqual({q["id"] for q in r2}, {"central-menu-sync", "delivery-platforms"})
+        self.assertEqual({q["id"] for q in r2}, {"reservations", "central-menu-sync", "delivery-platforms"})
         self.assertTrue(all(q["why"] == "followup" for q in r2))
         self.assertEqual(foundry.grill_plan(pack, ledger, sel["prefilled"], 1), [])
 
@@ -355,6 +355,109 @@ class GrillTests(unittest.TestCase):
             back = foundry.load_ledger(tmp)
             self.assertEqual(back["decisions"], ledger["decisions"])
             self.assertEqual(foundry.validate_schema(back, foundry.load_schema("decisions.schema.json")), [])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class P3Tests(unittest.TestCase):
+    def test_sharjah_confidence_and_derived_provider(self):
+        res = foundry.match_brief("restaurant in Sharjah, dine-in only, we use Network International for cards", REPO)
+        self.assertEqual(res["chosen"], "restaurant-pos")
+        self.assertGreaterEqual(res["confidence"], 0.85, res)
+        sel = foundry.selection_from_match(res)
+        pack = foundry.load_pack(REPO, "restaurant-pos")
+        ledger = foundry.empty_ledger("restaurant-pos")
+        for pf in sel["prefilled"]:
+            foundry.decide(ledger, pack, pf["question_id"], pf["value"], "brief", None, 0)
+        foundry.apply_defaults(ledger, pack, sel["prefilled"])
+        e = next(d for d in ledger["decisions"] if d["id"] == "payment-provider-name")
+        self.assertEqual(e["value"], "Network International")
+        self.assertEqual(e["source"], "agent-fact")
+        self.assertIn("derived from payments=network-intl", e["rationale"])
+
+    def test_derive_null_falls_to_default(self):
+        pack = foundry.load_pack(REPO, "restaurant-pos")
+        ledger = foundry.empty_ledger("restaurant-pos")
+        foundry.decide(ledger, pack, "payments", "other", "human", None, 1)
+        plan = foundry.grill_plan(pack, ledger, [], 2)
+        self.assertIn("payment-provider-name", [q["id"] for q in plan], "null map unlocks the follow-up")
+        foundry.apply_defaults(ledger, pack, [])
+        e = next(d for d in ledger["decisions"] if d["id"] == "payment-provider-name")
+        self.assertEqual((e["value"], e["source"]), ("unknown", "pack-default"))
+
+    def test_when_list(self):
+        pack = foundry.load_pack(REPO, "restaurant-pos")
+        ledger = foundry.empty_ledger("restaurant-pos")
+        foundry.decide(ledger, pack, "service-model", "both", "human", None, 1)
+        self.assertIn("reservations", [q["id"] for q in foundry.grill_plan(pack, ledger, [], 2)])
+
+    def test_rematch_shop_groceries(self):
+        first = foundry.match_brief("I want an app for my shop", REPO)
+        self.assertEqual(first["chosen"], "generic")
+        ledger = foundry.empty_ledger("generic")
+        gen = foundry.load_pack(REPO, "generic")
+        foundry.decide(ledger, gen, "product-summary", "we sell groceries and mobile top-ups", "human", None, 1)
+        second = foundry.match_brief(foundry.rematch_text("I want an app for my shop", ledger), REPO)
+        self.assertEqual(second["chosen"], "retail-pos")
+        self.assertGreaterEqual(second["confidence"], 0.7)
+
+    def test_rematch_cli_switches_pack_and_ledger(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            (tmp / ".foundry").mkdir()
+            (tmp / ".foundry" / "brief.md").write_text("# Brief\n\nI want an app for my shop\n", encoding="utf-8")
+            b = str(tmp / ".foundry" / "brief.md")
+            run(foundry.main, ["match", "--brief", b, "--write", "--dir", str(tmp)])
+            run(foundry.main, ["decide", "--id", "product-summary", "--value", "we sell groceries and mobile top-ups", "--source", "human", "--round", "1", "--dir", str(tmp)])
+            code, out = run(foundry.main, ["match", "--brief", b, "--rematch", "--write", "--dir", str(tmp), "--json"])
+            self.assertEqual(code, 0)
+            self.assertIn('"rematched"', out)
+            ledger = foundry.load_ledger(tmp)
+            self.assertEqual(ledger["pack"], "retail-pos")
+            self.assertIn("rematched", ledger["flags"])
+            self.assertEqual(ledger["decisions"], [])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_variant_briefs(self):
+        for exp_path in sorted((REPO / "evals" / "expected" / "restaurant-variants").glob("*.yaml")):
+            exp = foundry.parse_yaml(exp_path.read_text(encoding="utf-8"))
+            text = (REPO / "evals" / "briefs" / "restaurant-variants" / f"{exp_path.stem}.md").read_text(encoding="utf-8")
+            body = "\n".join(l for l in text.splitlines() if not l.startswith("#"))
+            res = foundry.match_brief(body, REPO)
+            self.assertEqual(res["chosen"], "restaurant-pos", exp_path.stem)
+            self.assertGreaterEqual(res["confidence"], float(exp["min_confidence"]), exp_path.stem)
+
+    def test_prd_skeleton_then_gate(self):
+        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        pack = foundry.load_pack(REPO, "restaurant-pos")
+        ledger = foundry.load_ledger(fx)
+        text = foundry.prd_skeleton(pack, ledger, "restaurant in Sharjah")
+        self.assertEqual(text.count(foundry.MODEL_BLOCK), 2)
+        for fid in pack["must_have"]:
+            self.assertIn(f"`{fid}`", text)
+        for d in ledger["decisions"]:
+            self.assertIn(f"[D:{d['id']}]", text)
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            shutil.copytree(fx / ".foundry", tmp / ".foundry")
+            (tmp / ".foundry" / "prd.md").write_text(text, encoding="utf-8")
+            errs = foundry.gate_prd(tmp, REPO)
+            self.assertTrue(any("model: write" in e for e in errs), "unfilled model blocks must fail the gate")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_complete_pack_lint_catches_missing_screen(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            root = make_repo(tmp)
+            shutil.copytree(REPO / "packs" / "restaurant-pos", root / "packs" / "restaurant-pos")
+            sc = root / "packs" / "restaurant-pos" / "reference" / "screens.md"
+            sc.write_text(sc.read_text(encoding="utf-8").replace("## kds\n", "## kitchen-screen\n"), encoding="utf-8")
+            run(foundry.run_sync_index, root)
+            code, out = run(foundry.run_validate, root)
+            self.assertEqual(code, 1)
+            self.assertIn("screen 'kds' has no", out)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

@@ -1,64 +1,28 @@
----
-pack: <slug>
-version: 1
-decisions_hash: <from foundry.decisions_hash>
----
+# PRD model sections
 
-# PRD — <product name>
+`foundry.py prd-skeleton` writes the file; only these two blocks are authored by the model.
+Everything else (frontmatter, sections 2–8, 10) stays as generated.
 
 ## 1. Product
 
-One paragraph: what it is, for whom, where it runs, the one thing it must never fail at.
-Derived facts end with [D:<id>].
+Replace `<!-- model: write -->` and its comment with one paragraph:
 
-## 2. Personas
+> A <form factor> point of sale for <who> in <where> [D:region]. <Primary persona> <does the
+> core job> [D:service-model]. <Payment and receipt facts> [D:payments]. It must never
+> <the one failure the business cannot absorb> [D:offline].
 
-| Persona | Role in the product | Kept because |
-|---------|---------------------|--------------|
-| <from pack.personas, pruned by decisions> | | [D:<id>] or pack |
-
-## 3. Jobs to be done
-
-| Id | Persona | Job | must/should | Screens |
-|----|---------|-----|-------------|---------|
-| <pack.jobs[].id> | | | | |
-
-## 4. Scope IN
-
-- `<must_have id>` — one line
-- `<should_have id turned on>` — one line [D:<id>]
-
-## 5. Scope OUT
-
-- `<should_have id>` — reason (not chosen [D:<id>] / later phase / out of budget)
-
-## 6. Non-functional requirements
-
-- Offline: <required|optional|forbidden> [D:offline]
-- Latency: <p95 targets from nfr_defaults>
-- Devices: <from nfr_defaults and platform decisions>
-- Languages: <en + ar (RTL) for AE/SA, ur for PK> [D:region]
-- Uptime, backups, security baseline: <from nfr_defaults and compliance_must>
-
-## 7. Integrations
-
-| Category | Chosen | Source |
-|----------|--------|--------|
-| payments | <provider> | [D:payments] |
-
-## 8. Regional and compliance
-
-- Region: <country> [D:region]
-- Tax, receipt languages, e-invoicing: <pack.regional[region]>
-- Must controls: <pack.compliance_must, one per line>
+Rules: 4–7 sentences; every sentence that rests on a decision ends with `[D:<id>]`; no feature
+list (section 4 holds it).
 
 ## 9. Success metrics
 
-1. <metric, number, unit, window>
-2. ...
+Replace `<!-- model: write -->` and its comment with 3–5 numbered lines:
 
-## 10. Open assumptions
+> 1. <metric> under/over <number> <unit> within <window>
 
-Decisions taken from pack defaults; each can be changed by editing `.foundry/decisions.yaml`.
+Each metric maps to a must-have job in section 3. Example set for a restaurant:
 
-- `<id>` = <value> — <one line on what changes if it flips>
+1. Median order entry under 45 seconds per table within 30 days of go-live
+2. 99% of fired tickets visible on the KDS within 1 second during service hours, first 90 days
+3. Zero lost orders during measured connectivity drops in the first 90 days
+4. Shift close reconciled within 5 minutes on 95% of shifts from month two

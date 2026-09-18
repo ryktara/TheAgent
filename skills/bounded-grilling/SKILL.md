@@ -31,9 +31,9 @@ Budget: 7 in round 1, 3 in round 2, 0 after. Every entry lands in the ledger thr
    python scripts/foundry.py decide --auto-unattended
    ```
 
-   then continue at step 6. Confirms keep the prefilled value; everything else takes the pack
+   then continue at step 7. Confirms keep the prefilled value; everything else takes the pack
    default; all such entries carry `source: timeout-default`.
-   Done when: ledger `mode` is `unattended` and step 6 is next.
+   Done when: ledger `mode` is `unattended` and step 7 is next.
 
 3. **Plan round 1.**
 
@@ -64,17 +64,31 @@ Budget: 7 in round 1, 3 in round 2, 0 after. Every entry lands in the ledger thr
    Silence or "use the default" on a question → same command with `--source timeout-default`.
    Done when: every round-1 question id has a ledger entry and `grill-plan --round 1` is empty.
 
-5. **Round 2, once.** `grill-plan --round 2 --json`; when non-empty, repeat step 4 with
+5. **Rematch when generic.** When `.foundry/pack.yaml` `chosen` is `generic`, after round 1:
+
+   ```
+   python scripts/foundry.py match --brief .foundry/brief.md --rematch --write
+   ```
+
+   The product-summary answer is appended to the brief and rescored. When a domain pack now
+   clears its threshold the selection carries flag `rematched`; the ledger restarts for the
+   new pack (mode kept, round-1 count kept): run `decide --apply-prefilled` again, then
+   `grill-plan --round 1` for the new pack's confirms and remaining budget.
+   Done when: `chosen` is a domain pack or the rematch left `generic` in place.
+
+6. **Round 2, once.** `grill-plan --round 2 --json`; when non-empty, repeat step 4 with
    `--round 2`. Round 2 is asked at most once.
    Done when: `grill-plan --round 2` is empty.
 
-6. **Close the frontier.**
+7. **Close the frontier.**
 
    ```
    python scripts/foundry.py decide --apply-defaults
    python scripts/foundry.py gate grill
    ```
 
+   `apply-defaults` resolves `derive_from` questions from their parent answer with
+   `source: agent-fact` and takes the pack default for the rest.
    Done when: rounds 1 and 2 both return no questions, `decisions.yaml` validates, the ledger
    has an entry for every question id in the pack, and the gate prints `pass`.
 

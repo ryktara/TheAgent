@@ -1,6 +1,6 @@
 ---
 name: prd
-description: Write .foundry/prd.md from the chosen pack, the decision ledger and the brief. Cite every decision as [D:id] and list every default as an open assumption.
+description: Write .foundry/prd.md from the chosen pack, the decision ledger and the brief. Generate sections 2–8 and 10 deterministically, then write sections 1 and 9.
 invocation: model
 model: sonnet
 reads: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, packs/<slug>/pack.yaml]
@@ -10,34 +10,36 @@ gate: python scripts/foundry.py gate prd
 
 # prd — phase 3
 
-Single source of truth for scope. Inputs are three files plus one pack.yaml; the pack's
-`reference/` folder stays closed in this phase. Template: PRD-TEMPLATE.md (sibling).
+Single source of truth for scope. The skeleton carries every table, feature id and `[D:id]`
+citation; the model writes two sections. The pack's `reference/` folder stays closed here.
+Template for the two model sections: PRD-TEMPLATE.md (sibling).
 
 ## Steps
 
-1. **Load inputs.** Read `.foundry/pack.yaml` for `chosen`, then `packs/<chosen>/pack.yaml`,
-   `.foundry/decisions.yaml`, `.foundry/brief.md`. Compute the ledger hash:
+1. **Generate the skeleton.**
 
    ```
-   python -c "import sys; sys.path.insert(0,'scripts'); import foundry as f, pathlib as p; print(f.decisions_hash(f.load_ledger(p.Path('.'))))"
+   python scripts/foundry.py prd-skeleton --out .foundry/prd.md
    ```
 
-   Done when: pack, ledger, brief and hash are in hand.
+   Done when: `.foundry/prd.md` exists with frontmatter and two `<!-- model: write -->` blocks.
 
-2. **Fill PRD-TEMPLATE.md section by section.** Rules that the gate checks:
-   - Section 4 lists every pack `must_have` id in backticks, plus each `should_have` the ledger
-     turns on (for example `multi-branch` when `[D:branches]` = multi).
-   - Section 5 lists every remaining `should_have` id in backticks with a one-line reason.
-   - Section 6 names offline, latency, devices and languages; languages include Arabic (RTL)
-     for AE and SA, Urdu for PK.
-   - Section 8 copies `regional[<region>]` and `compliance_must` for the region in `[D:region]`.
-   - Section 10 lists every decision with source `pack-default` or `timeout-default` as
-     `` `id` `` = value, one per line, marked changeable.
-   - Every sentence derived from a decision ends with `[D:<id>]`.
-   Done when: all ten sections are filled and no placeholder text remains.
+2. **Write section 1, Product.** One paragraph from the brief and the confirmed decisions in
+   section 10: what it is, for whom, where it runs, the one thing it must never fail at. Each
+   sentence that rests on a decision ends with `[D:<id>]`. Replace the model block and its
+   comment.
+   Done when: section 1 has one paragraph and no `<!--` remains in it.
 
-3. **Write and gate.** Save `.foundry/prd.md` with frontmatter `pack`, `version: 1`,
-   `decisions_hash`. Run:
+3. **Write section 9, Success metrics.** Three to five lines, each with a number, a unit and a
+   time window, tied to the must-have jobs in section 3. Replace the model block.
+   Done when: section 9 has 3–5 numbered metrics and no `<!--` remains in it.
+
+4. **Review sections 4 and 5.** The skeleton enables a should-have when a decision shares a
+   token with it. Move an id between IN and OUT only with a citation, keeping every id in
+   exactly one of the two sections.
+   Done when: every pack `should_have` id appears once across sections 4 and 5.
+
+5. **Gate.**
 
    ```
    python scripts/foundry.py gate prd
@@ -47,9 +49,11 @@ Single source of truth for scope. Inputs are three files plus one pack.yaml; the
 
 ## Reference
 
-| Decision source | Where it appears |
-|-----------------|------------------|
-| human, brief, agent-fact | cited inline as [D:id] where it shapes scope or NFRs |
-| pack-default, timeout-default | section 10 Open assumptions (and inline citation when used) |
-
-Success metrics (section 9) are measurable: a number, a unit, and a time window each.
+| Skeleton section | Source |
+|------------------|--------|
+| 2 Personas, 3 Jobs | pack personas, jobs (id, persona, must, screens) |
+| 4 IN / 5 OUT | must_have always IN; should_have by decision token overlap |
+| 6 NFR | nfr_defaults, offline decision, regional languages |
+| 7 Integrations | pack integrations, decisions whose maps_to names the category |
+| 8 Regional | regional[region decision], compliance_must / should ids |
+| 10 Assumptions | every ledger entry: confirmed (human, brief, agent-fact) then defaults |

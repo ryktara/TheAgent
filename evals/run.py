@@ -27,20 +27,24 @@ FIXTURES = ROOT / "evals" / "fixtures"
 STAGES = ("match", "grill", "prd")
 
 
-def load_cases() -> list[dict]:
+def load_cases(include_variants: bool = False) -> list[dict]:
     cases = []
-    for brief in sorted(BRIEFS.glob("*.md")):
-        exp_path = EXPECTED / f"{brief.stem}.yaml"
+    briefs = sorted(BRIEFS.glob("*.md"))
+    if include_variants:
+        briefs += sorted(BRIEFS.glob("*/*.md"))
+    for brief in briefs:
+        rel = brief.relative_to(BRIEFS).with_suffix("")
+        exp_path = EXPECTED / f"{rel.as_posix()}.yaml"
         text = brief.read_text(encoding="utf-8")
         body = "\n".join(l for l in text.splitlines() if not l.startswith("#")).strip()
         exp = F.parse_yaml(exp_path.read_text(encoding="utf-8")) if exp_path.exists() else {}
-        cases.append({"name": brief.stem, "brief": body, "expected": exp})
+        cases.append({"name": rel.as_posix(), "brief": body, "expected": exp})
     return cases
 
 
 def stage_match(cases: list[dict]) -> int:
-    print(f"{'brief':<22} {'expected':<15} {'chosen':<15} {'conf':>5} {'min':>4} {'flags':<40} result")
-    print("-" * 112)
+    print(f"{'brief':<48} {'expected':<15} {'chosen':<15} {'conf':>5} {'min':>4} {'flags':<40} result")
+    print("-" * 138)
     passed = 0
     for c in cases:
         exp = c["expected"]
@@ -50,7 +54,7 @@ def stage_match(cases: list[dict]) -> int:
         for flag in exp.get("expected_flags", []) or []:
             ok = ok and flag in res["flags"]
         passed += ok
-        print(f"{c['name']:<22} {exp.get('expected_pack', '?'):<15} {res['chosen']:<15} {conf:>5.2f} "
+        print(f"{c['name']:<48} {exp.get('expected_pack', '?'):<15} {res['chosen']:<15} {conf:>5.2f} "
               f"{float(exp.get('min_confidence', 0)):>4.1f} {','.join(res['flags']) or '-':<40} {'pass' if ok else 'FAIL'}")
     print(f"\nmatch: {passed}/{len(cases)} pass")
     return 0 if passed == len(cases) else 1
@@ -117,7 +121,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     rc = 0
     for st in ([a.stage] if a.stage else list(STAGES)):
-        rc |= {"match": stage_match, "grill": stage_grill, "prd": stage_prd}[st](cases)
+        fn = {"match": stage_match, "grill": stage_grill, "prd": stage_prd}[st]
+        rc |= fn(load_cases(include_variants=True) if st == "match" else cases)
         print()
     return rc
 

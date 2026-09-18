@@ -1,0 +1,52 @@
+id,boundary_type,stride,threat,typical_mitigation_control_ids,severity_default
+TP-IE-01,internet-edge,S,Attacker impersonates the web app via phishing domain to capture staff credentials,SEC-AUTH-08;SEC-CRY-01;SEC-AUTH-13,medium
+TP-IE-02,internet-edge,T,"Request tampering in transit (downgrade, MITM on hotel wifi)",SEC-CRY-01,high
+TP-IE-03,internet-edge,R,Client denies sending a request; no request ids,SEC-LOG-01,low
+TP-IE-04,internet-edge,I,Verbose errors or debug endpoints leak stack traces and versions,SEC-LOG-04;SEC-CFG-02;SEC-CFG-06,medium
+TP-IE-05,internet-edge,D,Volumetric or credential-stuffing traffic exhausts the api,SEC-AUTH-04;SEC-API-02,medium
+TP-IE-06,internet-edge,E,Missing security headers enable clickjacking or script injection on back-office pages,SEC-API-08;SEC-IN-03,medium
+TP-EA-01,edge-api,S,Stolen device token reused from another network,SEC-AUTH-06;SEC-SESS-08;SEC-API-11,high
+TP-EA-02,edge-api,T,"Client sets server-owned fields (total, state, branch_id) in request bodies",SEC-ACC-04;SEC-BL-01,high
+TP-EA-03,edge-api,R,Money-moving action without actor identity,SEC-LOG-02;SEC-AUTH-11,high
+TP-EA-04,edge-api,I,List endpoints leak other branches' orders (BOLA),SEC-ACC-02;SEC-API-03,high
+TP-EA-05,edge-api,D,Unbounded pagination or bulk operations exhaust the api,SEC-IN-10;SEC-API-02,medium
+TP-EA-06,edge-api,E,Cashier calls admin routes or refund operation directly,SEC-ACC-01;SEC-ACC-03;SEC-SESS-07,high
+TP-EA-07,edge-api,T,Replay of a payment POST creates a duplicate charge,SEC-API-01,high
+TP-AD-01,api-db,S,App role used to bypass RLS with BYPASSRLS,SEC-ACC-05,medium
+TP-AD-02,api-db,T,SQL injection through string-built queries,SEC-IN-04,high
+TP-AD-03,api-db,R,Audit rows updated or deleted after the fact,SEC-DATA-07;SEC-LOG-02,high
+TP-AD-04,api-db,I,Backups unencrypted or exposed,SEC-DATA-06;SEC-CRY-03,medium
+TP-AD-05,api-db,D,Long-running report queries lock operational tables,SEC-API-03,low
+TP-AD-06,api-db,E,Migration run with superuser in production,SEC-CFG-01;SEC-ACC-05,medium
+TP-AT-01,api-third-party,S,Fake provider endpoint via DNS or SSRF,SEC-API-06;SEC-CRY-01,medium
+TP-AT-02,api-third-party,T,Provider response tampered or malformed leads to wrong Payment state,SEC-API-12;SEC-PAY-05,medium
+TP-AT-03,api-third-party,R,Payment captured at provider but not recorded locally,SEC-PAY-05;SEC-API-05,high
+TP-AT-04,api-third-party,I,Provider secrets leaked through logs or devices,SEC-PAY-03;SEC-CRY-03;SEC-DATA-08,high
+TP-AT-05,api-third-party,D,Provider outage blocks all tenders,SEC-API-05;SEC-CFG-08,medium
+TP-AT-06,api-third-party,E,Sandbox keys swapped for live keys without a human step,SEC-CFG-08;SEC-AGT-12,medium
+TP-DL-01,device-local,S,Shared terminal used under another staff member's PIN,SEC-AUTH-05;SEC-SESS-06,medium
+TP-DL-02,device-local,T,Tampered local store changes order totals before sync,SEC-BL-01;SEC-OFF-01,high
+TP-DL-03,device-local,R,Offline void with no approver recorded,SEC-AUTH-11;SEC-BL-05,high
+TP-DL-04,device-local,I,Lost tablet exposes cached customer data,SEC-CRY-05;SEC-OFF-02,medium
+TP-DL-05,device-local,D,Device clock skew reorders events,SEC-LOG-08,low
+TP-DL-06,device-local,E,Debug build exposes admin functions on the device,SEC-CFG-02,low
+TP-DO-01,device-offline-store,T,Duplicate or replayed outbox events create double orders,SEC-BL-11;SEC-API-11,high
+TP-DO-02,device-offline-store,R,Receipt numbers reused across devices,SEC-BL-08;SEC-OFF-04,high
+TP-DO-03,device-offline-store,I,PII persisted beyond the shift on the device,SEC-OFF-02;SEC-DATA-03,medium
+TP-DO-04,device-offline-store,D,Sync storm after reconnect starves ordering,SEC-OFF-05,medium
+TP-DO-05,device-offline-store,T,Conflicting edits resolved non-deterministically,SEC-OFF-03,medium
+TP-PB-01,terminal-print-bridge,S,Rogue LAN device sends print jobs or opens the drawer,SEC-CFG-07,high
+TP-PB-02,terminal-print-bridge,T,Control bytes injected through item names into ESC/POS,SEC-IN-07,medium
+TP-PB-03,terminal-print-bridge,R,Drawer opened without a tender recorded,SEC-LOG-02;SEC-BL-07,medium
+TP-PB-04,terminal-print-bridge,I,Receipt data sniffed on the LAN,SEC-CFG-07;SEC-CRY-01,low
+TP-PB-05,terminal-print-bridge,D,Printer offline blocks tender completion,SEC-API-05,low
+TP-WH-01,webhook-inbound,S,Forged webhook creates a paid order,SEC-CRY-06;SEC-API-04;SEC-BL-15,high
+TP-WH-02,webhook-inbound,T,Replayed webhook re-applies a capture,SEC-API-04,high
+TP-WH-03,webhook-inbound,R,Webhook processed with no receipt record,SEC-API-04;SEC-LOG-01,medium
+TP-WH-04,webhook-inbound,I,Webhook endpoint returns internal state on error,SEC-LOG-04,low
+TP-WH-05,webhook-inbound,D,Webhook flood exhausts workers,SEC-API-02,medium
+TP-AM-01,admin,S,Owner account taken over via password reuse,SEC-AUTH-02;SEC-AUTH-08,high
+TP-AM-02,admin,T,Role matrix edited to grant refund rights to cashiers,SEC-ACC-07;SEC-LOG-02,high
+TP-AM-03,admin,R,Settings changed without audit,SEC-LOG-02,medium
+TP-AM-04,admin,I,Export of all customers by a non-owner,SEC-ACC-03;SEC-ACC-09,medium
+TP-AM-05,admin,E,"Last owner demoted, locking out the organisation",SEC-ACC-06,medium

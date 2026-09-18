@@ -1,0 +1,165 @@
+id,context,en,ar,ur,notes,reviewed
+state.empty.generic,state,Nothing here yet.,لا يوجد شيء هنا بعد.,ابھی یہاں کچھ نہیں ہے۔,,false
+state.loading.generic,state,Loading…,جارٍ التحميل…,لوڈ ہو رہا ہے…,,false
+state.error.generic,state,"Something went wrong. Retry, or contact the manager.",حدث خطأ ما. أعد المحاولة أو تواصل مع المدير.,کچھ غلط ہو گیا۔ دوبارہ کوشش کریں یا منیجر سے رابطہ کریں۔,,false
+state.offline.generic,state,Offline. Changes are saved on this device and sync when the connection returns.,غير متصل. تُحفظ التغييرات على هذا الجهاز وتُزامن عند عودة الاتصال.,آف لائن۔ تبدیلیاں اس ڈیوائس پر محفوظ ہیں اور کنکشن واپس آنے پر سنک ہوں گی۔,,false
+state.locked.generic,state,A manager PIN is needed for this action.,هذا الإجراء يتطلب رمز المدير.,اس عمل کے لیے منیجر پن درکار ہے۔,,false
+state.success.generic,state,Done.,تم.,ہو گیا۔,,false
+state.empty.list,state,No records yet. Create the first one.,لا توجد سجلات بعد. أنشئ السجل الأول.,ابھی کوئی ریکارڈ نہیں۔ پہلا ریکارڈ بنائیں۔,,false
+state.loading.list,state,Loading list…,جارٍ تحميل القائمة…,فہرست لوڈ ہو رہی ہے…,,false
+state.error.list,state,The list could not be loaded. Retry.,تعذّر تحميل القائمة. أعد المحاولة.,فہرست لوڈ نہیں ہو سکی۔ دوبارہ کوشش کریں۔,,false
+state.offline.list,state,Showing the last saved list. Edits are queued.,عرض آخر قائمة محفوظة. التعديلات في قائمة الانتظار.,آخری محفوظ فہرست دکھائی جا رہی ہے۔ ترامیم قطار میں ہیں۔,,false
+state.locked.list,state,Manager PIN needed to edit this list.,رمز المدير مطلوب لتعديل هذه القائمة.,اس فہرست میں ترمیم کے لیے منیجر پن درکار ہے۔,,false
+state.success.list,state,Saved.,تم الحفظ.,محفوظ ہو گیا۔,,false
+state.empty.form,state,Fill in the fields to continue.,املأ الحقول للمتابعة.,جاری رکھنے کے لیے خانے پُر کریں۔,,false
+state.loading.form,state,Saving…,جارٍ الحفظ…,محفوظ ہو رہا ہے…,,false
+state.error.form,state,Some fields need attention. Fix them and save again.,بعض الحقول تحتاج مراجعة. صحّحها واحفظ مرة أخرى.,کچھ خانوں پر توجہ درکار ہے۔ درست کریں اور دوبارہ محفوظ کریں۔,,false
+state.offline.form,state,Saved on this device. It will sync when online.,تم الحفظ على هذا الجهاز وسيُزامن عند الاتصال.,اس ڈیوائس پر محفوظ ہے۔ آن لائن ہوتے ہی سنک ہوگا۔,,false
+state.locked.form,state,Manager PIN needed to change this.,رمز المدير مطلوب لتغيير هذا.,اس تبدیلی کے لیے منیجر پن درکار ہے۔,,false
+state.success.form,state,Saved.,تم الحفظ.,محفوظ ہو گیا۔,,false
+state.empty.order-entry,state,Tap an item to start the order.,اضغط على صنف لبدء الطلب.,آرڈر شروع کرنے کے لیے کسی آئٹم پر ٹیپ کریں۔,,false
+state.loading.order-entry,state,Loading menu…,جارٍ تحميل القائمة…,مینو لوڈ ہو رہا ہے…,,false
+state.error.order-entry,state,The menu could not be loaded. Retry.,تعذّر تحميل القائمة. أعد المحاولة.,مینو لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔,,false
+state.offline.order-entry,state,Offline. Orders are saved here and sent to the kitchen when online.,غير متصل. تُحفظ الطلبات هنا وتُرسل للمطبخ عند الاتصال.,آف لائن۔ آرڈر یہاں محفوظ ہیں اور آن لائن ہوتے ہی کچن کو بھیجے جائیں گے۔,,false
+state.locked.order-entry,state,Void over the limit needs a manager PIN.,الإلغاء فوق الحد يتطلب رمز المدير.,حد سے زیادہ کینسل کرنے کے لیے منیجر پن درکار ہے۔,,false
+state.success.order-entry,state,Sent to kitchen.,أُرسل إلى المطبخ.,کچن کو بھیج دیا گیا۔,,false
+state.empty.tender,state,Choose a tender to take payment.,اختر طريقة الدفع.,ادائیگی کے لیے طریقہ منتخب کریں۔,,false
+state.loading.tender,state,Waiting for the card terminal…,بانتظار جهاز الدفع…,کارڈ ٹرمینل کا انتظار ہے…,,false
+state.error.tender,state,Payment declined. Try another tender.,تم رفض الدفع. جرّب طريقة أخرى.,ادائیگی مسترد ہو گئی۔ کوئی اور طریقہ آزمائیں۔,,false
+state.offline.tender,state,Card terminal offline. Take cash or enter the approval code.,جهاز الدفع غير متصل. اقبل نقدًا أو أدخل رمز الموافقة.,کارڈ ٹرمینل آف لائن ہے۔ نقد لیں یا منظوری کوڈ درج کریں۔,,false
+state.locked.tender,state,Discount over policy needs a manager PIN.,الخصم فوق السياسة يتطلب رمز المدير.,پالیسی سے زیادہ رعایت کے لیے منیجر پن درکار ہے۔,,false
+state.success.tender,state,Paid. Change {change}.,تم الدفع. الباقي {change}.,ادا ہو گیا۔ بقایا {change}۔,,false
+state.empty.kds,state,No open tickets.,لا توجد تذاكر مفتوحة.,کوئی کھلا ٹکٹ نہیں۔,,false
+state.loading.kds,state,Connecting to the kitchen feed…,جارٍ الاتصال بقناة المطبخ…,کچن فیڈ سے جڑ رہا ہے…,,false
+state.error.kds,state,Kitchen feed lost. Tickets print as fallback.,انقطع اتصال المطبخ. تُطبع التذاكر كبديل.,کچن فیڈ منقطع ہے۔ متبادل کے طور پر ٹکٹ پرنٹ ہوں گے۔,,false
+state.offline.kds,state,Offline. Showing tickets from this device.,غير متصل. عرض التذاكر من هذا الجهاز.,آف لائن۔ اس ڈیوائس کے ٹکٹ دکھائے جا رہے ہیں۔,,false
+state.locked.kds,state,Recall needs a manager PIN after 10 minutes.,الاستدعاء بعد 10 دقائق يتطلب رمز المدير.,10 منٹ بعد ریکال کے لیے منیجر پن درکار ہے۔,,false
+state.success.kds,state,Bumped.,تم الإنجاز.,بمپ ہو گیا۔,,false
+state.empty.table-map,state,No floor plan yet. Open the floor editor.,لا توجد خريطة طاولات بعد. افتح محرر القاعة.,ابھی فلور پلان نہیں۔ فلور ایڈیٹر کھولیں۔,,false
+state.loading.table-map,state,Loading tables…,جارٍ تحميل الطاولات…,ٹیبل لوڈ ہو رہے ہیں…,,false
+state.error.table-map,state,Table status could not be refreshed.,تعذّر تحديث حالة الطاولات.,ٹیبل کی حالت تازہ نہیں ہو سکی۔,,false
+state.offline.table-map,state,Offline. Table states are from this device.,غير متصل. حالات الطاولات من هذا الجهاز.,آف لائن۔ ٹیبل کی حالت اس ڈیوائس سے ہے۔,,false
+state.locked.table-map,state,Transfer needs a manager PIN.,نقل الطاولة يتطلب رمز المدير.,ٹیبل منتقل کرنے کے لیے منیجر پن درکار ہے۔,,false
+state.success.table-map,state,Table updated.,تم تحديث الطاولة.,ٹیبل اپ ڈیٹ ہو گیا۔,,false
+state.empty.receipt,state,No receipt for this order yet.,لا يوجد إيصال لهذا الطلب بعد.,اس آرڈر کی رسید ابھی نہیں۔,,false
+state.loading.receipt,state,Preparing receipt…,جارٍ تجهيز الإيصال…,رسید تیار ہو رہی ہے…,,false
+state.error.receipt,state,Printer offline. Receipt queued; send an e-receipt instead.,الطابعة غير متصلة. الإيصال في قائمة الانتظار؛ أرسل إيصالًا إلكترونيًا.,پرنٹر آف لائن ہے۔ رسید قطار میں ہے؛ ای رسید بھیجیں۔,,false
+state.offline.receipt,state,Offline. Fiscal QR will be added when reported.,غير متصل. سيُضاف رمز QR الضريبي عند الإبلاغ.,آف لائن۔ فسکل QR رپورٹ ہونے پر شامل ہوگا۔,,false
+state.locked.receipt,state,Reprint needs a manager PIN.,إعادة الطباعة تتطلب رمز المدير.,دوبارہ پرنٹ کے لیے منیجر پن درکار ہے۔,,false
+state.success.receipt,state,Printed.,تمت الطباعة.,پرنٹ ہو گیا۔,,false
+state.empty.reports,state,No sales in this range.,لا توجد مبيعات في هذه الفترة.,اس مدت میں کوئی فروخت نہیں۔,,false
+state.loading.reports,state,Building report…,جارٍ إعداد التقرير…,رپورٹ تیار ہو رہی ہے…,,false
+state.error.reports,state,Report failed. Narrow the range and retry.,فشل التقرير. ضيّق الفترة وأعد المحاولة.,رپورٹ ناکام۔ مدت کم کریں اور دوبارہ کوشش کریں۔,,false
+state.offline.reports,state,Reports need a connection.,التقارير تتطلب اتصالًا.,رپورٹس کے لیے کنکشن درکار ہے۔,,false
+state.locked.reports,state,Owner access needed for this report.,هذا التقرير يتطلب صلاحية المالك.,اس رپورٹ کے لیے مالک کی رسائی درکار ہے۔,,false
+state.success.reports,state,Report ready.,التقرير جاهز.,رپورٹ تیار ہے۔,,false
+action.add-item,action,Add,إضافة,شامل کریں,,false
+action.send-to-kitchen,action,Send to kitchen,إرسال إلى المطبخ,کچن کو بھیجیں,,false
+action.hold,action,Hold,تعليق,روکیں,,false
+action.fire-course,action,Fire course,إرسال الطبق,کورس بھیجیں,,false
+action.print-bill,action,Print bill,طباعة الفاتورة,بل پرنٹ کریں,,false
+action.pay,action,Pay,دفع,ادائیگی,,false
+action.cash,action,Cash,نقدًا,نقد,,false
+action.card,action,Card,بطاقة,کارڈ,,false
+action.wallet,action,Wallet,محفظة,والٹ,,false
+action.room-charge,action,Charge to room,تحميل على الغرفة,کمرے پر چارج کریں,,false
+action.exact,action,Exact,المبلغ بالضبط,بالکل,,false
+action.complete,action,Complete,إتمام,مکمل کریں,,false
+action.split-bill,action,Split bill,تقسيم الفاتورة,بل تقسیم کریں,,false
+action.discount,action,Discount,خصم,رعایت,,false
+action.tip,action,Tip,إكرامية,ٹپ,,false
+action.void,action,Void,إلغاء,کینسل,,false
+action.comp,action,Comp,مجاني,مفت,,false
+action.refund,action,Refund,استرداد,رقم واپسی,,false
+action.reprint,action,Reprint,إعادة طباعة,دوبارہ پرنٹ,,false
+action.e-receipt,action,Send e-receipt,إرسال إيصال إلكتروني,ای رسید بھیجیں,,false
+action.no-receipt,action,No receipt,بدون إيصال,رسید نہیں,,false
+action.open-shift,action,Open shift,فتح الوردية,شفٹ کھولیں,,false
+action.close-shift,action,Close shift,إغلاق الوردية,شفٹ بند کریں,,false
+action.x-report,action,X report,تقرير X,X رپورٹ,,false
+action.z-report,action,Z report,تقرير Z,Z رپورٹ,,false
+action.bump,action,Bump,إنجاز,بمپ,,false
+action.recall,action,Recall,استدعاء,ریکال,,false
+action.mark-86,action,Mark sold out,تحديد كنافد,ختم شدہ نشان لگائیں,,false
+action.merge-tables,action,Merge tables,دمج الطاولات,ٹیبل ملائیں,,false
+action.transfer-table,action,Transfer table,نقل الطاولة,ٹیبل منتقل کریں,,false
+action.mark-clean,action,Mark clean,تحديد كنظيفة,صاف نشان لگائیں,,false
+action.accept-order,action,Accept,قبول,قبول کریں,,false
+action.reject-order,action,Reject,رفض,مسترد کریں,,false
+action.ready,action,Ready,جاهز,تیار,,false
+action.handover,action,Hand over,تسليم,حوالے کریں,,false
+action.retry,action,Retry,إعادة المحاولة,دوبارہ کوشش,,false
+action.cancel,action,Cancel,إلغاء,منسوخ,,false
+action.confirm,action,Confirm,تأكيد,تصدیق,,false
+action.undo,action,Undo,تراجع,واپس لیں,,false
+error.void-needs-pin,error,Void of {amount} needs a manager PIN.,إلغاء {amount} يتطلب رمز المدير.,{amount} کینسل کرنے کے لیے منیجر پن درکار ہے۔,,false
+error.item-86,error,{item} is sold out. A manager can reset it in Menu.,{item} نفد. يمكن للمدير إعادته من القائمة.,{item} ختم ہو گیا ہے۔ منیجر مینو سے بحال کر سکتا ہے۔,,false
+error.split-remaining,error,{amount} still unassigned. Move items or add a bill.,{amount} لم يُخصص بعد. انقل الأصناف أو أضف فاتورة.,{amount} ابھی تفویض نہیں ہوا۔ آئٹم منتقل کریں یا بل شامل کریں۔,,false
+error.terminal-timeout,error,"No reply from the card terminal. Retry, or take another tender.",لا استجابة من جهاز الدفع. أعد المحاولة أو اقبل طريقة أخرى.,کارڈ ٹرمینل سے جواب نہیں ملا۔ دوبارہ کوشش کریں یا دوسرا طریقہ لیں۔,,false
+error.shift-open-orders,error,"{n} open orders. Pay, void or transfer them first.",{n} طلبات مفتوحة. ادفعها أو ألغها أو انقلها أولًا.,{n} کھلے آرڈر ہیں۔ پہلے ادائیگی، کینسل یا منتقل کریں۔,,false
+error.fiscal-pending,error,{n} receipts not yet reported. Retrying automatically.,{n} إيصالات لم يُبلّغ عنها بعد. تتم إعادة المحاولة تلقائيًا.,{n} رسیدیں ابھی رپورٹ نہیں ہوئیں۔ خودکار دوبارہ کوشش جاری ہے۔,,false
+error.offline-pin,error,Approved offline by {name}. Will be audited on sync.,تمت الموافقة دون اتصال بواسطة {name}. ستُراجع عند المزامنة.,{name} نے آف لائن منظوری دی۔ سنک پر آڈٹ ہوگا۔,,false
+error.duplicate-plu,error,PLU {plu} is already used by {item}.,رمز PLU {plu} مستخدم بالفعل لـ {item}.,PLU {plu} پہلے سے {item} کے لیے استعمال ہو رہا ہے۔,,false
+error.wrong-pin,error,Wrong PIN. {n} attempts left.,رمز خاطئ. {n} محاولات متبقية.,غلط پن۔ {n} کوششیں باقی ہیں۔,,false
+error.pin-locked,error,PIN locked for 60 seconds.,تم قفل الرمز لمدة 60 ثانية.,پن 60 سیکنڈ کے لیے لاک ہے۔,,false
+error.refund-exceeds,error,Refund cannot exceed {amount}.,لا يمكن أن يتجاوز الاسترداد {amount}.,رقم واپسی {amount} سے زیادہ نہیں ہو سکتی۔,,false
+error.reason-required,error,Choose a reason to continue.,اختر سببًا للمتابعة.,جاری رکھنے کے لیے وجہ منتخب کریں۔,,false
+error.printer-offline,error,Printer offline. Job queued.,الطابعة غير متصلة. المهمة في قائمة الانتظار.,پرنٹر آف لائن ہے۔ کام قطار میں ہے۔,,false
+error.sync-conflict,error,{n} changes need a manager to resolve.,{n} تغييرات تحتاج المدير لحلّها.,{n} تبدیلیوں کو منیجر کے حل کی ضرورت ہے۔,,false
+error.table-occupied,error,Table {n} is already seated.,الطاولة {n} مشغولة بالفعل.,ٹیبل {n} پہلے سے مصروف ہے۔,,false
+label.subtotal,label,Subtotal,المجموع الفرعي,ذیلی کل,,false
+label.discount,label,Discount,الخصم,رعایت,,false
+label.service-charge,label,Service charge,رسوم الخدمة,سروس چارج,,false
+label.vat,label,VAT,ضريبة القيمة المضافة,ویٹ,,false
+label.total,label,Total,الإجمالي,کل,,false
+label.change,label,Change,الباقي,بقایا,,false
+label.tendered,label,Tendered,المدفوع,ادا کردہ,,false
+label.table,label,Table,طاولة,ٹیبل,,false
+label.covers,label,Covers,عدد الأشخاص,افراد,,false
+label.seat,label,Seat,مقعد,نشست,,false
+label.course,label,Course,طبق,کورس,,false
+label.server,label,Server,النادل,ویٹر,,false
+label.order-no,label,Order no.,رقم الطلب,آرڈر نمبر,,false
+label.receipt-no,label,Receipt no.,رقم الإيصال,رسید نمبر,,false
+label.trn,label,TRN,الرقم الضريبي,ٹیکس نمبر,,false
+label.date,label,Date,التاريخ,تاریخ,,false
+label.qty,label,Qty,الكمية,مقدار,,false
+label.price,label,Price,السعر,قیمت,,false
+label.notes,label,Notes,ملاحظات,نوٹس,,false
+label.allergens,label,Allergens,مسببات الحساسية,الرجی,,false
+label.float,label,Opening float,الرصيد الافتتاحي,ابتدائی نقد,,false
+label.counted,label,Counted,المعدود,گنتی,,false
+label.expected,label,Expected,المتوقع,متوقع,,false
+label.variance,label,Variance,الفرق,فرق,,false
+label.void-reason.mistake,label,Entered by mistake,أُدخل بالخطأ,غلطی سے درج ہوا,,false
+label.void-reason.customer-changed,label,Customer changed mind,غيّر العميل رأيه,گاہک نے ارادہ بدل لیا,,false
+label.void-reason.kitchen-error,label,Kitchen error,خطأ في المطبخ,کچن کی غلطی,,false
+label.void-reason.out-of-stock,label,Out of stock,غير متوفر,اسٹاک ختم,,false
+label.void-reason.merge,label,Merged tables,دمج طاولات,ٹیبل ملائے گئے,,false
+label.comp-reason.complaint,label,Complaint,شكوى,شکایت,,false
+label.comp-reason.staff-meal,label,Staff meal,وجبة موظف,عملے کا کھانا,,false
+label.comp-reason.vip,label,VIP,ضيف مميز,وی آئی پی,,false
+label.age,label,Age,المدة,وقت,,false
+label.station,label,Station,المحطة,اسٹیشن,,false
+label.rush,label,Rush,عاجل,فوری,,false
+label.paid,label,Paid,مدفوع,ادا شدہ,,false
+label.unpaid,label,Unpaid,غير مدفوع,غیر ادا شدہ,,false
+label.dine-in,label,Dine-in,داخل المطعم,ڈائن اِن,,false
+label.takeaway,label,Takeaway,سفري,پارسل,,false
+label.delivery,label,Delivery,توصيل,ڈیلیوری,,false
+receipt.header.tax-invoice,receipt,Tax invoice,فاتورة ضريبية,ٹیکس انوائس,,false
+receipt.header.simplified,receipt,Simplified tax invoice,فاتورة ضريبية مبسطة,سادہ ٹیکس انوائس,,false
+receipt.thank-you,receipt,Thank you for your visit,شكرًا لزيارتكم,تشریف آوری کا شکریہ,,false
+receipt.reprint,receipt,REPRINT,نسخة معادة,دوبارہ پرنٹ,,false
+receipt.void,receipt,VOID,ملغى,منسوخ,,false
+receipt.vat-included,receipt,Prices include VAT,الأسعار شاملة ضريبة القيمة المضافة,قیمتوں میں ویٹ شامل ہے,,false
+receipt.served-by,receipt,Served by,خدمكم,خدمت,,false
+receipt.scan-verify,receipt,Scan to verify,امسح للتحقق,تصدیق کے لیے اسکین کریں,,false
+receipt.fbr-invoice,receipt,FBR invoice no.,رقم فاتورة FBR,ایف بی آر انوائس نمبر,,false
+receipt.cash,receipt,Cash,نقدًا,نقد,,false
+receipt.card-ending,receipt,Card ending,بطاقة تنتهي بـ,کارڈ آخری ہندسے,,false
+receipt.approval-code,receipt,Approval,رمز الموافقة,منظوری کوڈ,,false
+kds.new-ticket,receipt,New ticket,تذكرة جديدة,نیا ٹکٹ,,false
+kds.all-day,receipt,All day,الإجمالي,کل دن,,false
+kds.held,receipt,Held,معلّق,روکا ہوا,,false
+kds.recalled,receipt,Recalled,مستدعى,ریکال شدہ,,false

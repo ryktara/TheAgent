@@ -12,7 +12,8 @@ python scripts/foundry.py scaffold-pack <slug>
 
 ## Routing table
 
-`packs/index.csv` is the only file `pack-match` reads. Columns:
+`packs/index.csv` is generated: `python scripts/foundry.py sync-index` rebuilds it from every
+`pack.yaml` (`threshold` defaults to 0.7, generic 0.0) and `validate` fails on drift. Columns:
 
 | Column | Meaning |
 |--------|---------|
@@ -37,10 +38,11 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example (schema 1.1)
+## pack.yaml example (schema 1.2)
 
 ```yaml
-version: "1.1"
+version: "1.2"
+threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
 aliases: [restaurant point of sale, cafe pos, qsr pos]
@@ -64,7 +66,7 @@ reference: {screens: reference/screens.md, workflows: reference/workflows.md, gl
 
 Schema: `schemas/pack.schema.json`.
 
-## Question bank (1.1)
+## Question bank (1.2)
 
 `questions` is a ranked bank of at most 12. The 7/3 round budget is enforced at grill time by
 `schemas/decisions.schema.json`, so a brief that pre-answers three questions still leaves enough
@@ -82,6 +84,7 @@ ranked questions to fill round 1.
 | skip_if_brief_mentions | no | keywords; any hit pre-answers the question with `source: brief` |
 | brief_hints | no | choice → keywords; a hit resolves the value to that choice |
 | maps_to | no | dotted path into decisions, e.g. `region.country` |
+| followups | no | up to 3 of `{when: <value or "*">, ask: [ids]}`; targets are round-2 only and never fill round 1 |
 
 `foundry.py match` prefills: for a choice question, the value is the `brief_hints` choice whose
 keyword hit, else the choice whose text matches, else the matched phrase. Bool questions become

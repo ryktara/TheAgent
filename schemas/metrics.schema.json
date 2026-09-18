@@ -12,13 +12,17 @@
     "skill": { "type": "string" },
     "event": { "type": "string", "enum": ["phase-start", "phase-end", "tool-call", "gate", "ticket-start", "ticket-end", "review"] },
     "tool": { "type": "string" },
-    "tokens_in": { "type": "integer", "minimum": 0 },
-    "tokens_out": { "type": "integer", "minimum": 0 },
-    "tool_calls": { "type": "integer", "minimum": 0 },
-    "wall_ms": { "type": "integer", "minimum": 0 },
+    "started": { "type": ["string", "null"] },
+    "ended": { "type": ["string", "null"] },
+    "tokens_in": { "type": ["integer", "null"], "minimum": 0 },
+    "tokens_out": { "type": ["integer", "null"], "minimum": 0 },
+    "tool_calls": { "type": ["integer", "null"], "minimum": 0 },
+    "tool_calls_estimate": { "type": ["integer", "null"], "minimum": 0 },
+    "wall_ms": { "type": ["integer", "null"], "minimum": 0 },
     "model": { "type": "string", "enum": ["haiku", "sonnet", "opus"] },
     "gate_passed": { "type": "boolean" },
     "screenshot": { "type": "string" },
+    "note": { "type": "string" },
     "notes": { "type": "string" }
   }
 }

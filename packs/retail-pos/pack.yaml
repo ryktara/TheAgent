@@ -1,4 +1,5 @@
-version: "1.1"
+version: "1.2"
+threshold: 0.7
 slug: retail-pos
 name: Retail POS
 aliases: [retail point of sale, retail pos, shop pos, store pos, supermarket pos, grocery pos, pharmacy pos]
@@ -33,9 +34,12 @@ ui_profile: {style: high-contrast-operational, density: high, touch: 48dp, fonts
 questions:
   - {id: region, rank: 1, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, uae, riyadh, jeddah, saudi, ksa, karachi, lahore, pakistan], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}, maps_to: region.country}
   - {id: payments, rank: 2, ask: "Card payments via which provider?", answer_type: choice, choices: [stripe, network-intl, tap, mada, cash-only], default: stripe, reversible: true, skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, mada, cash only], brief_hints: {network-intl: [network international, n-genius], tap: [tap payments], mada: [mada], cash-only: [cash only]}, maps_to: payments.provider}
-  - {id: branches, rank: 3, ask: "Single store or multi-store?", answer_type: choice, choices: [single, multi], default: single, reversible: true, skip_if_brief_mentions: [one store, second store, stores, branches, outlets, chain], brief_hints: {multi: [stores, branches, outlets, chain, second store next year], single: [one store, single store]}, maps_to: org.branches}
+  - {id: branches, rank: 3, ask: "Single store or multi-store?", answer_type: choice, choices: [single, multi], default: single, reversible: true, followups: [{when: multi, ask: [stock-transfer]}], skip_if_brief_mentions: [one store, second store, stores, branches, outlets, chain], brief_hints: {multi: [stores, branches, outlets, chain, second store next year], single: [one store, single store]}, maps_to: org.branches}
   - {id: variants, rank: 4, ask: "Do products come in sizes or colours?", answer_type: bool, default: true, reversible: true, skip_if_brief_mentions: [size, sizes, colour, colours, color, colors, variants], maps_to: catalog.variants}
-  - {id: einvoice, rank: 5, ask: "Government e-invoicing required?", answer_type: bool, default: false, reversible: false, skip_if_brief_mentions: [zatca, fatoora, e-invoice, e-invoices, einvoice, fbr], maps_to: compliance.einvoice}
-  - {id: loyalty, rank: 6, ask: "Loyalty programme?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [loyalty, points, rewards], maps_to: features.loyalty}
+  - {id: einvoice, rank: 5, ask: "Government e-invoicing required?", answer_type: bool, default: false, reversible: false, followups: [{when: true, ask: [einvoice-provider]}], skip_if_brief_mentions: [zatca, fatoora, e-invoice, e-invoices, einvoice, fbr], maps_to: compliance.einvoice}
+  - {id: loyalty, rank: 6, ask: "Loyalty programme?", answer_type: bool, default: false, reversible: true, followups: [{when: true, ask: [loyalty-type]}], skip_if_brief_mentions: [loyalty, points, rewards], maps_to: features.loyalty}
   - {id: offline, rank: 7, ask: "Must checkout keep working when internet drops?", answer_type: bool, default: true, reversible: false, skip_if_brief_mentions: [offline, internet drops, without internet], maps_to: nfr.offline}
+  - {id: stock-transfer, rank: 8, ask: "Transfer stock between stores inside the app?", answer_type: bool, default: true, reversible: true, maps_to: inventory.transfers}
+  - {id: einvoice-provider, rank: 9, ask: "E-invoice via a certified provider or direct integration?", answer_type: choice, choices: [provider, direct], default: provider, reversible: true, maps_to: compliance.einvoice_mode}
+  - {id: loyalty-type, rank: 10, ask: "Points per spend, stamps, or tiers?", answer_type: choice, choices: [points, stamps, tiers], default: points, reversible: true, maps_to: features.loyalty_type}
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}

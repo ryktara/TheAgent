@@ -1,79 +1,279 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://foundry.dev/schemas/pack.schema.json",
-  "title": "Foundry domain pack (pack.yaml) v1.1",
+  "title": "Foundry domain pack (pack.yaml) v1.2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "slug", "name", "aliases", "confidence_keywords", "personas", "jobs", "must_have", "should_have", "entities", "invariants", "integrations", "regional", "compliance_must", "nfr_defaults", "stack_default", "ui_profile", "questions", "reference"],
+  "required": [
+    "version",
+    "slug",
+    "name",
+    "aliases",
+    "confidence_keywords",
+    "personas",
+    "jobs",
+    "must_have",
+    "should_have",
+    "entities",
+    "invariants",
+    "integrations",
+    "regional",
+    "compliance_must",
+    "nfr_defaults",
+    "stack_default",
+    "ui_profile",
+    "questions",
+    "reference"
+  ],
   "properties": {
-    "version": { "type": "string", "const": "1.1" },
-    "slug": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
-    "name": { "type": "string", "minLength": 1 },
-    "aliases": { "type": "array", "items": { "type": "string" } },
-    "confidence_keywords": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-    "personas": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence_keywords": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "personas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
     "jobs": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "must", "screens"],
+        "required": [
+          "id",
+          "must",
+          "screens"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "must": { "type": "boolean" },
-          "screens": { "type": "array", "items": { "type": "string" } }
+          "id": {
+            "type": "string"
+          },
+          "must": {
+            "type": "boolean"
+          },
+          "screens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
-    "must_have": { "type": "array", "items": { "type": "string" } },
-    "should_have": { "type": "array", "items": { "type": "string" } },
+    "must_have": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "should_have": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "entities": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
-        "properties": { "states": { "type": "array", "items": { "type": "string" } } },
+        "properties": {
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "additionalProperties": true
       }
     },
-    "invariants": { "type": "array", "items": { "type": "string" } },
-    "integrations": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
-    "regional": { "type": "object", "additionalProperties": { "type": "object" } },
-    "compliance_must": { "type": "array", "items": { "type": "string" } },
-    "nfr_defaults": { "type": "object" },
-    "stack_default": { "type": "object", "additionalProperties": { "type": "string" } },
-    "ui_profile": { "type": "object" },
+    "invariants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "regional": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "compliance_must": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nfr_defaults": {
+      "type": "object"
+    },
+    "stack_default": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ui_profile": {
+      "type": "object"
+    },
     "questions": {
       "type": "array",
       "maxItems": 12,
       "items": {
         "type": "object",
-        "required": ["id", "rank", "ask", "answer_type", "default"],
+        "required": [
+          "id",
+          "rank",
+          "ask",
+          "answer_type",
+          "default"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "rank": { "type": "integer", "minimum": 1, "maximum": 12 },
-          "ask": { "type": "string" },
-          "answer_type": { "type": "string", "enum": ["choice", "text", "number", "bool"] },
-          "choices": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+          "id": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "ask": {
+            "type": "string"
+          },
+          "answer_type": {
+            "type": "string",
+            "enum": [
+              "choice",
+              "text",
+              "number",
+              "bool"
+            ]
+          },
+          "choices": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "string"
+            }
+          },
           "default": {},
-          "reversible": { "type": "boolean" },
-          "skip_if_brief_mentions": { "type": "array", "items": { "type": "string" } },
-          "brief_hints": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
-          "maps_to": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$" }
+          "reversible": {
+            "type": "boolean"
+          },
+          "skip_if_brief_mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "brief_hints": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "maps_to": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+          },
+          "followups": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "required": [
+                "when",
+                "ask"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "when": {},
+                "ask": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 3,
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "reference": {
       "type": "object",
-      "required": ["screens", "workflows", "glossary", "compliance", "ux_patterns"],
-      "additionalProperties": { "type": "string" },
+      "required": [
+        "screens",
+        "workflows",
+        "glossary",
+        "compliance",
+        "ux_patterns"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
       "properties": {
-        "screens": { "type": "string" },
-        "workflows": { "type": "string" },
-        "glossary": { "type": "string" },
-        "compliance": { "type": "string" },
-        "ux_patterns": { "type": "string" }
+        "screens": {
+          "type": "string"
+        },
+        "workflows": {
+          "type": "string"
+        },
+        "glossary": {
+          "type": "string"
+        },
+        "compliance": {
+          "type": "string"
+        },
+        "ux_patterns": {
+          "type": "string"
+        }
       }
+    },
+    "threshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
     }
   }
 }

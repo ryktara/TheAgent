@@ -1,1 +1,105 @@
 term,definition,aliases
+Order,One guest transaction from first line to close; owns lines payments and receipt,ticket;check;chit
+OrderLine,One menu item with qty variant modifiers seat and course on an Order,line;item line
+Cover,One guest seated at a table; used for per-head reporting,pax;head;guest count
+Table,A physical seating unit on the floor plan with a state,seat;tbl
+Zone,A named area of the floor such as Indoor or Terrace,section;area
+KOT,Kitchen Order Ticket: the fired lines sent to a kitchen station,kitchen ticket;KitchenTicket;chit
+Fire,Send a course or line to the kitchen now,send;push
+Hold,Keep a line on the order without firing it,park
+Course,A timed group of lines such as starters mains desserts,seating course
+Bump,Mark a kitchen ticket or line done on the KDS,clear;done
+Recall,Bring a bumped ticket back to the KDS,unbump
+KDS,Kitchen display system: screen showing tickets per station,kitchen screen
+Station,A kitchen prep area such as grill fryer cold that receives its own tickets,prep station
+86,Item unavailable now; removed from ordering until reset,sold out;eighty-six
+PLU,Price look-up code typed to add an item quickly,item code;short code
+Modifier,An option that changes an item such as size or extra cheese,option;add-on;extra
+ModifierGroup,A set of modifiers with min and max selection rules,option group
+Variant,A size or version of an item with its own price and SKU,size;portion
+Seat,Position number at a table used to split bills by guest,position
+Split bill,Dividing one order into several bills by seat item equal or custom,split check;separate bills
+Split tender,Paying one bill with more than one tender,mixed payment
+Tender,A payment method such as cash card wallet room charge,payment type;MOP
+Tab,An open order kept running across visits or the evening,open check;running bill
+Bill,The printed request for payment before tender,check;pre-receipt
+Receipt,The fiscal document issued after payment,invoice;tax invoice
+Simplified tax invoice,KSA B2C receipt format required by ZATCA with TLV QR,فاتورة مبسطة
+TLV QR,Tag-length-value base64 QR carrying seller VAT number time total and VAT,ZATCA QR
+TRN,UAE Tax Registration Number printed on receipts,VAT number
+FBR invoice number,Pakistan fiscal invoice id returned by the FBR POS system and printed with a QR,FBR IN
+Tax-inclusive,Displayed price already contains tax; tax is extracted not added,inclusive pricing
+Tax-exclusive,Tax added on top of the displayed price at the bill,exclusive pricing
+Service charge,Percentage added to the bill by house policy shown separately,SC;service
+Municipality fee,Emirate-level fee on hotel F&B bills such as Dubai 7%,DM fee
+Tourism Dirham,Per-room per-night Dubai fee; not applied to restaurant bills,TD
+Tip,Gratuity given to staff recorded on the payment,gratuity
+Discount,A reduction applied to a line or the order with a reason,promo;offer
+Comp,Give a line free with reason and approval; cost still deducted,complimentary;on the house
+Void,Cancel a line or order with reason; fired voids need approval,cancel
+Refund,Return money for a paid order fully or partly,return;reversal
+Manager PIN,Short code that approves guarded actions,override code;approval
+Approver,Staff who entered the PIN for a guarded action,authoriser
+Shift,A cashier session on one device with float and cash count,session;till session
+Float,Opening cash in the drawer at shift start,opening balance;cash float
+Cash count,Denomination count at shift close,cash up;cashing up
+Variance,Counted cash minus expected cash,over/short
+X-report,Shift summary printed without closing,mid-shift report
+Z-report,Shift close summary that resets the shift totals,end of shift;Z
+End of day,Business day close across devices with posting to accounting,EOD;day close
+Payout,Cash taken from the drawer for expenses recorded against the shift,paid out
+Drawer,Cash drawer opened by cash tenders or with permission,till
+Customer display,Second screen facing the guest showing lines and total,CFD;customer-facing display
+Channel,Where the order came from: dine-in counter qr delivery platform,source;order type
+Parcel,Takeaway order (South Asian usage),takeaway;take-out;to go
+Dine-in,Guest eats at a table with service,eat in;sit down
+Quick service,Order and pay at the counter then collect,QSR;fast casual;counter service
+Cloud kitchen,Delivery-only kitchen with no dining room possibly several brands,dark kitchen;ghost kitchen;virtual brand
+Food court kiosk,Counter unit inside a mall food court often with shared seating,kiosk;stall
+Room charge,Hotel guest posts the bill to their room folio,post to room;charge to room
+Folio,Hotel guest account in the PMS that room charges post to,guest account
+PMS,Hotel property management system integrated for room charges,hotel system
+Khaata,Customer credit account settled later (Urdu/Hindi usage),udhaar;tab;credit account
+Aggregator,Delivery platform sending orders such as Talabat Deliveroo Careem Noon Food,delivery platform;marketplace
+Tablet fallback,Manual entry of platform orders when the API is down,tablet mode
+Rider,Delivery driver collecting the order,driver;courier
+Prep time,Minutes promised to the platform before the order is ready,preparation time
+Auto-accept,Accept platform orders without staff action,auto-confirm
+Reservation,A booked table for a time and party size,booking
+Waitlist,Walk-in queue for tables with notify on ready,queue
+No-show,Reservation whose guests did not arrive,DNA
+Menu,All categories items variants and modifiers offered,catalogue
+Category,A menu grouping such as Hot Drinks or Grills,department
+Availability schedule,Times when an item or category can be ordered,day-part;happy hour
+Channel price,Item price specific to a channel such as delivery,platform price
+Recipe,Bill of materials that maps an item to inventory quantities,BOM;recipe card
+Yield,Portions one recipe batch produces,portion count
+Stock deduction,Automatic inventory movement when an item is served,depletion
+Wastage,Stock lost to spoilage or error recorded with reason,waste;spoilage
+Par level,Minimum stock to keep; below it triggers low-stock,reorder point
+Purchase order,Request to a supplier for stock,PO
+Goods receipt,Recording delivered stock against a PO,GRN;receiving
+Offline queue,Local store of writes waiting to sync,sync queue;outbox
+SyncEvent,One queued write with device id and sequence,event;outbox entry
+Conflict,Two devices changed the same field while offline,merge conflict
+Client UUID,Order id generated on the device so offline orders are unique,local id
+Device sequence,Monotonic counter per device used to order sync events,seq
+Receipt block,Range of receipt numbers reserved to a device for offline use,number range
+Branch,One physical location with its own receipts tax and float,outlet;location;store
+Central menu,Menu published from head office to all branches,master menu
+Per-branch price,Override of a central price at one branch,local price
+Staff,Person with a PIN and role on the POS,employee;user
+Role,Named permission set such as cashier waiter manager owner,permission set
+Audit event,Immutable record of who did what to which object when,audit log entry
+Loyalty points,Points earned per spend redeemable as discount,rewards
+Allergen tag,Warning label on a line or item such as nuts dairy,allergy note
+Rush,Priority flag on a ticket shown first on the KDS,priority;VIP
+Order age,Minutes since a ticket was fired; drives KDS colours,ticket timer
+Numpad,On-screen keypad for quantities amounts PINs,keypad
+Quick cash,Buttons for exact and round cash amounts at tender,fast cash
+Hosted fields,Provider-hosted card inputs that keep card data off the POS,hosted payment page;iframe fields
+SoftPOS,Accepting contactless cards on a phone without a terminal,tap to phone
+Terminal,Card reader device that captures card payments,PDQ;card machine;EDC
+Approval code,Code returned by the terminal or gateway for a captured payment,auth code
+Settlement,Provider payout of captured card amounts to the merchant,payout
+Reconciliation,Matching POS payments to provider and platform settlements,recon

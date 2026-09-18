@@ -1,49 +1,118 @@
-version: "1.2"
+version: "1.3"
+complete: true
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
-aliases: [restaurant point of sale, restaurant pos, cafe pos, f&b pos, qsr pos, coffee shop pos, cafeteria pos]
-confidence_keywords: [restaurant, cafe, cafeteria, coffee shop, kitchen, kds, kitchen display, table, tables, dine-in, dine in, takeaway, menu, modifiers, order, orders, waiter, chef, bill, split bill, tips, reservations, food, f&b, qsr, shisha, mandi, shawarma, karak, bakery, cloud kitchen, delivery, talabat, deliveroo, pos, ipad, tablet, cards, network international, n-genius]
-personas: [cashier, waiter, kitchen, manager, owner, customer]
+aliases: [restaurant point of sale, restaurant pos, cafe pos, f&b pos, qsr pos, coffee shop pos, cafeteria pos, food court pos, cloud kitchen pos, hotel restaurant pos]
+confidence_keywords: [restaurant, cafe, cafeteria, coffee shop, kitchen, kds, kitchen display, table, dine-in, dining, fine dining, takeaway, parcel, menu, modifiers, order, waiter, chef, bill, split bill, tips, reservations, food, f&b, qsr, fast food, shisha, hookah, mandi, shawarma, karak, chai, tea shop, bakery, cloud kitchen, dark kitchen, delivery, talabat, deliveroo, careem, noon food, pos, ipad, tablet, food court, kiosk, self-order, qr menu, qr ordering, hotel restaurant, room charge, room service, buffet, catering, canteen, bistro, grill, pizzeria, burger, juice bar, dhaba, biryani, kebab, falafel, lounge, brunch, eatery, diner, kot, covers, brands]
+personas: [cashier, waiter, kitchen, manager, owner, accountant, customer, delivery-rider]
 jobs:
-  - {id: take-order, must: true, screens: [order-entry, table-map]}
-  - {id: prepare-order, must: true, screens: [kds]}
-  - {id: settle-bill, must: true, screens: [payment, split-bill]}
-  - {id: close-shift, must: true, screens: [shift-close]}
-  - {id: review-sales, must: true, screens: [reports-daily]}
-must_have: [order-entry, modifiers, split-bill, kds, payments, shift-close, inventory-basic, reports-daily, offline-queue, vat-receipt]
-should_have: [reservations, loyalty, delivery-integration, multi-branch, table-map, tips]
+  - {id: take-order-table, persona: waiter, must: true, screens: [table-map, order-entry]}
+  - {id: take-order-counter, persona: cashier, must: true, screens: [order-entry]}
+  - {id: take-order-qr, persona: customer, must: false, screens: [qr-self-order]}
+  - {id: modify-order, persona: waiter, must: true, screens: [order-entry, modifier-sheet]}
+  - {id: send-to-kitchen, persona: waiter, must: true, screens: [order-entry, kds]}
+  - {id: kds-bump, persona: kitchen, must: true, screens: [kds]}
+  - {id: hold-void-comp, persona: manager, must: true, screens: [order-entry, manager-pin]}
+  - {id: split-bill, persona: cashier, must: true, screens: [split-bill]}
+  - {id: merge-transfer-tables, persona: waiter, must: true, screens: [table-map]}
+  - {id: apply-discount, persona: cashier, must: true, screens: [tender, manager-pin]}
+  - {id: tips-service-charge, persona: cashier, must: true, screens: [tender]}
+  - {id: take-payment, persona: cashier, must: true, screens: [tender]}
+  - {id: print-receipt, persona: cashier, must: true, screens: [receipt-preview]}
+  - {id: refund, persona: manager, must: true, screens: [refund, manager-pin]}
+  - {id: open-close-shift, persona: cashier, must: true, screens: [shift-open, shift-close]}
+  - {id: end-of-day, persona: manager, must: true, screens: [end-of-day]}
+  - {id: manage-menu, persona: manager, must: true, screens: [menu-management]}
+  - {id: manage-floor, persona: manager, must: true, screens: [floor-editor, table-map]}
+  - {id: reservations-waitlist, persona: waiter, must: false, screens: [reservations]}
+  - {id: inventory-basic, persona: manager, must: true, screens: [inventory, recipe-editor]}
+  - {id: purchasing, persona: manager, must: false, screens: [purchasing]}
+  - {id: delivery-orders, persona: kitchen, must: false, screens: [delivery-inbox, kds]}
+  - {id: reports, persona: owner, must: true, screens: [reports]}
+  - {id: staff-roles, persona: owner, must: true, screens: [staff-roles]}
+  - {id: multi-branch, persona: owner, must: false, screens: [branch-switcher, menu-management]}
+  - {id: loyalty, persona: cashier, must: false, screens: [tender, customer-lookup]}
+  - {id: offline-sync, persona: cashier, must: true, screens: [sync-status]}
+must_have: [order-entry, table-map, modifiers, course-firing, send-to-kitchen, kds, hold-void-comp, split-bill, merge-transfer, discounts, tips-service-charge, tender-cash-card-wallet, split-tender, receipt-bilingual-qr, refunds, shift-cash-count, z-report, end-of-day, menu-management, floor-management, inventory-basic, reports-core, staff-roles, offline-queue, audit-log]
+should_have: [qr-self-order, room-charge, reservations, waitlist, purchasing, delivery-integration, multi-branch, loyalty, whatsapp-receipts, accounting-sync, customer-display, e-invoicing]
 entities:
-  Order: {states: [draft, sent, ready, served, paid, void]}
-  OrderLine: {states: [pending, fired, ready, served, voided]}
-  Table: {states: [free, seated, ordered, billed]}
-  Payment: {states: [pending, authorised, captured, refunded, failed]}
-  Shift: {states: [open, closed, reconciled]}
-  MenuItem: {states: [active, sold-out, hidden]}
+  Order: {states: [draft, sent, in-progress, ready, served, billed, paid, closed, void, refunded], fields: [id, client_uuid, device_seq, branch_id, table_id, channel, covers, subtotal, discount_total, service_charge, tax_total, total, opened_at, closed_at]}
+  OrderLine: {states: [pending, held, fired, ready, served, voided, comped], fields: [order_id, menu_item_id, variant_id, qty, unit_price, modifiers_total, line_total, course, seat, notes, allergens]}
+  Modifier: {states: [active, hidden], fields: [group_id, name, price_delta, max_qty]}
+  ModifierGroup: {states: [active, hidden], fields: [name, min_select, max_select, required]}
+  Table: {states: [free, seated, ordered, billed, dirty, blocked], fields: [branch_id, zone, number, seats, shape, x, y]}
+  Shift: {states: [open, closed, reconciled], fields: [branch_id, device_id, opened_by, opening_float, closing_count, expected_cash, variance]}
+  Payment: {states: [pending, authorised, captured, declined, refunded, voided], fields: [order_id, amount, tender_id, provider_ref, approval_code, captured_at]}
+  Tender: {states: [active, disabled], fields: [name, kind, provider, surcharge_pct, opens_drawer]}
+  Refund: {states: [requested, approved, processed, failed], fields: [payment_id, amount, reason, approver_id]}
+  Receipt: {states: [issued, reprinted, voided], fields: [order_id, branch_id, number, fiscal_qr, language, issued_at]}
+  MenuItem: {states: [active, sold-out, hidden, seasonal], fields: [category_id, plu, name_en, name_ar, price, tax_rule_id, kitchen_station, image]}
+  Variant: {states: [active, hidden], fields: [menu_item_id, name, price_delta, sku]}
+  Course: {states: [scheduled, fired, served], fields: [order_id, sequence, name, fired_at]}
+  KitchenTicket: {states: [new, in-progress, ready, bumped, recalled], fields: [order_id, station, lines, fired_at, bumped_at, age_seconds]}
+  Reservation: {states: [requested, confirmed, seated, no-show, cancelled], fields: [customer_id, party_size, slot, table_id, notes]}
+  Customer: {states: [guest, registered, blocked], fields: [name, phone, email, loyalty_points, khaata_balance, allergens]}
+  Discount: {states: [active, expired], fields: [name, kind, value, scope, requires_pin, channel]}
+  TaxRule: {states: [active, retired], fields: [region, name, rate, inclusive, applies_to]}
+  Branch: {states: [active, suspended], fields: [name, region, currency, timezone, receipt_prefix, fiscal_regime]}
+  Staff: {states: [active, suspended], fields: [name, pin_hash, role_id, branch_ids]}
+  Role: {states: [active], fields: [name, permissions]}
+  InventoryItem: {states: [active, discontinued], fields: [name, unit, on_hand, par_level, cost]}
+  Recipe: {states: [active, retired], fields: [menu_item_id, components, yield]}
+  StockMovement: {states: [recorded], fields: [inventory_item_id, qty, kind, reference, at]}
+  SyncEvent: {states: [pending, sent, acked, conflict], fields: [device_id, seq, entity, payload, created_at]}
 invariants:
-  - "Order total == sum(lines) - discounts + tax"
-  - "A paid Order has payments summing to its total"
-  - "A void Order has zero captured payments"
-  - "Every fired OrderLine appears on exactly one KDS station"
-  - "A Shift closes only when every Order opened in it is paid or void"
-integrations: {payments: [stripe, network-intl, tap, checkout], delivery: [talabat, deliveroo, careem], accounting: [zoho, quickbooks], printers: [epson-epos, star]}
+  - "Order.total == sum(OrderLine.line_total) - Order.discount_total + Order.service_charge + Order.tax_total, computed in minor units"
+  - "When TaxRule.inclusive is true, tax_total is extracted from tax-inclusive prices and rounding happens once per Order, not per line"
+  - "An Order in state paid has captured Payment amounts summing exactly to Order.total"
+  - "An OrderLine in state voided or comped carries a reason and an approver Staff id"
+  - "A Shift closes only when every Order opened on its device is paid, void or transferred"
+  - "Every offline Order carries a client_uuid and a device_seq that is monotonic per device"
+  - "Receipt numbers are gapless and increasing per Branch; a reprint reuses the number and marks Receipt reprinted"
+  - "A KitchenTicket is derived from fired OrderLines; it never holds lines that are not on the Order"
+  - "A Refund never exceeds the captured amount of its Payment minus prior Refunds"
+  - "A Table in state seated or ordered references exactly one open Order"
+  - "Merging Tables moves every OrderLine to one surviving Order and voids the others with reason merge"
+  - "A Discount that requires a PIN is applied only with an approver Staff id recorded on the Order"
+  - "Service charge applies to subtotal after discounts and before tax unless TaxRule says otherwise"
+  - "StockMovement of kind sale is written once per served OrderLine using the Recipe of its MenuItem"
+  - "A SyncEvent in state conflict is resolved by the server rule last-writer-wins per field except Payment, which is append-only"
+  - "MenuItem in state sold-out cannot be added to a new OrderLine on any channel"
+  - "Receipt.language is one of the Branch receipt languages and defaults to the Customer preference"
+  - "Every state change on Order, Payment, Refund, Shift and Discount writes one audit log event"
+  - "A Modifier price_delta is added to OrderLine.modifiers_total once per selected quantity, within its ModifierGroup min and max"
+  - "A Tender of kind cash opens the drawer; a Tender of kind card requires a provider_ref and approval_code on its Payment"
+  - "A Reservation in state seated references exactly one Table and one open Order"
+  - "InventoryItem.on_hand == sum(StockMovement.qty) for that item since the last count"
+  - "A Course fires all its OrderLines together; a fired Course keeps its sequence"
+  - "A Variant price_delta applies to OrderLine.unit_price before any Modifier"
+integrations: {payments: [network-intl, tap, stripe, checkout, magnati, telr, paytabs, cash, softpos], delivery: [talabat, deliveroo, careem, noon-food, tablet-fallback], accounting: [zoho, quickbooks, xero, odoo], printers: [escpos-network, escpos-usb, escpos-bluetooth, star, epson], hardware: [cash-drawer, barcode-scanner, customer-display, kds-tablet], messaging: [whatsapp-receipts], einvoicing: [ae-fta, sa-zatca, pk-fbr]}
 regional:
-  AE: {tax: "VAT 5%", receipt_lang: [en, ar], einvoice: "FTA phase 2 (2026)"}
-  SA: {tax: "VAT 15%", receipt_lang: [ar, en], einvoice: "ZATCA Fatoora phase 2"}
-  PK: {tax: "GST/PST by province", receipt_lang: [en, ur], fbr_pos_integration: true}
-compliance_must: [PCI-DSS SAQ-A via hosted fields, receipt retention 5y, VAT-compliant receipt fields]
-nfr_defaults: {offline: required, p95_order_entry_ms: 200, tablets: [ipad, android-10in], printers: thermal-80mm}
-stack_default: {web: nextjs, api: hono, db: postgres, offline: pglite-sync, mobile: expo}
-ui_profile: {style: high-contrast-operational, density: high, touch: 48dp, dark: kitchen-only, fonts: [Inter, tabular-numerals]}
+  AE: {tax: "VAT 5%", inclusive_default: true, receipt_lang: [en, ar], einvoice: "FTA e-invoicing B2B/B2G from 2027; B2C receipts exempt until further notice", rounding: "nearest fils, once per order", currency: AED, minor_units: 2, fiscal: "VAT tax invoice fields; TRN on receipt", fees: "hotel F&B: 7% municipality fee (Dubai), 10% service charge; Tourism Dirham on rooms only"}
+  SA: {tax: "VAT 15%", inclusive_default: true, receipt_lang: [ar, en], einvoice: "ZATCA Fatoora phase 2: simplified tax invoice with TLV QR, reported within 24h", rounding: "nearest halala, once per order", currency: SAR, minor_units: 2, fiscal: "simplified tax invoice, QR tags 1-5 minimum, XML reporting", fees: "service charge optional; must be shown separately"}
+  PK: {tax: "provincial sales tax on restaurant services: Punjab 16% cash / 8% card; Sindh 15% cash / 8% card or wallet; KP 16% (verify)", inclusive_default: false, receipt_lang: [en, ur], einvoice: "FBR POS integration for notified tier-1 retailers and restaurants: FBR invoice number + QR on receipt, real-time", rounding: "nearest rupee", currency: PKR, minor_units: 0, fiscal: "FBR invoice number and QR; PRA/SRB invoice number where registered", fees: "service charge by policy; shown separately"}
+  QA: {tax: "no VAT in force (UNVERIFIED as of 2026)", inclusive_default: true, receipt_lang: [en, ar], einvoice: "none", rounding: "nearest dirham", currency: QAR, minor_units: 2, fiscal: "none", fees: "hotel F&B service charge common"}
+  BH: {tax: "VAT 10% (UNVERIFIED)", inclusive_default: true, receipt_lang: [en, ar], einvoice: "none announced", rounding: "nearest 5 fils", currency: BHD, minor_units: 3, fiscal: "VAT invoice fields", fees: "hotel and restaurant government levy 10% (UNVERIFIED)"}
+  KW: {tax: "no VAT in force (UNVERIFIED)", inclusive_default: true, receipt_lang: [en, ar], einvoice: "none", rounding: "nearest fils", currency: KWD, minor_units: 3, fiscal: "none", fees: "service charge optional"}
+  OM: {tax: "VAT 5% (UNVERIFIED)", inclusive_default: true, receipt_lang: [en, ar], einvoice: "planned (UNVERIFIED)", rounding: "nearest baisa", currency: OMR, minor_units: 3, fiscal: "VAT invoice fields", fees: "tourism levy on hotel F&B (UNVERIFIED)"}
+  EG: {tax: "VAT 14% (UNVERIFIED)", inclusive_default: true, receipt_lang: [ar, en], einvoice: "ETA e-receipt for B2C (UNVERIFIED)", rounding: "nearest piastre", currency: EGP, minor_units: 2, fiscal: "ETA e-receipt", fees: "service charge 12% common (UNVERIFIED)"}
+compliance_must: [C-ALL-01, C-ALL-02, C-ALL-03, C-ALL-04, C-ALL-05, C-ALL-06, C-AE-01, C-AE-02, C-AE-03, C-SA-01, C-SA-02, C-PK-01, C-PK-02]
+compliance_should: [C-ALL-07, C-ALL-08, C-AE-04, C-SA-03, C-PK-03]
+nfr_defaults: {offline: required, p95_add_line_ms: 100, p95_send_to_kitchen_ms: 300, p95_tender_ms: 500, sync_recovery_s: 60, concurrent_terminals_min: 3, tablets: [ipad-10th-gen, android-10in, windows-pos-terminal], kitchen_screen: 15in, printers: thermal-80mm, rtl: required, font_min_px: 16, touch_min_dp: 48, uptime: "99.5%", backups: daily}
+stack_default: {web-pos: nextjs-pwa, api: hono-node, db: postgres, offline: pglite-event-sourced-sync, realtime: websocket, printing: escpos-local-bridge, mobile-waiter: expo, kds: nextjs-pwa}
+ui_profile: {style: operational-high-contrast, density: high, touch: 48dp, numpad_first: true, dark: kds-only, light: cashier, fonts: [Inter, tabular-numerals], order_age_colors: {green_under_min: 5, amber_under_min: 10, red_from_min: 10}, rtl: mirrored}
 questions:
-  - {id: service-model, rank: 1, ask: "Dine-in, quick-service, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, dine in, quick-service, quick service, qsr, takeaway only, table service], brief_hints: {dine-in: [dine-in, dine in, table service, waiters, at the table], quick-service: [quick-service, quick service, qsr, counter, takeaway only, fast food], both: [dine-in and takeaway, both]}, maps_to: service.model}
-  - {id: region, rank: 2, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, ajman, uae, emirates, riyadh, jeddah, saudi, ksa, karachi, lahore, islamabad, pakistan], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}, maps_to: region.country}
-  - {id: payments, rank: 3, ask: "Card payments via which provider?", answer_type: choice, choices: [stripe, network-intl, tap, checkout, cash-only, other], default: stripe, reversible: true, followups: [{when: other, ask: [payment-provider-name]}], skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, checkout.com, cash only], brief_hints: {stripe: [stripe], network-intl: [network international, n-genius, ngenius], tap: [tap payments, tap], checkout: [checkout.com], cash-only: [cash only, no cards]}, maps_to: payments.provider}
-  - {id: branches, rank: 4, ask: "Single location or multi-branch?", answer_type: choice, choices: [single, multi], default: single, reversible: true, followups: [{when: multi, ask: [central-menu-sync]}], skip_if_brief_mentions: [branches, two cafes, three cafes, multiple locations, outlets, chain], brief_hints: {multi: [branches, two cafes, three cafes, multiple locations, outlets, chain, franchise], single: [one location, single location, one restaurant]}, maps_to: org.branches}
+  - {id: service-model, rank: 1, ask: "Dine-in with table service, quick-service counter, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, dine in, quick-service, quick service, qsr, takeaway only, table service, fine dining, food court, kiosk], brief_hints: {dine-in: [dine-in, dine in, table service, waiters, at the table, fine dining, hotel restaurant], quick-service: [quick-service, quick service, qsr, counter, takeaway only, fast food, food court, kiosk, cloud kitchen, shawarma shop], both: [dine-in and takeaway, both]}, followups: [{when: [dine-in, both], ask: [reservations]}, {when: quick-service, ask: [qr-self-order]}], maps_to: service.model}
+  - {id: region, rank: 2, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, QA, BH, KW, OM, EG, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, ajman, deira, uae, emirates, riyadh, jeddah, dammam, saudi, ksa, karachi, lahore, islamabad, pakistan, doha, qatar, bahrain, manama, kuwait, muscat, oman, cairo, egypt], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, deira, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan], QA: [doha, qatar], BH: [bahrain, manama], KW: [kuwait], OM: [muscat, oman], EG: [cairo, egypt]}, maps_to: region.country}
+  - {id: payments, rank: 3, ask: "Card payments via which provider?", answer_type: choice, choices: [network-intl, tap, stripe, checkout, magnati, telr, paytabs, cash-only, other], default: network-intl, reversible: true, skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, checkout.com, magnati, telr, paytabs, cash only], brief_hints: {stripe: [stripe], network-intl: [network international, n-genius, ngenius], tap: [tap payments, tap], checkout: [checkout.com], magnati: [magnati], telr: [telr], paytabs: [paytabs], cash-only: [cash only, no cards]}, followups: [{when: other, ask: [payment-provider-name]}], maps_to: payments.provider}
+  - {id: branches, rank: 4, ask: "Single location or multi-branch?", answer_type: choice, choices: [single, multi], default: single, reversible: true, skip_if_brief_mentions: [branches, two cafes, three cafes, multiple locations, outlets, chain, multiple brands, franchise], brief_hints: {multi: [branches, two cafes, three cafes, multiple locations, outlets, chain, franchise, multiple brands], single: [one location, single location, one restaurant]}, followups: [{when: multi, ask: [central-menu-sync]}], maps_to: org.branches}
   - {id: kds, rank: 5, ask: "Kitchen display screen, printed tickets, or both?", answer_type: choice, choices: [kds, printer, both], default: both, reversible: true, skip_if_brief_mentions: [kitchen screen, kitchen display, kds, kitchen printer], brief_hints: {kds: [kitchen screen, kitchen display, kds], printer: [kitchen printer, print tickets]}, maps_to: kitchen.output}
-  - {id: delivery, rank: 6, ask: "Integrate delivery platforms?", answer_type: bool, default: false, reversible: true, followups: [{when: true, ask: [delivery-platforms]}], skip_if_brief_mentions: [talabat, deliveroo, careem, delivery orders], maps_to: integrations.delivery}
+  - {id: delivery, rank: 6, ask: "Integrate delivery platforms?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [talabat, deliveroo, careem, noon food, delivery orders, with delivery, home delivery], followups: [{when: true, ask: [delivery-platforms]}], maps_to: integrations.delivery}
   - {id: offline, rank: 7, ask: "Must order-taking keep working when internet drops?", answer_type: bool, default: true, reversible: false, skip_if_brief_mentions: [offline, internet drops, without internet, no connectivity], maps_to: nfr.offline}
-  - {id: payment-provider-name, rank: 8, ask: "Name the payment provider so integration research can start.", answer_type: text, default: "unknown", reversible: true, maps_to: payments.provider_name}
-  - {id: central-menu-sync, rank: 9, ask: "One central menu pushed to every branch, or each branch edits its own?", answer_type: choice, choices: [central, per-branch], default: central, reversible: true, maps_to: org.menu_sync}
-  - {id: delivery-platforms, rank: 10, ask: "Which delivery platforms?", answer_type: choice, choices: [talabat, deliveroo, careem, all], default: talabat, reversible: true, skip_if_brief_mentions: [talabat, deliveroo, careem], brief_hints: {talabat: [talabat], deliveroo: [deliveroo], careem: [careem]}, maps_to: integrations.delivery_platforms}
-reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}
+  - {id: reservations, rank: 8, ask: "Reservations and waitlist inside the POS?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [reservations, reservation, waitlist, bookings], maps_to: features.reservations}
+  - {id: qr-self-order, rank: 9, ask: "Customers order from a QR menu at the table or counter?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [qr menu, qr ordering, self-order, scan to order], maps_to: features.qr_self_order}
+  - {id: delivery-platforms, rank: 10, ask: "Which delivery platforms?", answer_type: choice, choices: [talabat, deliveroo, careem, noon-food, all], default: talabat, reversible: true, skip_if_brief_mentions: [talabat, deliveroo, careem, noon food], brief_hints: {talabat: [talabat], deliveroo: [deliveroo], careem: [careem], noon-food: [noon food]}, maps_to: integrations.delivery_platforms}
+  - {id: central-menu-sync, rank: 11, ask: "One central menu pushed to every branch, or each branch edits its own?", answer_type: choice, choices: [central, per-branch], default: central, reversible: true, maps_to: org.menu_sync}
+  - {id: payment-provider-name, rank: 12, ask: "Name the payment provider so integration research can start.", answer_type: text, default: "unknown", reversible: true, derive_from: {question: payments, map: {network-intl: "Network International", tap: "Tap Payments", stripe: "Stripe", checkout: "Checkout.com", magnati: "Magnati", telr: "Telr", paytabs: "PayTabs", cash-only: "none", other: null}}, maps_to: payments.provider_name}
+reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md, sources: reference/sources.md}

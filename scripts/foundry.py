@@ -561,7 +561,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.7"
+PACK_TEMPLATE = """version: "1.8"
 complete: false
 threshold: 0.7
 slug: {slug}
@@ -1320,9 +1320,16 @@ GATES = {"intake": gate_intake, "pack-match": gate_pack_match, "grill": gate_gri
 
 
 def run_gate(phase: str, project: Path, root: Path) -> int:
+    if phase in ("release", "14"):
+        import foundry_ops as O
+        errs = O.gate_release(project, root)
+        for e in errs:
+            print(f"gate release: FAIL: {e}")
+        print("gate release: pass" if not errs else "gate release: FAIL")
+        return 1 if errs else 0
     name = PHASE_ALIASES.get(phase)
     if name is None:
-        print(f"gate {phase}: not implemented yet (phases 0-10 only)")
+        print(f"gate {phase}: not implemented yet (phases 0-10 and release only)")
         return 2
     if name in GATES:
         errs = GATES[name](project, root)
@@ -1545,8 +1552,12 @@ def main(argv: list[str] | None = None) -> int:
     gt.add_argument("phase")
     gt.add_argument("--dir", type=Path, default=Path.cwd())
     gt.add_argument("--root", type=Path, default=ROOT)
-    mt = sub.add_parser("metrics", help="append a phase record to .foundry/metrics.jsonl; `metrics report` prints per-ticket totals")
-    mt.add_argument("report", nargs="?", choices=("report",))
+    mt = sub.add_parser("metrics", help="metrics --phase|--ticket records; `metrics report [--compare a b] [--phases]`; `metrics ingest [--since ts] [--transcripts dir]`")
+    mt.add_argument("report", nargs="?", choices=("report", "ingest"))
+    mt.add_argument("--compare", nargs=2, type=Path, metavar=("A", "B"))
+    mt.add_argument("--phases", action="store_true")
+    mt.add_argument("--since")
+    mt.add_argument("--transcripts", type=Path)
     mt.add_argument("--phase", type=int)
     mt.add_argument("--ticket")
     mt.add_argument("--tokens-in", type=int); mt.add_argument("--tokens-out", type=int); mt.add_argument("--graph-calls", type=int)
@@ -1594,6 +1605,7 @@ def main(argv: list[str] | None = None) -> int:
     dd = sub.add_parser("dod", help="run the ticket's definition-of-done steps")
     dd.add_argument("--ticket", required=True)
     dd.add_argument("--only", help="comma-separated step names")
+    dd.add_argument("--tier", choices=("fast", "full"), default="full", help="fast = typecheck+lint+unit; full = every step")
     dd.add_argument("--dir", type=Path, default=Path.cwd())
     dd.add_argument("--root", type=Path, default=ROOT)
     sc = sub.add_parser("scaffold", help="execute T-000: monorepo scaffold for the chosen stack")
@@ -1605,6 +1617,26 @@ def main(argv: list[str] | None = None) -> int:
     dc2.add_argument("--palettes-only", action="store_true")
     dc2.add_argument("--dir", type=Path, default=Path.cwd())
     dc2.add_argument("--root", type=Path, default=ROOT)
+    rp = sub.add_parser("review-pack", help="assemble the review payload: .foundry/reviews/T-xxx.pack.md (≤1.5k tokens) + T-xxx.diff")
+    rp.add_argument("--ticket", required=True)
+    rp.add_argument("--dir", type=Path, default=Path.cwd())
+    rp.add_argument("--root", type=Path, default=ROOT)
+    stt = sub.add_parser("status", help="one-screen dashboard: phase, tickets, dod pass rate, blockers, wizards, tokens, estimate")
+    stt.add_argument("--dir", type=Path, default=Path.cwd())
+    stt.add_argument("--root", type=Path, default=ROOT)
+    wz = sub.add_parser("wizard", help="wizard status | wizard scaffold --slug s --ticket T --var NAME:desc:regex [--validate cmd] [--why text] [--step text]")
+    wz.add_argument("action", choices=("status", "scaffold"))
+    wz.add_argument("--slug"); wz.add_argument("--ticket"); wz.add_argument("--why"); wz.add_argument("--validate")
+    wz.add_argument("--var", action="append"); wz.add_argument("--step", action="append")
+    wz.add_argument("--dir", type=Path, default=Path.cwd())
+    rl = sub.add_parser("release-skeleton", help="emit CHANGELOG.md, Dockerfiles, compose.prod.yml+Caddyfile or fly.toml, runbook.md, scripts/smoke.mjs, user-docs/")
+    rl.add_argument("--dir", type=Path, default=Path.cwd())
+    rl.add_argument("--root", type=Path, default=ROOT)
+    ho = sub.add_parser("handoff", help="handoff write [--next-command cmd] [--note text]: rewrite .foundry/handoff.md frontmatter from build state")
+    ho.add_argument("action", choices=("write", "show"))
+    ho.add_argument("--next-command"); ho.add_argument("--note")
+    ho.add_argument("--dir", type=Path, default=Path.cwd())
+    ho.add_argument("--root", type=Path, default=ROOT)
     ss = sub.add_parser("schema-skeleton", help="emit prisma/schema.prisma (or db/schema.ts)")
     ss.add_argument("--orm", choices=("prisma", "drizzle"), default="prisma")
     ss.add_argument("--dir", type=Path, default=Path.cwd())
@@ -1644,8 +1676,11 @@ def main(argv: list[str] | None = None) -> int:
             return run_gate(a.phase, a.dir.resolve(), a.root.resolve())
         if a.cmd == "metrics":
             import foundry_build as B
+            import foundry_ops as O
             if a.report == "report":
-                return B.run_metrics_report(a.dir.resolve())
+                return O.run_metrics_report(a.dir.resolve(), a.compare, a.phases)
+            if a.report == "ingest":
+                return O.run_metrics_ingest(a.dir.resolve(), a.root.resolve(), a.since, a.transcripts)
             if a.ticket:
                 B.record_ticket_metrics(a.dir.resolve(), a.ticket, tokens_in=a.tokens_in, tokens_out=a.tokens_out, tool_calls=a.tool_calls, wall_ms=a.wall_ms,
                                         graph_calls=a.graph_calls, grep_read_calls=a.grep_read_calls, dod_loops=a.dod_loops, review_blocking_count=a.review_blocking)
@@ -1675,7 +1710,21 @@ def main(argv: list[str] | None = None) -> int:
         if a.cmd == "build":
             return B.run_build(a, a.dir.resolve())
         if a.cmd == "dod":
-            return B.run_dod(a.dir.resolve(), a.root.resolve(), a.ticket, [x.strip() for x in a.only.split(",")] if a.only else None)
+            return B.run_dod(a.dir.resolve(), a.root.resolve(), a.ticket, [x.strip() for x in a.only.split(",")] if a.only else None, a.tier)
+        import foundry_ops as O
+        if a.cmd == "review-pack":
+            return O.run_review_pack(a.dir.resolve(), a.root.resolve(), a.ticket)
+        if a.cmd == "status":
+            return O.run_status(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "wizard":
+            return O.run_wizard(a, a.dir.resolve())
+        if a.cmd == "release-skeleton":
+            return O.run_release_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "handoff":
+            if a.action == "show":
+                p = a.dir.resolve() / ".foundry" / "handoff.md"
+                print(p.read_text(encoding="utf-8") if p.exists() else "no handoff.md"); return 0
+            return O.run_handoff(a.dir.resolve(), a.root.resolve(), a.next_command, a.note)
         if a.cmd == "scaffold":
             return B.run_scaffold(a.dir.resolve(), a.root.resolve(), a.stack, install=not a.no_install)
         import foundry_security as X

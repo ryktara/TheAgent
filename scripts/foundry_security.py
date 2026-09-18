@@ -349,8 +349,15 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
         j = job_by_id.get(jid, {})
         ent = j.get("entity")
         return (int(j.get("priority", 5)), order.index(ent) if ent in order else len(order), job_index.get(jid, 999))
-    must_jobs = [j for j in jobs_in_scope if job_by_id.get(j, {}).get("must")]
-    should_jobs = [j for j in jobs_in_scope if j in job_by_id and not job_by_id[j].get("must")]
+    # jobs[].merge_into (pack 1.8): a merged job rides on its target's ticket (screens, operations, tests folded in)
+    merged: dict[str, list[str]] = {}
+    for jid, j in job_by_id.items():
+        tgt = j.get("merge_into")
+        if tgt and tgt in job_by_id and jid in jobs_in_scope:
+            merged.setdefault(tgt, []).append(jid)
+    absorbed = {m for ms in merged.values() for m in ms}
+    must_jobs = [j for j in jobs_in_scope if job_by_id.get(j, {}).get("must") and j not in absorbed]
+    should_jobs = [j for j in jobs_in_scope if j in job_by_id and not job_by_id[j].get("must") and j not in absorbed]
     n = 6
     job_ticket: dict[str, str] = {}
     for jid in sorted(must_jobs, key=job_rank):
@@ -379,6 +386,15 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
           files=[f"apps/api/src/{ctx}/{_slug(jid)}.ts", f"apps/api/src/{ctx}/{_slug(jid)}.test.ts"] + [f"apps/web/app/{s}/page.tsx" for s in scr] + ([f"packages/db/prisma/schema.prisma"] if ent else []),
           tests=tests, slice_=f"Vertical slice for job `{jid}`: operations {', '.join(ops) or 'none'}; screens {', '.join(scr) or 'none'}; copy from copy.csv; a11y scan; screenshot.")
         job_ticket[jid] = tid
+        for mj in merged.get(jid, []):
+            mt = tickets[-1]
+            mt["jobs"].append(mj)
+            mt["screens"] += [s for s in screens_by_job.get(mj, []) if s not in mt["screens"]]
+            mt["operations"] += [o for o in ops_by_job.get(mj, []) if o not in mt["operations"]]
+            mt["tests"].append(f"Given the merged job {mj}, When {mj.replace('-', ' ')} runs on the same screen, Then its operations respond and its screen states render")
+            mt["title"] = mt["title"].split(" (", 1)[0] + f" + {mj.replace('-', ' ')} ({', '.join(mt['screens']) or 'api only'})"
+            mt["slice"] += f" Merged job `{mj}`: operations {', '.join(ops_by_job.get(mj, [])) or 'none'}."
+            job_ticket[mj] = tid
         n += 1
     # should-have jobs merge into the nearest must ticket when count would exceed 60; otherwise own ticket
     for jid in sorted(should_jobs, key=job_rank):

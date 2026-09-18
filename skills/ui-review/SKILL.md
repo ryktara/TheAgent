@@ -3,7 +3,7 @@ name: ui-review
 description: Review a ticket's screens as a subagent from screenshots, screen specs and axe results, returning a fixed JSON verdict to .foundry/reviews/T-xxx.ui.json.
 invocation: model
 model: sonnet
-reads: [.foundry/tickets/T-xxx.md, .foundry/screens/*.md, .foundry/screenshots/T-xxx/, design-system/MASTER.md, design-system/tokens.json, .foundry/tickets/T-xxx.status.yaml]
+reads: [.foundry/reviews/T-xxx.pack.md, .foundry/reviews/T-xxx.diff, .foundry/screenshots/T-xxx/, .foundry/tickets/T-xxx.status.yaml]
 writes: [.foundry/reviews/T-xxx.ui.json]
 gate: python -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('verdict') in ('pass','fail') else 1)" .foundry/reviews/T-xxx.ui.json
 ---
@@ -41,3 +41,11 @@ Screens judged against their spec and the design system, with the screenshots as
 Blocking: missing state, raw hex where a token exists, RTL not mirrored, serious axe violation,
 touch target under 48 px on an operational screen. Non-blocking: spacing rhythm, copy tone,
 icon choice.
+
+## Inputs (P8)
+
+The subagent receives three things: this skill's name, the project root and the review pack
+(`.foundry/reviews/T-xxx.pack.md` ≤1.5k tokens: acceptance tests, operations with authz, controls,
+changed files; `.foundry/reviews/T-xxx.diff`: the diff plus new files). Read those two files first;
+open another file only to verify a finding, at most three. Every blocking item carries `file`,
+`line` and a concrete `fix` so implement-ticket applies it without re-reading the codebase.

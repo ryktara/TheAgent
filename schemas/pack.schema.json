@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://foundry.dev/schemas/pack.schema.json",
-  "title": "Foundry domain pack (pack.yaml) v1.7",
+  "title": "Foundry domain pack (pack.yaml) v1.8",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "const": "1.7"
+      "const": "1.8"
     },
     "slug": {
       "type": "string",
@@ -91,6 +91,39 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9
+          },
+          "extra_readers": {
+            "type": "array",
+            "description": "1.8: roles that may list/get this job's entity beyond the persona and admin; objects may scope to states",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "role"
+                  ],
+                  "properties": {
+                    "role": {
+                      "type": "string"
+                    },
+                    "states": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "merge_into": {
+            "type": "string",
+            "description": "1.8: this job is delivered by the named job's ticket (same screen); no own ticket"
           }
         }
       }

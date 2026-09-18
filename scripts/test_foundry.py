@@ -28,7 +28,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.7"
+PACK_EXAMPLE = """version: "1.8"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
@@ -797,7 +797,7 @@ class P7Tests(unittest.TestCase):
     def test_scaffold_writes_files_without_install(self):
         code, out = run(self.B.run_scaffold, self.tmp, REPO, "nextjs-pwa", False)
         self.assertEqual(code, 0, out)
-        for rel in ("package.json", "apps/web/app/page.tsx", "apps/api/src/app.ts", "packages/db/prisma/schema.prisma", "packages/ui/src/numpad.tsx", "tests/e2e/a11y.spec.ts", "docker-compose.yml", ".env.example", ".github/workflows/ci.yml"):
+        for rel in ("package.json", "apps/web/app/page.tsx", "apps/api/src/app.ts", "packages/db/prisma/schema.prisma", "packages/ui/src/numpad.tsx", "tests/e2e/dod.spec.ts", "docker-compose.yml", ".env.example", ".github/workflows/ci.yml"):
             self.assertTrue((self.tmp / rel).exists(), rel)
         self.assertIn("model Order", (self.tmp / "packages/db/prisma/schema.prisma").read_text(encoding="utf-8"))
         self.assertEqual(run(self.B.run_scaffold, self.tmp, REPO, "expo", False)[0], 2)

@@ -38,10 +38,10 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example (schema 1.7)
+## pack.yaml example (schema 1.8)
 
 ```yaml
-version: "1.7"
+version: "1.8"
 complete: false
 threshold: 0.7
 slug: restaurant-pos
@@ -82,6 +82,17 @@ Schema: `schemas/pack.schema.json`.
 | ui_profile.themes | `{default: <palette id>, kds: <palette id>, …}` token-swap themes per surface |
 | regional[R].compliance_must / compliance_should | region-specific control ids; only the decided region's ids reach the PRD and compliance.yaml |
 | regional[R].tax_by_province | table `{name: {rate, digital_rate, authority, as_of, note}}` rendered as a table in PRD §8 |
+
+## Job fields added in 1.8
+
+- `jobs[].extra_readers`: roles beyond the persona and admin that may call the job entity's `list`/`get`
+  operations. A string grants read; an object `{role, states}` limits the read to the listed states.
+  `api-skeleton` appends `; or role == <role> (read only, states …)` to `x-foundry.authz` and adds the role to
+  `personas`. restaurant-pos: `send-to-kitchen` grants `kitchen` read of orders in sent/in-progress/ready;
+  `kds-bump` grants `waiter` read of kitchen tickets.
+- `jobs[].merge_into: <job id>`: the job is delivered by the named job's ticket (same screens). `tickets-skeleton`
+  folds its screens, operations and one acceptance test into the target ticket and emits no ticket of its own.
+  restaurant-pos: `merge-transfer-tables` and `manage-floor` merge into `take-order-table` (51 → 49 tickets).
 
 ## Pack lint (`complete: true`)
 

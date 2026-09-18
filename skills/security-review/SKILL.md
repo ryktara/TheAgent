@@ -3,7 +3,7 @@ name: security-review
 description: Review a ticket's diff against its security controls as a subagent (authz, idempotency, audit, validation, secrets, semgrep), returning a fixed JSON verdict to .foundry/reviews/T-xxx.sec.json.
 invocation: model
 model: sonnet
-reads: [.foundry/tickets/T-xxx.md, .foundry/reviews/T-xxx.changes.json, .foundry/threats.md, .foundry/compliance.yaml, data/security-controls.csv, .foundry/tickets/T-xxx.status.yaml]
+reads: [.foundry/reviews/T-xxx.pack.md, .foundry/reviews/T-xxx.diff, data/security-controls.csv]
 writes: [.foundry/reviews/T-xxx.sec.json]
 gate: python -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('verdict') in ('pass','fail') else 1)" .foundry/reviews/T-xxx.sec.json
 ---
@@ -40,3 +40,11 @@ authz matrix row for each operation is the expectation.
 Blocking: authz missing or weaker than the matrix, no idempotency on money POST, audit missing,
 unknown fields accepted, secret in diff, card data pattern, semgrep error-level finding.
 Non-blocking: semgrep skipped, missing rate limit on a non-money route, log verbosity.
+
+## Inputs (P8)
+
+The subagent receives three things: this skill's name, the project root and the review pack
+(`.foundry/reviews/T-xxx.pack.md` ≤1.5k tokens: acceptance tests, operations with authz, controls,
+changed files; `.foundry/reviews/T-xxx.diff`: the diff plus new files). Read those two files first;
+open another file only to verify a finding, at most three. Every blocking item carries `file`,
+`line` and a concrete `fix` so implement-ticket applies it without re-reading the codebase.

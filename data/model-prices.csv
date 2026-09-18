@@ -1,0 +1,6 @@
+model,input_per_m,output_per_m,cache_read_per_m,cache_write_per_m,as_of,note
+claude-sonnet-4-5,3.00,15.00,0.30,3.75,2025-10-01,public list price USD per million tokens
+claude-opus-4-1,15.00,75.00,1.50,18.75,2025-10-01,public list price USD per million tokens
+claude-haiku-4-5,1.00,5.00,0.10,1.25,2025-10-01,public list price USD per million tokens
+claude-fable-5-1,15.00,75.00,1.50,18.75,2025-10-01,estimate: billed at the opus tier until a public price exists
+default,3.00,15.00,0.30,3.75,2025-10-01,fallback = sonnet tier

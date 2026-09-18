@@ -16,6 +16,9 @@ from typing import Any
 
 import foundry as F
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+TIERS = {"fast": ["typecheck", "lint", "unit"], "full": None}
+
 DOD_STEPS = ["typecheck", "lint", "unit", "integration", "e2e-smoke", "a11y-axe", "screenshot", "semgrep", "detect_changes_risk", "spec-review"]
 SCRIPT_FOR = {"typecheck": "typecheck", "lint": "lint", "unit": "test:unit", "integration": "test:integration", "e2e-smoke": "e2e:smoke", "a11y-axe": "a11y", "screenshot": "screenshot"}
 
@@ -37,7 +40,7 @@ def load_build(project: Path) -> dict:
 def save_build(project: Path, state: dict) -> None:
     p = build_state_path(project)
     p.parent.mkdir(parents=True, exist_ok=True)
-    order = ["cbm_project", "indexed_at", "generation", "active_ticket", "done", "blockers"]
+    order = ["cbm_project", "indexed_at", "generation", "active_ticket", "done", "blockers", "stamps"]
     p.write_text(F.dump_yaml({k: state.get(k) for k in order}), encoding="utf-8", newline="\n")
 
 
@@ -71,8 +74,19 @@ def run_build(a, project: Path) -> int:
         if find_ticket(project, a.ticket) is None:
             print(f"build activate: {a.ticket} not found"); return 1
         state["active_ticket"] = a.ticket
+        stamps = state.setdefault("stamps", []) or []
+        cur = next((s for s in stamps if s.get("ticket") == a.ticket), None)
+        if cur is None:
+            stamps.append({"ticket": a.ticket, "activated_at": F._now(), "completed_at": None})
+        elif not cur.get("completed_at"):
+            pass  # re-activation of an unfinished ticket keeps the original window
+        else:
+            stamps.append({"ticket": a.ticket, "activated_at": F._now(), "completed_at": None})
+        state["stamps"] = stamps
         save_build(project, state)
-        print(ticket_summary(project, a.ticket))
+        import foundry_ops as O
+        print(O.ticket_card(project, ROOT_DIR, a.ticket))
+        print("\nnext: index_repository (incremental) so the graph sees the current tree, then implement-ticket step 2.")
         return 0
     if a.action == "complete":
         tid = a.ticket or state.get("active_ticket")
@@ -82,8 +96,12 @@ def run_build(a, project: Path) -> int:
             state["done"].append(tid)
         if state.get("active_ticket") == tid:
             state["active_ticket"] = None
+        for s in reversed(state.get("stamps") or []):
+            if s.get("ticket") == tid and not s.get("completed_at"):
+                s["completed_at"] = F._now(); break
         save_build(project, state)
         print(f"build complete: {tid} done ({len(state['done'])} total)")
+        print("next: index_repository (incremental) before the next activate; `foundry.py handoff write` at session end.")
         return 0
     if a.action == "index":
         state["cbm_project"] = a.name or project.name
@@ -138,7 +156,7 @@ def _tail(text: str, n: int = 20) -> list[str]:
     return [l.rstrip() for l in text.splitlines()[-n:]]
 
 
-def run_dod(project: Path, root: Path, tid: str, only: list[str] | None = None) -> int:
+def run_dod(project: Path, root: Path, tid: str, only: list[str] | None = None, tier: str = "full") -> int:
     tp = find_ticket(project, tid)
     if tp is None:
         print(f"dod: ticket {tid} not found"); return 1
@@ -147,19 +165,47 @@ def run_dod(project: Path, root: Path, tid: str, only: list[str] | None = None) 
     steps = [s.replace("detect_changes_risk<=medium", "detect_changes_risk") for s in steps]
     if only:
         steps = [s for s in steps if s in only]
+    if TIERS.get(tier):
+        steps = [s for s in steps if s in TIERS[tier]]
     scripts = _pkg_scripts(project)
     routes = _routes_for_ticket(project, tid)
-    env = {"FOUNDRY_TICKET": tid, "FOUNDRY_ROUTES": ",".join(routes), "CI": "1"}
+    # FOUNDRY_DOD instead of CI: Playwright keeps reuseExistingServer on, so dev servers survive between runs.
+    env = {"FOUNDRY_TICKET": tid, "FOUNDRY_ROUTES": ",".join(routes), "FOUNDRY_DOD": "1"}
     records = []
     failed = []
+    combined: dict[str, Any] | None = None  # one Playwright run serves a11y-axe + screenshot when tests/e2e/dod.spec.ts exists
+    t_run = time.time()
+    # Fast tier: typecheck, lint and unit are independent processes; run them concurrently (target ≤30 s).
+    parallel: dict[str, tuple[int, str, float]] = {}
+    par_names = ("typecheck", "lint", "unit") if tier == "fast" else ("typecheck", "lint", "unit", "integration")
+    par_steps = [s for s in steps if s in par_names and SCRIPT_FOR[s] in scripts and not (s == "integration" and not list(project.glob("apps/*/src/**/*.int.test.ts")))]
+    if len(par_steps) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            futs = {s: ex.submit(run_cmd, f"pnpm run {SCRIPT_FOR[s]}", project, env) for s in par_steps}
+            parallel = {s: f.result() for s, f in futs.items()}
+    one_pw = (project / "tests" / "e2e" / "dod.spec.ts").exists()  # one Playwright run: smoke specs + dod spec (axe + shots)
     for step in steps:
         rec: dict[str, Any] = {"name": step, "cmd": None, "exit": None, "seconds": 0.0, "tail": [], "skipped": False}
-        if step in SCRIPT_FOR:
+        if step in parallel:
+            code, out, secs = parallel[step]
+            rec.update(cmd=f"pnpm run {SCRIPT_FOR[step]} (parallel)", exit=code, seconds=round(secs, 1), tail=_tail(out))
+        elif step in SCRIPT_FOR:
             script = SCRIPT_FOR[step]
             if script not in scripts:
                 rec.update(skipped=True, tail=[f"no package.json script '{script}'"])
             elif step in ("a11y-axe", "screenshot") and not routes:
                 rec.update(skipped=True, tail=["no routes declared by the ticket's screens"])
+            elif step in ("e2e-smoke", "a11y-axe", "screenshot") and one_pw:
+                if combined is None:
+                    cmd = "pnpm exec playwright test" if routes else "pnpm exec playwright test --grep-invert \"dod:\""
+                    code, out, secs = run_cmd(cmd, project, env)
+                    combined = {"cmd": cmd, "exit": code, "seconds": round(secs, 1), "tail": _tail(out)}
+                    rec.update(**combined)
+                elif step in ("a11y-axe", "screenshot") and not routes:
+                    rec.update(skipped=True, tail=["no routes declared by the ticket's screens"])
+                else:
+                    rec.update(cmd=combined["cmd"] + " (same run)", exit=combined["exit"], seconds=0.0, tail=combined["tail"])
             elif step == "integration" and not list(project.glob("apps/*/src/**/*.int.test.ts")):
                 rec.update(skipped=True, tail=["no *.int.test.ts files (integration tag absent)"])
             elif step == "e2e-smoke" and not (project / "tests" / "e2e" / "smoke.spec.ts").exists():
@@ -200,12 +246,13 @@ def run_dod(project: Path, root: Path, tid: str, only: list[str] | None = None) 
                 print("    " + line[:200])
         _append_metrics(project, {"ts": F._now(), "phase": 11, "ticket": tid, "event": "tool-call", "tool": f"dod:{step}", "wall_ms": int(rec["seconds"] * 1000), "gate_passed": rec["skipped"] or rec["exit"] == 0})
     passed = not failed
+    _append_metrics(project, {"ts": F._now(), "phase": 11, "ticket": tid, "event": "dod-run", "tier": tier if not only else "only", "seconds": round(time.time() - t_run, 1), "passed": passed, "failed_steps": failed})
     status_path = project / ".foundry" / "tickets" / f"{tid}.status.yaml"
     prev = F.parse_yaml(status_path.read_text(encoding="utf-8")) if status_path.exists() else {"ticket": tid, "attempts": []}
     prev.setdefault("attempts", []).append({"at": F._now(), "passed": passed, "failed_steps": failed, "steps": [{"name": r["name"], "cmd": r["cmd"], "exit": r["exit"], "seconds": r["seconds"], "skipped": r["skipped"], "tail": r["tail"][-5:]} for r in records]})
     prev["last"] = {"passed": passed, "failed_steps": failed}
     status_path.write_text(_dump_status(prev), encoding="utf-8", newline="\n")
-    print(f"dod {tid}: {'PASS' if passed else 'FAIL ' + ', '.join(failed)} ({sum(1 for r in records if r['skipped'])} skipped)")
+    print(f"dod {tid} [{tier}]: {'PASS' if passed else 'FAIL ' + ', '.join(failed)} ({sum(1 for r in records if r['skipped'])} skipped, {time.time() - t_run:.0f}s)")
     return 0 if passed else 1
 
 

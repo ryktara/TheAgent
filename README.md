@@ -41,11 +41,33 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | P5 | Design layer: 7 data CSVs, design-check, design-system, screen specs | done |
 | P6 | Security controls, threat model, compliance, tickets; /foundry ends at phase 10 | done |
 | P7a | Build loop machinery: CBM mandatory, DoD runner, hooks, implement-ticket + review skills, T-000 scaffold executed | done |
-| P7b | Feature tickets implemented through the loop | planned |
+| P7b | T-001…T-008 built through the loop on the Sharjah brief; 7 plugin fixes; examples in docs/examples | done |
+| P8 | Loop efficiency (tiers, one Playwright run, ticket card, review pack), transcript metrics + cost, wizard, release, handoff/resume, status dashboard | done |
+| P9–P11 | Second pack end to end, evals on the build loop, packaging | planned |
 | P8 | Wizard, release, handoff, /foundry-resume | planned |
 | P9 | Evals runner, metrics report, dogfood run | planned |
 | P10 | retail-pos + trading-app packs | planned |
 | P11 | Portfolio packs, model routing, sandbox builds | planned |
+
+## Build loop commands (P8)
+
+| Command | What it does |
+|---------|--------------|
+| `build activate --ticket T-xxx` | stamps the ticket window and prints the ticket card (the spec, ≤80 lines) |
+| `dod --ticket T-xxx --tier fast\|full` | fast = typecheck+lint+unit in parallel (≤30 s); full = every step, one Playwright run for smoke+axe+shots |
+| `review-pack --ticket T-xxx` | `.foundry/reviews/T-xxx.pack.md` (≤1.5k tokens) + `.diff`: the only inputs reviewers get |
+| `metrics ingest [--since ts] [--transcripts dir]` | real tokens per ticket from Claude Code transcripts (`~/.claude/projects/<cwd-encoded>/*.jsonl`, incl. `<session>/subagents/`), priced by `data/model-prices.csv` |
+| `metrics report [--phases] [--compare a.jsonl b.jsonl]` | self-reported and transcript columns, cost, dod runs, full-tier seconds; before/after diff |
+| `status` | one-screen dashboard: phase, tickets, dod pass rate, blockers, wizards, tokens, estimate |
+| `wizard status\|scaffold` | human-only prerequisites: md + ps1 + sh that prompt, validate, write .env.local, verify |
+| `release-skeleton`, `gate release` | CHANGELOG, Dockerfiles, compose+Caddy or fly.toml, runbook, smoke, user docs; smoke on a local prod build |
+| `handoff write\|show` | handoff.md frontmatter (phase, active_ticket, done, blocked, wizards_pending, next_command, cbm_project, generation) |
+
+Transcript path: Claude Code writes `~/.claude/projects/<session cwd with every non-alphanumeric as "-">/<session>.jsonl`
+and subagent transcripts under `<session>/subagents/`. `metrics ingest` scans every folder, keeps files modified since the
+earliest ticket window and attributes each assistant turn by timestamp to the ticket whose activate/complete stamps
+(`.foundry/build.yaml` `stamps`) enclose it. Windows for tickets built before stamps existed are back-filled from their
+ticket-end record.
 
 ## Layout
 

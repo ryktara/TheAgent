@@ -1,4 +1,4 @@
-version: "1.7"
+version: "1.8"
 complete: true
 threshold: 0.7
 slug: restaurant-pos
@@ -11,11 +11,11 @@ jobs:
   - {id: take-order-counter, priority: 1, entity: Order, persona: cashier, must: true, screens: [order-entry]}
   - {id: take-order-qr, priority: 1, entity: Order, persona: customer, must: false, screens: [qr-self-order]}
   - {id: modify-order, priority: 2, entity: OrderLine, persona: waiter, must: true, screens: [order-entry, modifier-sheet]}
-  - {id: send-to-kitchen, priority: 2, entity: Order, persona: waiter, must: true, screens: [order-entry, kds]}
-  - {id: kds-bump, priority: 2, entity: KitchenTicket, persona: kitchen, must: true, screens: [kds]}
+  - {id: send-to-kitchen, priority: 2, entity: Order, persona: waiter, must: true, screens: [order-entry, kds], extra_readers: [{role: kitchen, states: [sent, in-progress, ready]}]}
+  - {id: kds-bump, priority: 2, entity: KitchenTicket, persona: kitchen, must: true, screens: [kds], extra_readers: [waiter]}
   - {id: hold-void-comp, priority: 4, entity: OrderLine, persona: manager, must: true, screens: [order-entry, manager-pin]}
   - {id: split-bill, priority: 4, entity: Order, persona: cashier, must: true, screens: [split-bill]}
-  - {id: merge-transfer-tables, entity: Table, persona: waiter, must: true, screens: [table-map]}
+  - {id: merge-transfer-tables, entity: Table, persona: waiter, must: true, screens: [table-map], merge_into: take-order-table}
   - {id: apply-discount, priority: 4, entity: Order, persona: cashier, must: true, screens: [tender, manager-pin]}
   - {id: tips-service-charge, priority: 4, entity: Order, persona: cashier, must: true, screens: [tender]}
   - {id: take-payment, priority: 3, entity: Payment, persona: cashier, must: true, screens: [tender]}
@@ -24,7 +24,7 @@ jobs:
   - {id: open-close-shift, entity: Shift, persona: cashier, must: true, screens: [shift-open, shift-close]}
   - {id: end-of-day, entity: Shift, persona: manager, must: true, screens: [end-of-day]}
   - {id: manage-menu, entity: MenuItem, persona: manager, must: true, screens: [menu-management]}
-  - {id: manage-floor, entity: Table, persona: manager, must: true, screens: [floor-editor, table-map]}
+  - {id: manage-floor, entity: Table, persona: manager, must: true, screens: [floor-editor, table-map], merge_into: take-order-table}
   - {id: reservations-waitlist, entity: Reservation, persona: waiter, must: false, screens: [reservations]}
   - {id: inventory-basic, entity: InventoryItem, persona: manager, must: true, screens: [inventory, recipe-editor]}
   - {id: purchasing, entity: InventoryItem, persona: manager, must: false, screens: [purchasing]}

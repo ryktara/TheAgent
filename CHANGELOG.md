@@ -2,6 +2,28 @@
 
 One entry per build step. Newest first.
 
+## P8 — Efficiency, metrics, wizard, release, handoff (2026-09-18)
+
+- Loop efficiency: `dod --tier fast|full` (fast = typecheck+lint+unit in parallel; stop hook uses it); one Playwright
+  run (`tests/e2e/dod.spec.ts`) serves axe + screenshots for declared routes, `fullPage` off for list routes, dev
+  servers reused between runs (`FOUNDRY_DOD` instead of `CI`); `build activate` prints the ticket card (the spec,
+  ≤80 lines) and stamps the window; `review-pack --ticket` builds the only reviewer input (≤1.5k-token header +
+  diff); implement-ticket applies blocking items at file+line and reruns only the fast tier + the blocking family;
+  toast stacks at top-end (max 3, safe area, RTL aware) with `ToastViewport` + `toast()`.
+- Real metrics: `metrics ingest` reads Claude Code transcripts (`~/.claude/projects/<cwd-encoded>/…`) and sums
+  input/output/cache tokens per assistant turn into ticket windows from `build.yaml` stamps (back-filled from
+  ticket-end rows for older tickets), priced by `data/model-prices.csv`; `metrics report` shows self-reported and
+  transcript columns, `--compare a b`, `--phases`.
+- Wizard skill + `wizard scaffold|status`: md with exact steps, ps1/sh that prompt, validate by regex, write
+  `.env.local`, run the validation command; ticket continues behind `FEATURE_<SLUG>`.
+- Release skill + `release-skeleton` + `gate release`: CHANGELOG from ticket commits, Dockerfiles, compose.prod.yml +
+  Caddyfile (VPS) or fly.toml per ADR 0007, runbook, smoke.mjs, user docs (cashier en/ar, manager en) from screens
+  and copy.csv; the gate builds and smokes a local production start.
+- Handoff/resume: `handoff write|show` with a frontmatter schema; SessionStart injects frontmatter + next_command
+  only; /foundry-resume continues at the exact ticket; `status` dashboard.
+- Pack schema 1.8: `jobs[].extra_readers` (api-skeleton authz) and `jobs[].merge_into` (tickets-skeleton).
+- doctor reports the codebase-memory watcher flag; eslint template adds the `fetch` global.
+
 ## P7b — Build loop on real tickets (2026-09-18)
 
 - fix: `metrics report` sums the agent-reported `grep_read_calls` on ticket-end records (reason: the P7b

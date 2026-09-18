@@ -142,6 +142,8 @@ def run_doctor(require_cbm: bool = False) -> int:
     rows.append(("codebase-memory-mcp", cbm or "missing", "ok" if cbm else f"required for /foundry-build; install: {CBM_INSTALL}", require_cbm))
     reg = cbm_registered()
     rows.append(("cbm mcp registered", "yes" if reg else "no", "ok" if reg else f"add to ~/.claude.json or ./.mcp.json: {CBM_MCP_JSON}", require_cbm))
+    watch = cbm_watcher_enabled()
+    rows.append(("cbm watcher", "enabled" if watch else "off", "ok" if watch else "warn: no --watch flag on the MCP entry; implement-ticket re-indexes on activate/complete instead", False))
     sg = shutil.which("semgrep")
     rows.append(("semgrep", sg or "missing", "ok" if sg else "optional; runs in CI. Install: pip install semgrep (or pipx); no native Windows wheel, use WSL or CI", False))
     docker = _version(["docker", "--version"])
@@ -155,6 +157,21 @@ def run_doctor(require_cbm: bool = False) -> int:
             hard_fail = True
     print("\ndoctor: " + ("FAIL (python, node, git" + (", codebase-memory-mcp" if require_cbm else "") + " missing)" if hard_fail else "ok"))
     return 1 if hard_fail else 0
+
+
+def cbm_watcher_enabled() -> bool:
+    """True when the codebase-memory-mcp registration passes a watch flag (args or env)."""
+    for p in (Path.home() / ".claude.json", Path.cwd() / ".mcp.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for name, srv in (d.get("mcpServers") or {}).items():
+            if "codebase-memory" in name:
+                blob = json.dumps(srv).lower()
+                if "--watch" in blob or "watch\": \"true" in blob or "watch=1" in blob or "codebase_memory_watch" in blob:
+                    return True
+    return False
 
 
 def cbm_present() -> bool:
@@ -820,6 +837,24 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
             "delete": {"operationId": f"{sn}_archive", "summary": f"Archive {e['name']}", "parameters": [{"name": "id", "in": "path", "required": True, "schema": {"type": "string", "format": "uuid"}}],
                        "responses": responses("204"), "x-foundry": xf("archive", f"role == {admin}", True, True)},
         }
+    # jobs[].extra_readers (pack 1.8): more roles may list/get the job's entity, optionally limited to states
+    for j in pack.get("jobs") or []:
+        ent = _entity_for_job(j, names)
+        readers = j.get("extra_readers") or []
+        if not ent or not readers:
+            continue
+        sn = _snake(ent)
+        for opid in (f"{sn}_list", f"{sn}_get"):
+            for path, methods in paths.items():
+                for m, op in methods.items():
+                    if isinstance(op, dict) and op.get("operationId") == opid:
+                        xf = op["x-foundry"]
+                        for r in readers:
+                            role = r["role"] if isinstance(r, dict) else str(r)
+                            states = r.get("states") if isinstance(r, dict) else None
+                            xf["authz"] += f"; or role == {role} (read only" + (f", states {', '.join(states)}" if states else "") + ")"
+                            if role not in xf["personas"]:
+                                xf["personas"].append(role)
     job_ops = 0
     for j in pack.get("jobs") or []:
         ent = _entity_for_job(j, names)

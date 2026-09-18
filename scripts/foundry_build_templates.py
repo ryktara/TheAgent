@@ -14,9 +14,10 @@ TEMPLATES["package.json"] = """{
     "lint": "eslint .",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "e2e:smoke": "playwright test --grep-invert \"axe:|shot \"",
-    "a11y": "playwright test tests/e2e/a11y.spec.ts",
-    "screenshot": "playwright test tests/e2e/screenshot.spec.ts",
+    "e2e:smoke": "playwright test --grep-invert \"axe:|shot |dod:\"",
+    "a11y": "playwright test tests/e2e/dod.spec.ts --grep \"dod: axe\"",
+    "screenshot": "playwright test tests/e2e/dod.spec.ts --grep \"dod: shot\"",
+    "dod:e2e": "playwright test tests/e2e/dod.spec.ts",
     "db:migrate": "pnpm --filter @__APP_NAME__/db run migrate",
     "db:seed": "pnpm --filter @__APP_NAME__/db run seed",
     "tokens": "pnpm --filter @__APP_NAME__/ui run tokens"
@@ -92,7 +93,7 @@ export default tseslint.config(
   { ignores: ["**/node_modules/**", "**/.next/**", "**/dist/**", "**/sw.js", "**/next-env.d.ts", "**/generated/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  { files: ["**/*.mjs", "**/*.cjs"], languageOptions: { globals: { console: "readonly", process: "readonly", URL: "readonly", Buffer: "readonly" } } },
+  { files: ["**/*.mjs", "**/*.cjs"], languageOptions: { globals: { console: "readonly", process: "readonly", URL: "readonly", Buffer: "readonly", fetch: "readonly" } } },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],
@@ -120,13 +121,15 @@ const apiPort = Number(process.env.API_PORT ?? 3001);
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 60_000,
-  fullyParallel: false,
+  fullyParallel: true,
+  workers: process.env.CI ? 1 : 3,
   retries: 0,
   reporter: [["list"]],
   use: { baseURL: `http://localhost:${webPort}`, trace: "retain-on-failure" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
-    { command: "pnpm --filter @__APP_NAME__/api run dev", url: `http://localhost:${apiPort}/health`, reuseExistingServer: !process.env.CI, timeout: 120_000 },
+    // Local DoD runs reuse running dev servers (FOUNDRY_DOD); CI always starts fresh ones.
+    { command: "pnpm --filter @__APP_NAME__/api run dev", env: { ...process.env, DEVICE_ENROL_CODE: process.env.DEVICE_ENROL_CODE ?? "e2e-enrol-code" }, url: `http://localhost:${apiPort}/health`, reuseExistingServer: !process.env.CI, timeout: 120_000 },
     { command: "pnpm --filter @__APP_NAME__/web run dev", url: `http://localhost:${webPort}/`, reuseExistingServer: !process.env.CI, timeout: 180_000 },
   ],
 });
@@ -146,43 +149,49 @@ test("api health is ok", async ({ request }) => {
   expect(await res.json()).toEqual({ ok: true });
 });
 """
-TEMPLATES["tests/e2e/a11y.spec.ts"] = """import { test, expect } from "@playwright/test";
+TEMPLATES["tests/e2e/dod.spec.ts"] = """import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-
-const routes = (process.env.FOUNDRY_ROUTES ?? "/").split(",").map((r) => r.trim()).filter(Boolean);
-
-for (const route of routes) {
-  test(`axe: ${route}`, async ({ page }) => {
-    await page.goto(route);
-    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
-    const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-    expect(serious, JSON.stringify(serious.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length })), null, 2)).toEqual([]);
-  });
-}
-"""
-TEMPLATES["tests/e2e/screenshot.spec.ts"] = """import { test } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
+/**
+ * DoD screen pass: ONE Playwright run serves axe + screenshots for the routes the ticket declares (FOUNDRY_ROUTES).
+ * Per route: light/ltr context runs axe and a screenshot; dark/ltr, light/rtl, dark/rtl take screenshots only.
+ * fullPage is off for list-like routes (kds, reports, lists) to keep the shots and the run short.
+ */
 const routes = (process.env.FOUNDRY_ROUTES ?? "/").split(",").map((r) => r.trim()).filter(Boolean);
 const ticket = process.env.FOUNDRY_TICKET ?? "adhoc";
 const dir = `.foundry/screenshots/${ticket}`;
+const webPort = process.env.WEB_PORT ?? 3000;
 mkdirSync(dir, { recursive: true });
+const settle = async (page: import("@playwright/test").Page) => {
+  await page.waitForLoadState("networkidle");
+  await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached", timeout: 15_000 }).catch(() => undefined);
+};
+const name = (route: string, theme: string, lang: string) => (route === "/" ? "home" : route.replace(/^\\//, "").replace(/[/?=&]/g, "-")) + `-${theme}-${lang === "ar" ? "rtl" : "ltr"}.png`;
+const fullPage = (route: string) => !/kds|report|list|inventory|audit/.test(route);
 
 for (const route of routes) {
-  for (const theme of ["light", "dark"] as const) {
-    for (const lang of ["en", "ar"] as const) {
-      test(`shot ${route} ${theme} ${lang}`, async ({ browser }) => {
-        const context = await browser.newContext({ colorScheme: theme, viewport: { width: 1280, height: 800 } });
-        await context.addCookies([{ name: "NEXT_LOCALE", value: lang, url: `http://localhost:${process.env.WEB_PORT ?? 3000}` }]);
-        const page = await context.newPage();
-        await page.goto(route);
-        await page.waitForLoadState("networkidle");
-        await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached", timeout: 15_000 }).catch(() => undefined);
-        const name = (route === "/" ? "home" : route.replace(/^\\//, "").replace(/\\//g, "-")) + `-${theme}-${lang === "ar" ? "rtl" : "ltr"}.png`;
-        await page.screenshot({ path: `${dir}/${name}`, fullPage: true });
-        await context.close();
-      });
-    }
+  test(`dod: axe ${route}`, async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: "light", viewport: { width: 1280, height: 800 } });
+    const page = await context.newPage();
+    await page.goto(route);
+    await settle(page);
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
+    const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(serious, JSON.stringify(serious.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.map((n) => n.html.slice(0, 120)) })), null, 2)).toEqual([]);
+    await page.screenshot({ path: `${dir}/${name(route, "light", "en")}`, fullPage: fullPage(route) });
+    await context.close();
+  });
+  for (const [theme, lang] of [["dark", "en"], ["light", "ar"], ["dark", "ar"]] as const) {
+    test(`dod: shot ${route} ${theme} ${lang}`, async ({ browser }) => {
+      const context = await browser.newContext({ colorScheme: theme, viewport: { width: 1280, height: 800 } });
+      await context.addCookies([{ name: "NEXT_LOCALE", value: lang, url: `http://localhost:${webPort}` }]);
+      const page = await context.newPage();
+      await page.goto(route);
+      await settle(page);
+      await page.screenshot({ path: `${dir}/${name(route, theme, lang)}`, fullPage: fullPage(route) });
+      await context.close();
+    });
   }
 }
 """
@@ -549,7 +558,7 @@ export { IconButton } from "./icon-button";
 export { Numpad } from "./numpad";
 export { QuantityStepper } from "./quantity-stepper";
 export { Dialog } from "./dialog";
-export { Toast } from "./toast";
+export { Toast, ToastViewport, toast } from "./toast";
 export { OfflineBanner } from "./offline-banner";
 export { DataTable } from "./data-table";
 export { cn } from "./cn";
@@ -645,12 +654,45 @@ export function Dialog({ open, title, onClose, children }: { open: boolean; titl
   );
 }
 """
-TEMPLATES["packages/ui/src/toast.tsx"] = """import * as React from "react";
+TEMPLATES["packages/ui/src/toast.tsx"] = """"use client";
+import * as React from "react";
 
-export function Toast({ kind = "info", children }: { kind?: "info" | "success" | "error"; children: React.ReactNode }) {
+/**
+ * Toasts stack at the top-end corner (logical: top-right in LTR, top-left in RTL), respect the safe area, keep at most
+ * three, and never overlap the action bar. Each toast auto-dismisses; the container is one polite live region.
+ */
+type Kind = "info" | "success" | "error";
+interface Item { id: number; kind: Kind; text: React.ReactNode }
+const listeners = new Set<(items: Item[]) => void>();
+let items: Item[] = [];
+let seq = 0;
+const publish = () => listeners.forEach((l) => l([...items]));
+export function toast(text: React.ReactNode, kind: Kind = "info", ms = 4000) {
+  const id = ++seq;
+  items = [...items, { id, kind, text }].slice(-3);
+  publish();
+  setTimeout(() => { items = items.filter((i) => i.id !== id); publish(); }, ms);
+}
+
+export function ToastViewport() {
+  const [list, setList] = React.useState<Item[]>([]);
+  React.useEffect(() => { listeners.add(setList); return () => { listeners.delete(setList); }; }, []);
+  return (
+    <div role="region" aria-live="polite" aria-label="Notifications" className="pointer-events-none fixed inset-inline-end-4 z-50 flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2" style={{ top: "max(1rem, env(safe-area-inset-top))" }}>
+      {list.map((i) => (
+        <div key={i.id} role="status" className="pointer-events-auto rounded-[var(--radius-r1,6px)] px-4 py-3 text-white shadow" style={{ background: i.kind === "success" ? "var(--color-success)" : i.kind === "error" ? "var(--color-danger)" : "var(--color-info)" }}>
+          {i.text}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Inline variant kept for tests and simple pages: renders in flow, not fixed. */
+export function Toast({ kind = "info", children }: { kind?: Kind; children: React.ReactNode }) {
   const color = kind === "success" ? "var(--color-success)" : kind === "error" ? "var(--color-danger)" : "var(--color-info)";
   return (
-    <div role="status" aria-live="polite" className="fixed bottom-4 inset-inline-end-4 rounded-[var(--radius-r1,6px)] px-4 py-3 text-white" style={{ background: color }}>
+    <div role="status" aria-live="polite" className="rounded-[var(--radius-r1,6px)] px-4 py-3 text-white" style={{ background: color }}>
       {children}
     </div>
   );

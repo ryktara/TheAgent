@@ -3,7 +3,7 @@ name: code-review
 description: Review a ticket's diff for standards and spec conformance as a subagent, returning a fixed JSON verdict to .foundry/reviews/T-xxx.code.json.
 invocation: model
 model: sonnet
-reads: [.foundry/tickets/T-xxx.md, .foundry/reviews/T-xxx.changes.json, .foundry/adr/*.md, openapi.yaml, CONTEXT.md]
+reads: [.foundry/reviews/T-xxx.pack.md, .foundry/reviews/T-xxx.diff, .foundry/adr/*.md]
 writes: [.foundry/reviews/T-xxx.code.json]
 gate: python -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('verdict') in ('pass','fail') else 1)" .foundry/reviews/T-xxx.code.json
 ---
@@ -49,3 +49,11 @@ orders.
 | client can set server-owned fields | style |
 | money as float | test could be tighter |
 | ADR violated | |
+
+## Inputs (P8)
+
+The subagent receives three things: this skill's name, the project root and the review pack
+(`.foundry/reviews/T-xxx.pack.md` ≤1.5k tokens: acceptance tests, operations with authz, controls,
+changed files; `.foundry/reviews/T-xxx.diff`: the diff plus new files). Read those two files first;
+open another file only to verify a finding, at most three. Every blocking item carries `file`,
+`line` and a concrete `fix` so implement-ticket applies it without re-reading the codebase.

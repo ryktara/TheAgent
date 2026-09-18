@@ -9,8 +9,8 @@ stdlib, reads the Claude Code JSON payload on stdin, writes JSON on stdout, and 
 | bash_guard.py | PreToolUse, `Bash` | `tool_name`, `tool_input.command` | `hookSpecificOutput.permissionDecision: deny` + reason for `rm -rf /`, force push, `curl \| sh`, writes to `.env*` or secrets files, `npm publish`, `git reset --hard`, `DROP TABLE`; nothing otherwise | SEC-AGT-02, SEC-AGT-03 |
 | edit_guard.py | PreToolUse, `Edit\|Write\|MultiEdit` | `tool_name`, `tool_input.file_path`, `cwd` | `permissionDecision: allow` with `additionalContext` when the path is outside the active ticket's `files_likely_touched` and outside `tests/` or `.foundry/`; never denies | SEC-AGT-10 |
 | metrics.py | PostToolUse, `.*` | `tool_name`, `tool_response`, `cwd` | none; appends `{ts, phase 11, event tool-call, tool, ticket, tool_calls 1, tokens_out ≈ chars/4, note}` to `.foundry/metrics.jsonl` | observability |
-| session_start.py | SessionStart | `cwd` | `additionalContext`: graph-first rule, `.foundry/handoff.md` (≤4000 chars), active ticket summary (≤30 lines) | SEC-AGT-06 |
-| stop_check.py | Stop | `cwd`, `stop_hook_active` | `systemMessage` with the tail of `foundry.py dod --ticket <active> --only typecheck,lint`; never blocks | SEC-AGT-09 |
+| session_start.py | SessionStart | `cwd` | `additionalContext` ≤15 lines: graph-first rule with the re-index check, handoff.md frontmatter (phase, active_ticket, done, blocked, wizards_pending, next_command, cbm_project, generation) | SEC-AGT-06 |
+| stop_check.py | Stop | `cwd`, `stop_hook_active` | `systemMessage` with the tail of `foundry.py dod --ticket <active> --tier fast` (typecheck, lint, unit in parallel); never blocks | SEC-AGT-09 |
 
 Active ticket and done list come from `.foundry/build.yaml` (written by `foundry.py build
 activate|complete`). Hooks only act inside a project that has a `.foundry/` folder.

@@ -1,4 +1,4 @@
-"""Stop: runs the fast DoD steps (typecheck, lint) for the active ticket and reports; never blocks."""
+"""Stop: runs the fast DoD tier (typecheck, lint, unit) for the active ticket and reports; never blocks."""
 from __future__ import annotations
 
 import subprocess
@@ -18,10 +18,10 @@ def main() -> None:
     if not tid or not (project / "package.json").exists():
         return
     foundry = Path(__file__).resolve().parents[1] / "scripts" / "foundry.py"
-    r = subprocess.run([sys.executable, str(foundry), "dod", "--ticket", tid, "--only", "typecheck,lint", "--dir", str(project)],
+    r = subprocess.run([sys.executable, str(foundry), "dod", "--ticket", tid, "--tier", "fast", "--dir", str(project)],
                        capture_output=True, text=True, timeout=280, encoding="utf-8", errors="replace")
     tail = "\n".join((r.stdout or "").splitlines()[-6:])
-    emit({"systemMessage": f"foundry stop_check ({tid}, typecheck+lint): exit {r.returncode}\n{tail}"})
+    emit({"systemMessage": f"foundry stop_check ({tid}, fast tier): exit {r.returncode}\n{tail}"})
 
 
 if __name__ == "__main__":

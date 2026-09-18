@@ -1,0 +1,13 @@
+brief: ambiguous-shop
+expected_pack: generic
+min_confidence: 0.0
+max_questions: 7
+required_artifacts:
+  - .foundry/brief.md
+  - .foundry/pack.yaml
+  - .foundry/decisions.yaml
+required_decisions:
+  - product-category
+  - primary-persona
+  - region
+notes: Confidence must fall below every threshold; the first round-1 question narrows the pack (retail vs restaurant vs service).

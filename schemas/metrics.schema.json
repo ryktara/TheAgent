@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foundry.dev/schemas/metrics.schema.json",
+  "title": "Foundry metrics record (one line of .foundry/metrics.jsonl)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts", "phase", "event"],
+  "properties": {
+    "ts": { "type": "string", "description": "ISO-8601 timestamp" },
+    "phase": { "type": "integer", "minimum": 0, "maximum": 15 },
+    "ticket": { "type": "string" },
+    "skill": { "type": "string" },
+    "event": { "type": "string", "enum": ["phase-start", "phase-end", "tool-call", "gate", "ticket-start", "ticket-end", "review"] },
+    "tool": { "type": "string" },
+    "tokens_in": { "type": "integer", "minimum": 0 },
+    "tokens_out": { "type": "integer", "minimum": 0 },
+    "tool_calls": { "type": "integer", "minimum": 0 },
+    "wall_ms": { "type": "integer", "minimum": 0 },
+    "model": { "type": "string", "enum": ["haiku", "sonnet", "opus"] },
+    "gate_passed": { "type": "boolean" },
+    "screenshot": { "type": "string" },
+    "notes": { "type": "string" }
+  }
+}

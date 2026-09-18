@@ -1,0 +1,19 @@
+brief: restaurant-pos
+expected_pack: restaurant-pos
+min_confidence: 0.8
+max_questions: 5
+required_artifacts:
+  - .foundry/brief.md
+  - .foundry/pack.yaml
+  - .foundry/decisions.yaml
+  - .foundry/prd.md
+  - CONTEXT.md
+  - .foundry/domain.yaml
+  - .foundry/architecture.md
+  - .foundry/tickets
+required_decisions:
+  - service-model
+  - region
+  - payments
+  - branches
+notes: Region AE and multi-branch are derivable from the brief; expect them logged as source brief.

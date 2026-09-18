@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foundry.dev/schemas/skill-frontmatter.schema.json",
+  "title": "Foundry SKILL.md frontmatter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "invocation", "model", "reads", "writes", "gate"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "description": { "type": "string", "minLength": 10, "maxLength": 1024 },
+    "invocation": { "type": "string", "enum": ["user", "model"] },
+    "model": { "type": "string", "enum": ["haiku", "sonnet", "opus"] },
+    "reads": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "writes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "gate": { "type": "string", "minLength": 1 }
+  }
+}

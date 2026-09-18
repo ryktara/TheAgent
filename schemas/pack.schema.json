@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foundry.dev/schemas/pack.schema.json",
+  "title": "Foundry domain pack (pack.yaml)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "name", "aliases", "confidence_keywords", "personas", "jobs", "must_have", "should_have", "entities", "invariants", "integrations", "regional", "compliance_must", "nfr_defaults", "stack_default", "ui_profile", "questions", "reference"],
+  "properties": {
+    "slug": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "aliases": { "type": "array", "items": { "type": "string" } },
+    "confidence_keywords": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "personas": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "jobs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "must", "screens"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "must": { "type": "boolean" },
+          "screens": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "must_have": { "type": "array", "items": { "type": "string" } },
+    "should_have": { "type": "array", "items": { "type": "string" } },
+    "entities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": { "states": { "type": "array", "items": { "type": "string" } } },
+        "additionalProperties": true
+      }
+    },
+    "invariants": { "type": "array", "items": { "type": "string" } },
+    "integrations": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
+    "regional": { "type": "object", "additionalProperties": { "type": "object" } },
+    "compliance_must": { "type": "array", "items": { "type": "string" } },
+    "nfr_defaults": { "type": "object" },
+    "stack_default": { "type": "object", "additionalProperties": { "type": "string" } },
+    "ui_profile": { "type": "object" },
+    "questions": {
+      "type": "array",
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["id", "ask", "default"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "ask": { "type": "string" },
+          "default": {},
+          "reversible": { "type": "boolean" }
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": ["screens", "workflows", "glossary", "compliance", "ux_patterns"],
+      "additionalProperties": { "type": "string" },
+      "properties": {
+        "screens": { "type": "string" },
+        "workflows": { "type": "string" },
+        "glossary": { "type": "string" },
+        "compliance": { "type": "string" },
+        "ux_patterns": { "type": "string" }
+      }
+    }
+  }
+}

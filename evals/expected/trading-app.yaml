@@ -1,0 +1,21 @@
+brief: trading-app
+expected_pack: trading-app
+min_confidence: 0.8
+max_questions: 7
+required_artifacts:
+  - .foundry/brief.md
+  - .foundry/pack.yaml
+  - .foundry/decisions.yaml
+  - .foundry/prd.md
+  - CONTEXT.md
+  - .foundry/domain.yaml
+  - .foundry/architecture.md
+  - .foundry/threats.md
+  - .foundry/compliance.yaml
+  - .foundry/tickets
+required_decisions:
+  - market
+  - broker-integration
+  - kyc-provider
+  - leverage
+notes: Regulatory disclosures and risk warnings are must_have; expect threat model to cover order tampering.

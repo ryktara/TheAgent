@@ -1,0 +1,8 @@
+{
+  "name": "foundry",
+  "version": "0.1.0",
+  "description": "Autonomous app-engineering pipeline: brief in, designed + architected + implemented + tested app out, with at most 7 questions asked.",
+  "author": { "name": "Foundry contributors" },
+  "skills": "./skills",
+  "keywords": ["app-engineering", "pipeline", "domain-packs", "autonomous"]
+}

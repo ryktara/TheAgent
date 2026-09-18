@@ -1,0 +1,19 @@
+brief: retail-pos
+expected_pack: retail-pos
+min_confidence: 0.8
+max_questions: 5
+required_artifacts:
+  - .foundry/brief.md
+  - .foundry/pack.yaml
+  - .foundry/decisions.yaml
+  - .foundry/prd.md
+  - CONTEXT.md
+  - .foundry/domain.yaml
+  - .foundry/architecture.md
+  - .foundry/compliance.yaml
+  - .foundry/tickets
+required_decisions:
+  - region
+  - payments
+  - branches
+notes: ZATCA e-invoicing must appear in compliance.yaml as a must control.

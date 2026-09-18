@@ -1,0 +1,61 @@
+# FOUNDRY
+
+Foundry is a Claude Code plugin that turns a one-line brief into a designed, architected,
+implemented and tested application while asking the founder at most seven questions.
+It is built for non-technical founders: type `/foundry "I need a restaurant POS"` and let the
+pipeline run.
+
+## Install
+
+```
+claude plugins install ./foundry
+```
+
+For a local checkout you can also register the folder as a local marketplace and install from
+it. Confirm the install by checking that `/foundry` appears in the slash-command list.
+
+Requirements: Claude Code, Python 3.11+ (stdlib only). Windows, macOS and Linux are supported;
+use `scripts/foundry.ps1` or `scripts/foundry.sh`. Implementation phases depend on the
+codebase-memory-mcp server for code intelligence.
+
+## Pipeline overview
+
+`/foundry` takes the brief, matches it against a domain pack (industry knowledge shipped as YAML
+and CSV), asks a bounded set of questions to close the decision frontier, then produces a PRD,
+domain model with glossary, architecture with ADRs, data and API contracts, a design system,
+screen specs, threat model and compliance map, and a DAG of tracer-bullet tickets.
+`/foundry-build` implements each ticket under typecheck, test, lint, semgrep and axe gates with
+screenshots, runs code, UI and security reviews, hands human-only steps to a wizard, releases,
+and writes a handoff file that a fresh session can resume from with `/foundry-resume`.
+Full table: [docs/pipeline.md](docs/pipeline.md).
+
+## Status
+
+| Step | Deliverable | Status |
+|------|-------------|--------|
+| P0 | Scaffold + house style, validate, scaffold-pack, tests, CI | done |
+| P1 | Pack schema hardening + generic pack + pack-match skill | planned |
+| P2 | Bounded grilling + decision ledger + /foundry phases 0–3 | planned |
+| P3 | restaurant-pos pack (full reference) | planned |
+| P4 | Domain model, architecture, data-model, api-contract skills | planned |
+| P5 | Design layer: data CSVs, design-system, screen-spec, `foundry.py query` | planned |
+| P6 | Security controls, threat-model, compliance, to-tickets | planned |
+| P7 | Implementation loop: /foundry-build, implement-ticket, review subagents, hooks | planned |
+| P8 | Wizard, release, handoff, /foundry-resume | planned |
+| P9 | Evals runner, metrics report, dogfood run | planned |
+| P10 | retail-pos + trading-app packs | planned |
+| P11 | Portfolio packs, model routing, sandbox builds | planned |
+
+## Layout
+
+```
+.claude-plugin/plugin.json   plugin manifest
+skills/                      SKILL.md folders (at most 150 lines each)
+packs/                       domain packs + index.csv
+data/                        CSV knowledge queried by scripts
+schemas/                     JSON Schema draft 2020-12
+scripts/                     foundry.py CLI + wrappers + tests
+hooks/                       planned PostToolUse / Stop hooks
+evals/                       golden briefs + expected outcomes
+docs/pipeline.md             16-row phase table (0–15)
+```

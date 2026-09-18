@@ -1,0 +1,13 @@
+brief: hostile-no-questions
+expected_pack: generic
+min_confidence: 0.0
+max_questions: 7
+required_artifacts:
+  - .foundry/brief.md
+  - .foundry/pack.yaml
+  - .foundry/decisions.yaml
+  - .foundry/prd.md
+required_decisions:
+  - scope-first-slice
+  - product-category
+notes: The budget still applies; the agent proposes one first product with pack defaults and logs every other module as out of scope in prd.md. Zero questions is allowed only when every decision has a pack default.

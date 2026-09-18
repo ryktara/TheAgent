@@ -6,7 +6,7 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | Phase | Name | Skill | Reads | Writes | Gate |
 |------:|------|-------|-------|--------|------|
 | 0 | Intake | /foundry | brief | .foundry/brief.md | brief non-empty |
-| 1 | Pack match | pack-match | brief, packs/index.csv | .foundry/pack.yaml | confidence ≥ threshold else generic |
+| 1 | Pack match | pack-match | brief, packs/index.csv | .foundry/pack.yaml | top confidence ≥ its index.csv threshold (0.7 for domain packs, 0.0 for generic) else generic; ties within 0.15 resolved by must_have overlap |
 | 2 | Bounded grill | bounded-grilling | pack defaults, brief | .foundry/decisions.yaml | frontier empty AND questions ≤ 7 (round 1) / 3 (round 2) |
 | 3 | PRD | prd | decisions, pack | .foundry/prd.md | every pack must_have present or explicitly excluded |
 | 4 | Domain model | domain-model | prd, pack entities | CONTEXT.md, .foundry/domain.yaml | every PRD noun in glossary; every entity has invariants |
@@ -24,3 +24,11 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 
 Gates are enforced by `scripts/foundry.py gate <phase>` (P7+). Until then each skill states its
 gate in frontmatter and checks it by hand.
+
+## Phase 1 confidence formula (`foundry.py match`, matcher 1.0)
+
+For each index.csv row: `raw = (3.0 × alias phrase hits + 1.0 × keyword hits + 0.5 × stem hits) / (1 + ln(1 + keyword count))`.
+Then `confidence = (raw / max raw) × min(1, distinct hits / 3) × (1 − overlap²)` where `overlap` is the
+best other domain pack's raw divided by this pack's raw (generic is exempt). The saturation term keeps a
+single stray word such as "shop" below threshold; the overlap term sends a brief that names every
+module at once ("POS, inventory, accounting, HR, CRM") to generic with the `scope-sprawl` flag.

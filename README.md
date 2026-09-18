@@ -34,7 +34,7 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | Step | Deliverable | Status |
 |------|-------------|--------|
 | P0 | Scaffold + house style, validate, scaffold-pack, tests, CI | done |
-| P1 | Pack schema hardening + generic pack + pack-match skill | planned |
+| P1 | Pack schema 1.1 + generic pack + pack-match skill + deterministic matcher | done |
 | P2 | Bounded grilling + decision ledger + /foundry phases 0–3 | planned |
 | P3 | restaurant-pos pack (full reference) | planned |
 | P4 | Domain model, architecture, data-model, api-contract skills | planned |

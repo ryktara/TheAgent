@@ -4,6 +4,11 @@ One entry per build step. Newest first.
 
 ## P7b — Build loop on real tickets (2026-09-18)
 
+- fix: scaffold `globals.css` adds `@source "../../../packages/ui/src"` (reason: Tailwind v4 never scanned the
+  shared UI package, so `grid-cols-3` on Numpad was missing and the T-004 RTL numpad test failed once `.next` was
+  rebuilt in T-008).
+- fix: screenshot spec waits for network idle and for `[aria-busy="true"]` to detach before capturing (reason:
+  T-008 shots captured the loading skeleton while PGlite initialised).
 - fix: `schema-skeleton` no longer appends `created_at`/`updated_at`/`deleted_at` when the pack entity already
   lists them (reason: `prisma validate` failed on SyncEvent with a duplicate created_at in T-003).
 - fix: ESLint template declares `console`, `process`, `URL`, `Buffer` globals for `.mjs` scripts (reason:

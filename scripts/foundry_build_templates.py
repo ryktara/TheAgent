@@ -176,6 +176,8 @@ for (const route of routes) {
         await context.addCookies([{ name: "NEXT_LOCALE", value: lang, url: `http://localhost:${process.env.WEB_PORT ?? 3000}` }]);
         const page = await context.newPage();
         await page.goto(route);
+        await page.waitForLoadState("networkidle");
+        await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached", timeout: 15_000 }).catch(() => undefined);
         const name = (route === "/" ? "home" : route.replace(/^\\//, "").replace(/\\//g, "-")) + `-${theme}-${lang === "ar" ? "rtl" : "ltr"}.png`;
         await page.screenshot({ path: `${dir}/${name}`, fullPage: true });
         await context.close();
@@ -308,6 +310,7 @@ TEMPLATES["apps/web/components.json"] = """{
 """
 TEMPLATES["apps/web/app/globals.css"] = """@import "tailwindcss";
 @import "../../../design-system/tailwind.tokens.css";
+@source "../../../packages/ui/src";
 
 @theme inline {
   --color-primary: var(--color-primary);

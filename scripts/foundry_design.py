@@ -38,7 +38,10 @@ def contrast_ratio(a: str, b: str) -> float:
 
 PALETTE_PAIRS = [("text", "bg", 4.5), ("text_muted", "bg", 4.5), ("primary_fg", "primary", 4.5), ("border", "bg", 3.0),
                  ("success", "bg", 3.0), ("warning", "bg", 3.0), ("danger", "bg", 3.0), ("info", "bg", 3.0),
-                 ("text", "surface", 4.5), ("dark_text", "dark_bg", 4.5), ("dark_text", "dark_surface", 4.5)]
+                 ("text", "surface", 4.5), ("dark_text", "dark_bg", 4.5), ("dark_text", "dark_surface", 4.5),
+                 ("dark_text_muted", "dark_bg", 4.5), ("dark_primary", "dark_bg", 3.0), ("dark_secondary", "dark_bg", 3.0), ("dark_accent", "dark_bg", 3.0),
+                 ("dark_border", "dark_bg", 3.0), ("dark_success", "dark_bg", 3.0), ("dark_warning", "dark_bg", 3.0), ("dark_danger", "dark_bg", 3.0), ("dark_info", "dark_bg", 3.0)]
+TEXT_ROLES = ["text", "text_muted", "primary_fg"]
 
 
 def check_palette_row(row: dict) -> list[str]:
@@ -149,6 +152,11 @@ def product_type_for(pack: dict) -> dict:
 
 def pick_palette(ptype: dict, ui: dict, prefer_dark: bool) -> dict:
     rows = _rows("palettes")
+    pinned = ui.get("palette") or (ui.get("themes") or {}).get("default")
+    if pinned:
+        for r in rows:
+            if r["id"] == pinned:
+                return r
     wanted = _tags(ptype["tags"]) | {ptype["default_palette_tag"], "operational" if ptype["density"] == "high" else "saas"}
     if prefer_dark:
         wanted.add("dark")
@@ -156,8 +164,12 @@ def pick_palette(ptype: dict, ui: dict, prefer_dark: bool) -> dict:
     return ranked[0]
 
 
-def pick_typography(ptype: dict, rtl: bool) -> dict:
+def pick_typography(ptype: dict, rtl: bool, ui: dict | None = None) -> dict:
     rows = _rows("typography")
+    if ui and ui.get("typography"):
+        for r in rows:
+            if r["id"] == ui["typography"]:
+                return r
     wanted = _tags(ptype["tags"]) | {ptype["default_typography_tag"]}
     def sc(r):
         s = _score(_tags(r["use_case"]) | _tags(r["mood"]), wanted)
@@ -199,7 +211,11 @@ def design_tokens(pal: dict, typo: dict, style: dict, ui: dict, ptype: dict, reg
     color: dict[str, Any] = {}
     for role in ("primary", "primary_fg", "secondary", "accent", "bg", "surface", "surface_alt", "text", "text_muted", "border", "success", "warning", "danger", "info"):
         color[role] = {"$type": "color", "$value": pal[role], "$extensions": src(f"palettes.csv:{pal['id']}")}
-    dark = {"bg": pal["dark_bg"], "surface": pal["dark_surface"], "text": pal["dark_text"], "primary": pal["primary"] if contrast_ratio(pal["primary"], pal["dark_bg"]) >= 3 else pal["accent"]}
+    dark = {"bg": pal["dark_bg"], "surface": pal["dark_surface"], "surface_alt": pal["dark_surface"], "text": pal["dark_text"], "text_muted": pal.get("dark_text_muted", pal["dark_text"]),
+            "primary": pal.get("dark_primary", pal["primary"]), "primary_fg": pal["dark_bg"] if contrast_ratio(pal["dark_bg"], pal.get("dark_primary", pal["primary"])) >= 4.5 else "#ffffff",
+            "secondary": pal.get("dark_secondary", pal["secondary"]), "accent": pal.get("dark_accent", pal["accent"]), "border": pal.get("dark_border", pal["border"]),
+            "success": pal.get("dark_success", pal["success"]), "warning": pal.get("dark_warning", pal["warning"]), "danger": pal.get("dark_danger", pal["danger"]), "info": pal.get("dark_info", pal["info"])}
+    non_text_only = [r for r in ("primary", "secondary", "accent", "border", "success", "warning", "danger", "info") if contrast_ratio(pal[r], pal["bg"]) < 4.5]
     radius_map = {"0px": [0], "2px": [0, 2], "4px": [0, 4, 8], "6px": [0, 6, 12], "8px": [0, 8, 16], "10px": [0, 10, 20], "12px": [0, 12, 24, 999], "14px": [0, 14, 28, 999], "16px": [0, 16, 32, 999]}
     radii = radius_map.get(style["radius"], [0, 8, 16])
     motion_level = style["motion_level"]
@@ -208,7 +224,8 @@ def design_tokens(pal: dict, typo: dict, style: dict, ui: dict, ptype: dict, reg
     return {
         "$schema": "https://design-tokens.github.io/community-group/format/",
         "foundry": {"palette": pal["id"], "typography": typo["id"], "style": style["id"], "product_type": ptype["id"], "touch_min": touch,
-                    "operational": operational, "tabular_numerals": True, "rtl": region_rtl},
+                    "operational": operational, "tabular_numerals": True, "rtl": region_rtl, "text_roles": TEXT_ROLES, "non_text_only": non_text_only,
+                    "themes": ui.get("themes") or {}},
         "color": {"light": color, "dark": {k: {"$type": "color", "$value": v, "$extensions": src(f"palettes.csv:{pal['id']}")} for k, v in dark.items()}},
         "font": {"family": {"heading": {"$type": "fontFamily", "$value": typo["heading_font"], "$extensions": src(f"typography.csv:{typo['id']}")},
                             "body": {"$type": "fontFamily", "$value": typo["body_font"], "$extensions": src(f"typography.csv:{typo['id']}")},
@@ -299,11 +316,24 @@ def master_md(pack: dict, ledger: dict, pal: dict, typo: dict, style: dict, ptyp
            f"Density {ptype['density']}; navigation {ptype['nav_pattern']}; touch targets {tokens['touch']['min']['$value']}.", ""]
     if brand:
         out += [f"Brand input: {brand}", ""]
-    out += ["## Palette", "", "| Role | Light | Dark | Contrast vs bg (light) |", "|------|-------|------|------------------------|"]
+    out += ["## Palette", "", "| Role | Light | Dark | Contrast vs bg (light) | Use |", "|------|-------|------|------------------------|-----|"]
     for role in ("primary", "primary_fg", "secondary", "accent", "bg", "surface", "surface_alt", "text", "text_muted", "border", "success", "warning", "danger", "info"):
         dark = tokens["color"]["dark"].get(role, {}).get("$value", "-")
         ratio = contrast_ratio(pal[role], pal["bg"]) if role != "bg" else 1.0
-        out.append(f"| {role} | `{pal[role]}` | `{dark}` | {ratio:.2f}:1 |")
+        if role in ("bg", "surface", "surface_alt"):
+            use = "surface"
+        elif role == "primary_fg":
+            use = "text on primary"
+        elif ratio >= 4.5:
+            use = "text-safe"
+        elif ratio >= 3.0:
+            use = "non-text-only (fills, borders, icons)"
+        else:
+            use = "decorative"
+        out.append(f"| {role} | `{pal[role]}` | `{dark}` | {ratio:.2f}:1 | {use} |")
+    if tokens["foundry"].get("themes"):
+        out.append("")
+        out.append("Themes: " + ", ".join(f"{k} → `{v}`" for k, v in tokens["foundry"]["themes"].items()) + ". Each theme is a palettes.csv row applied as a token swap.")
     out += ["", "## Typography", "", f"Heading {typo['heading_font']} · body {typo['body_font']} · mono {typo['mono_font']} · Arabic {typo['arabic_font']} · Urdu {typo['urdu_font']} · weights {typo['weights']} · tabular numerals on.", "",
             "| Step | Size | Use |", "|------|------|-----|"]
     uses = {"base": "body, inputs, table cells, captions at base weight", "md": "labels, list titles", "lg": "section titles", "xl": "page titles", "2xl": "amount due, KPI values", "3xl": "display, kiosk", "4xl": "hero, queue numbers"}
@@ -314,7 +344,8 @@ def master_md(pack: dict, ledger: dict, pal: dict, typo: dict, style: dict, ptyp
             f"- Shadow: none, sm, md ({style['shadow']} default)", f"- Z-index: {', '.join(tokens['z'].keys())}",
             f"- Motion: {', '.join(f'{k} {v['$value']}' for k, v in tokens['motion']['duration'].items())}; reduced-motion variant removes movement",
             f"- Touch: minimum {tokens['touch']['min']['$value']}; numpad keys 64px", ""]
-    out += ["## Components", "", "| Id | Component | shadcn | States | Min target |", "|----|-----------|--------|--------|------------|"]
+    out += ["## Components", "", f"Text-safe roles for any component label: {', '.join(TEXT_ROLES)}. Non-text-only roles: {', '.join(tokens['foundry']['non_text_only']) or 'none'} (fills, borders, icons only).", "",
+            "| Id | Component | shadcn | States | Min target |", "|----|-----------|--------|--------|------------|"]
     for c in comps:
         out.append(f"| `{c['id']}` | {c['component']} | {c['shadcn_name']} | {c['states']} | {c['min_target']} |")
     out += ["", "## Do and avoid", "", "| Rule | Do | Avoid | Source |", "|------|----|-------|--------|"]
@@ -347,7 +378,7 @@ def run_design_skeleton(project: Path, root: Path) -> int:
     brand = next((d for d in ledger.get("decisions", []) if d["id"] == "brand" and d["value"] is True), None)
     prefer_dark = str(ui.get("dark", "")).lower() in ("default", "always")
     pal = pick_palette(ptype, ui, prefer_dark)
-    typo = pick_typography(ptype, rtl)
+    typo = pick_typography(ptype, rtl, ui)
     style = pick_style(ptype, ui)
     tokens = design_tokens(pal, typo, style, ui, ptype, rtl)
     print_scope = any("receipt" in f or "print" in f or "report" in f for f in (pack.get("must_have") or []))
@@ -381,6 +412,14 @@ def gate_design(project: Path, root: Path) -> list[str]:
     for sec in REQUIRED_MASTER_SECTIONS:
         if f"## {sec}" not in master:
             errs.append(f"MASTER.md missing section '## {sec}'")
+    bad = set(meta.get("text_roles") or []) & set(meta.get("non_text_only") or [])
+    if bad:
+        errs.append(f"tokens.json: non-text-only role(s) used as text: {', '.join(sorted(bad))}")
+    for role in meta.get("text_roles") or []:
+        lv = ((tokens.get("color") or {}).get("light") or {}).get(role, {}).get("$value")
+        bgv = ((tokens.get("color") or {}).get("light") or {}).get("primary" if role == "primary_fg" else "bg", {}).get("$value")
+        if lv and bgv and contrast_ratio(lv, bgv) < 4.5:
+            errs.append(f"tokens.json: text role {role} has contrast {contrast_ratio(lv, bgv):.2f} < 4.5")
     comp_ids = {r["id"] for r in _rows("components")}
     inv = master.split("## Components", 1)[1].split("\n## ", 1)[0] if "## Components" in master else ""
     for cid in re.findall(r"^\| `([a-z0-9-]+)` \|", inv, re.M):
@@ -488,7 +527,33 @@ def _wireframe(screen_id: str, zones: str, phone: bool = False) -> list[str]:
     return lines[:20]
 
 
-def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, spec: dict, ptype: dict, rtl: bool, route_prefix: str = "/") -> str:
+SCREEN_TYPES = {"order-entry": "order-entry", "tender": "tender", "kds": "kds", "delivery-inbox": "kds", "table-map": "table-map", "floor-editor": "table-map",
+                "receipt-preview": "receipt", "reports": "reports", "split-bill": "tender", "refund": "tender", "manager-pin": "tender", "shift-open": "form", "shift-close": "form",
+                "end-of-day": "form", "menu-management": "list", "inventory": "list", "purchasing": "list", "staff-roles": "list", "reservations": "list", "customer-lookup": "list",
+                "sync-status": "generic", "branch-switcher": "generic", "recipe-editor": "form", "modifier-sheet": "form", "qr-self-order": "order-entry"}
+
+
+def _copy_rows() -> dict[str, dict]:
+    p = DATA / "copy.csv"
+    if not p.exists():
+        return {}
+    with p.open(encoding="utf-8", newline="") as fh:
+        return {r["id"]: r for r in csv.DictReader(fh)}
+
+
+def copy_for(state: str, screen_id: str, langs: list[str]) -> tuple[str, str, str]:
+    """(en, ar, ur) for a screen state; falls back to generic type rows."""
+    rows = _copy_rows()
+    stype = SCREEN_TYPES.get(screen_id, "generic")
+    for key in (f"state.{state}.{screen_id}", f"state.{state}.{stype}", f"state.{state}.generic"):
+        r = rows.get(key)
+        if r:
+            return r["en"], r["ar"] if "ar" in langs else "", r["ur"] if "ur" in langs else ""
+    return "", "", ""
+
+
+def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, spec: dict, ptype: dict, rtl: bool, route_prefix: str = "/", langs: list[str] | None = None) -> str:
+    langs = langs or ["en"]
     personas = sorted({j.get("persona") or "staff" for j in jobs})
     reads, writes = [], []
     for j in jobs:
@@ -519,7 +584,8 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
     out += ["## Actions", "", "| Action | Kind | Component |", "|--------|------|-----------|"]
     for i, a in enumerate([x.strip() for x in re.split(r";", actions) if x.strip()][:8]):
         out.append(f"| {a} | {'primary' if i == 0 else 'secondary'} | `{'button' if 'button' in comps else comps[0]}` |")
-    out += ["", "## States", "", "| State | Copy (en) | Copy (ar) | Notes |", "|-------|-----------|-----------|-------|"]
+    ur_col = "ur" in langs
+    out += ["", "## States", "", "| State | Copy (en) | Copy (ar) |" + (" Copy (ur) |" if ur_col else "") + " Notes |", "|-------|-----------|-----------|" + ("-----------|" if ur_col else "") + "-------|"]
     default_copy = {"empty": f"Nothing here yet. Start with {actions.split(';')[0].strip().lower()}.", "loading": "Loading…", "error": "Something went wrong. Retry, or contact the manager.",
                     "offline": "Offline. Changes are saved on this device and sync when the connection returns." if offline else "Read-only while offline.",
                     "locked": "A manager PIN is needed for this action.", "success": "Done."}
@@ -529,8 +595,12 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
         if v.strip():
             hints[k.strip().lower()] = v.strip()
     for st in SCREEN_STATES:
-        copy = next((v for k, v in hints.items() if st in k), default_copy[st])
-        out.append(f"| {st} | {copy} | <!-- ar --> {copy} | {'from screens.md' if st in ' '.join(hints) else 'default'} |")
+        en, ar, ur = copy_for(st, screen_id, langs)
+        hinted = next((v for k, v in hints.items() if st in k), None)
+        copy = hinted or en or default_copy[st]
+        ar_cell = ar if ar else "<!-- ar: translate -->"
+        note = "from screens.md" if hinted else ("copy.csv" if en else "default")
+        out.append(f"| {st} | {copy} | {ar_cell} |" + (f" {ur or '<!-- ur: translate -->'} |" if ur_col else "") + f" {note} |")
     out += ["", "## Validation and error copy", "", "- `FRM-02` Error copy says what happened and how to fix it in one sentence.", "- `FRM-01` Validate on blur; re-validate on change after the first error; summarise on submit.",
             "- `FRM-03` Submit stays enabled; errors listed on attempt.", "", "## Keyboard and shortcuts", "", "| Key | Action |", "|-----|--------|"]
     kb = {"kds": [("1–9", "bump ticket in slot"), ("R", "recall last bump"), ("S", "cycle station")], "order-entry": [("digits", "PLU search"), ("Enter", "add highlighted item"), ("Escape", "close sheet")],
@@ -571,9 +641,10 @@ def run_screens_skeleton(project: Path, root: Path) -> int:
             screens.setdefault(sc, []).append(j)
     out_dir = project / ".foundry" / "screens"
     out_dir.mkdir(parents=True, exist_ok=True)
+    langs = [str(l) for l in (reg.get("receipt_lang") or reg.get("languages") or ["en"])]
     for sc, jobs in screens.items():
         section = _screen_section(root, pack, sc)
-        (out_dir / f"{sc}.md").write_text(screen_spec_md(sc, jobs, pack, section, spec, ptype, rtl), encoding="utf-8", newline="\n")
+        (out_dir / f"{sc}.md").write_text(screen_spec_md(sc, jobs, pack, section, spec, ptype, rtl, langs=langs), encoding="utf-8", newline="\n")
     print(f"screens-skeleton: {len(screens)} screens for {len(jobs_in_scope)} jobs -> .foundry/screens/")
     return 0
 

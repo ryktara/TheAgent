@@ -14,6 +14,7 @@ Subcommands:
   query          query data/<csv> with --col value filters
   domain-skeleton / arch-skeleton / schema-skeleton / api-skeleton   phases 4-6 (see foundry_phases.py)
   design-skeleton / screens-skeleton / design-check                  phases 7-8 (see foundry_design.py)
+  threat-skeleton / tickets-skeleton / tickets next                  phases 9-10 (see foundry_security.py)
   metrics        append a phase record to .foundry/metrics.jsonl (implemented)
   query          query data/*.csv                         (P5)
 """
@@ -45,7 +46,7 @@ TRIGGER_WORDS = {
     "draft", "model", "design", "specify", "spec", "threat", "map", "split", "release",
     "hand", "handoff", "generate", "create", "validate", "audit", "plan", "run", "scaffold",
     "produce", "derive", "check", "convert", "extract", "compile", "verify", "record",
-    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask", "decide", "produce",
+    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask", "decide", "produce", "slice", "specify",
     # trigger nouns
     "brief", "pack", "prd", "domain", "architecture", "adr", "schema", "api", "openapi",
     "tokens", "screen", "screens", "ticket", "tickets", "wizard", "metrics", "gate",
@@ -559,7 +560,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.5"
+PACK_TEMPLATE = """version: "1.6"
 complete: false
 threshold: 0.7
 slug: {slug}
@@ -1194,7 +1195,8 @@ def run_decide(a, project: Path, root: Path) -> int:
 PHASE_ALIASES = {"0": "intake", "intake": "intake", "1": "pack-match", "pack-match": "pack-match",
                  "2": "grill", "grill": "grill", "3": "prd", "prd": "prd", "4": "domain", "domain": "domain",
                  "5": "architecture", "architecture": "architecture", "6": "data", "data": "data", "api": "api",
-                 "7": "design", "design": "design", "8": "screens", "screens": "screens"}
+                 "7": "design", "design": "design", "8": "screens", "screens": "screens",
+                 "9": "security", "security": "security", "10": "tickets", "tickets": "tickets"}
 
 
 def gate_intake(project: Path, root: Path) -> list[str]:
@@ -1319,13 +1321,16 @@ GATES = {"intake": gate_intake, "pack-match": gate_pack_match, "grill": gate_gri
 def run_gate(phase: str, project: Path, root: Path) -> int:
     name = PHASE_ALIASES.get(phase)
     if name is None:
-        print(f"gate {phase}: not implemented yet (phases 0-8 only)")
+        print(f"gate {phase}: not implemented yet (phases 0-10 only)")
         return 2
     if name in GATES:
         errs = GATES[name](project, root)
     elif name in ("design", "screens"):
         import foundry_design as D
         errs = D.GATES[name](project, root)
+    elif name in ("security", "tickets"):
+        import foundry_security as X
+        errs = X.GATES[name](project, root)
     else:
         import foundry_phases as P
         errs = P.GATES[name](project, root)
@@ -1565,6 +1570,16 @@ def main(argv: list[str] | None = None) -> int:
         sk = sub.add_parser(name, help=helptext)
         sk.add_argument("--dir", type=Path, default=Path.cwd())
         sk.add_argument("--root", type=Path, default=ROOT)
+    for name, helptext in (("threat-skeleton", "emit .foundry/threats.md, compliance.yaml, compliance-evidence-plan.md"), ("tickets-skeleton", "emit .foundry/tickets/T-*.md")):
+        sk = sub.add_parser(name, help=helptext)
+        sk.add_argument("--dir", type=Path, default=Path.cwd())
+        sk.add_argument("--root", type=Path, default=ROOT)
+    tk = sub.add_parser("tickets", help="tickets next [--n 3]: next unblocked tickets in topological order")
+    tk.add_argument("action", choices=("next",))
+    tk.add_argument("--n", type=int, default=3)
+    tk.add_argument("--done", default="", help="comma-separated ticket ids already done")
+    tk.add_argument("--dir", type=Path, default=Path.cwd())
+    tk.add_argument("--root", type=Path, default=ROOT)
     dc2 = sub.add_parser("design-check", help="WCAG contrast on data/palettes.csv and token checks on design-system/tokens.json")
     dc2.add_argument("--palettes-only", action="store_true")
     dc2.add_argument("--dir", type=Path, default=Path.cwd())
@@ -1626,6 +1641,13 @@ def main(argv: list[str] | None = None) -> int:
             return D.run_screens_skeleton(a.dir.resolve(), a.root.resolve())
         if a.cmd == "design-check":
             return D.run_design_check(a.root.resolve(), None if a.palettes_only else a.dir.resolve(), a.palettes_only)
+        import foundry_security as X
+        if a.cmd == "threat-skeleton":
+            return X.run_threat_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "tickets-skeleton":
+            return X.run_tickets_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "tickets":
+            return X.run_tickets_next(a.dir.resolve(), a.n, {x.strip() for x in a.done.split(",") if x.strip()})
     except (FileNotFoundError, KeyError, ValueError, YamlError) as e:
         print(f"foundry {a.cmd}: {e}")
         return 1

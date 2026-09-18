@@ -18,6 +18,7 @@ TEMPLATES["package.json"] = """{
     "a11y": "playwright test tests/e2e/dod.spec.ts --grep \"dod: axe\"",
     "screenshot": "playwright test tests/e2e/dod.spec.ts --grep \"dod: shot\"",
     "dod:e2e": "playwright test tests/e2e/dod.spec.ts",
+    "prepare": "pnpm --filter @__APP_NAME__/db exec prisma generate",
     "db:migrate": "pnpm --filter @__APP_NAME__/db run migrate",
     "db:seed": "pnpm --filter @__APP_NAME__/db run seed",
     "tokens": "pnpm --filter @__APP_NAME__/ui run tokens"
@@ -286,11 +287,14 @@ TEMPLATES["apps/web/tsconfig.json"] = """{
 TEMPLATES["apps/web/next-env.d.ts"] = "/// <reference types=\"next\" />\n/// <reference types=\"next/image-types/global\" />\n"
 TEMPLATES["apps/web/next.config.ts"] = """import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import path from "node:path";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@__APP_NAME__/ui"],
   headers: async () => [
     {

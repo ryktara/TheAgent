@@ -313,6 +313,8 @@ def run_scaffold(project: Path, root: Path, stack: str, install: bool = True) ->
         if code != 0:
             print("\n".join(_tail(out, 30)))
             return 1
+        code, out, secs = run_cmd(f"pnpm --filter @{app_name}/db exec prisma generate", project, timeout=600)
+        print(f"scaffold: prisma generate exit {code} in {secs:.0f}s")
         code, out, secs = run_cmd("pnpm exec playwright install chromium", project, timeout=1800)
         print(f"scaffold: playwright install chromium exit {code} in {secs:.0f}s")
         if code != 0:

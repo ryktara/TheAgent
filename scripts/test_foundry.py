@@ -27,7 +27,8 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.1"
+PACK_EXAMPLE = """version: "1.2"
+threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS
 aliases: [restaurant point of sale, cafe pos, qsr pos]
@@ -137,6 +138,15 @@ class ValidateTests(unittest.TestCase):
         code, out = run(foundry.run_validate, self.root)
         self.assertEqual(code, 0, out)
 
+    def test_index_drift_fails(self):
+        run(foundry.run_scaffold_pack, "x-pos", self.root)
+        (self.root / "packs" / "index.csv").write_text(foundry.build_index_text(self.root / "packs").replace("X POS", "X Pos"), encoding="utf-8")
+        code, out = run(foundry.run_validate, self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("sync-index", out)
+        run(foundry.run_sync_index, self.root)
+        self.assertEqual(run(foundry.run_validate, self.root)[0], 0)
+
     def test_real_repo_validates(self):
         code, out = run(foundry.run_validate, REPO)
         self.assertEqual(code, 0, out)
@@ -181,7 +191,7 @@ class ValidateTests(unittest.TestCase):
         run(foundry.run_scaffold_pack, "x-pos", self.root)
         p = self.root / "packs" / "x-pos" / "pack.yaml"
         p.write_text(p.read_text(encoding="utf-8").replace("rank: 2", "rank: 1"), encoding="utf-8")
-        (self.root / "packs" / "index.csv").write_text(",".join(foundry.INDEX_HEADER) + "\nx-pos,X,x,x,0.7\n", encoding="utf-8")
+        run(foundry.run_sync_index, self.root)
         code, out = run(foundry.run_validate, self.root)
         self.assertEqual(code, 1)
         self.assertIn("duplicate rank", out)
@@ -209,8 +219,7 @@ class ScaffoldPackTests(unittest.TestCase):
         self.assertTrue((pack / "pack.yaml").exists())
         for name in foundry.REFERENCE_FILES:
             self.assertTrue((pack / "reference" / name).exists(), name)
-        (self.root / "packs" / "index.csv").write_text(
-            ",".join(foundry.INDEX_HEADER) + "\nretail-pos,Retail POS,retail point of sale,retail;shop,0.7\n", encoding="utf-8")
+        run(foundry.run_sync_index, self.root)
         code, out = run(foundry.run_validate, self.root)
         self.assertEqual(code, 0, out)
 
@@ -220,10 +229,11 @@ class ScaffoldPackTests(unittest.TestCase):
         self.assertEqual(run(foundry.run_scaffold_pack, "Bad Slug", self.root)[0], 1)
 
     def test_unimplemented_commands_exit_2(self):
-        for cmd in ("query", "metrics", "gate"):
-            code, out = run(foundry.main, [cmd])
-            self.assertEqual(code, 2)
-            self.assertIn("not implemented in P0", out)
+        code, out = run(foundry.main, ["query"])
+        self.assertEqual(code, 2)
+        self.assertIn("not implemented", out)
+        code, out = run(foundry.main, ["gate", "7"])
+        self.assertEqual(code, 2)
 
 
 class MatchTests(unittest.TestCase):
@@ -285,6 +295,109 @@ class MatchTests(unittest.TestCase):
     def test_deterministic(self):
         b = load_brief("restaurant-pos")
         self.assertEqual(foundry.match_brief(b, REPO), foundry.match_brief(b, REPO))
+
+
+class GrillTests(unittest.TestCase):
+    """grill-plan is pure: exercised on every golden brief plus the gate brief."""
+
+    def _setup(self, brief: str):
+        res = foundry.match_brief(brief, REPO)
+        sel = foundry.selection_from_match(res)
+        pack = foundry.load_pack(REPO, sel["chosen"])
+        ledger = foundry.empty_ledger(sel["chosen"])
+        for pf in sel["prefilled"]:
+            foundry.decide(ledger, pack, pf["question_id"], pf["value"], "brief", None, 0)
+        return sel, pack, ledger
+
+    def test_every_golden_brief_round1_within_budget(self):
+        for exp_path in sorted((REPO / "evals" / "expected").glob("*.yaml")):
+            exp = foundry.parse_yaml(exp_path.read_text(encoding="utf-8"))
+            sel, pack, ledger = self._setup(load_brief(exp_path.stem))
+            plan = foundry.grill_plan(pack, ledger, sel["prefilled"], 1)
+            self.assertLessEqual(len(plan), 7, exp_path.stem)
+            self.assertLessEqual(len(plan), int(exp["max_questions"]), exp_path.stem)
+            ids = [q["id"] for q in plan]
+            self.assertEqual(len(ids), len(set(ids)), "duplicate question in plan")
+            confirms = [q for q in plan if q["why"] == "confirm-prefill"]
+            self.assertEqual(ids[:len(confirms)], [q["id"] for q in confirms], "confirms come first")
+
+    def test_gate_brief_confirm_and_followups(self):
+        sel, pack, ledger = self._setup("restaurant in Sharjah, dine-in only, we use Network International for cards")
+        plan = foundry.grill_plan(pack, ledger, sel["prefilled"], 1)
+        self.assertEqual(plan[0]["id"], "service-model")
+        self.assertEqual(plan[0]["why"], "confirm-prefill")
+        self.assertEqual(plan[0]["default"], "dine-in")
+        self.assertNotIn("region", [q["id"] for q in plan], "reversible prefill is not re-asked")
+        self.assertNotIn("central-menu-sync", [q["id"] for q in plan], "followup-only question stays out of round 1")
+        self.assertEqual(foundry.grill_plan(pack, ledger, sel["prefilled"], 2), [], "round 2 empty before round 1 answers")
+        for q in plan:
+            foundry.decide(ledger, pack, q["id"], "multi" if q["id"] == "branches" else (True if q["id"] == "delivery" else q["default"]), "human", None, 1)
+        r2 = foundry.grill_plan(pack, ledger, sel["prefilled"], 2)
+        self.assertEqual({q["id"] for q in r2}, {"central-menu-sync", "delivery-platforms"})
+        self.assertTrue(all(q["why"] == "followup" for q in r2))
+        self.assertEqual(foundry.grill_plan(pack, ledger, sel["prefilled"], 1), [])
+
+    def test_decide_rejects_bad_choice_and_coerces(self):
+        sel, pack, ledger = self._setup("restaurant with kitchen display and tables in Dubai")
+        with self.assertRaises(ValueError):
+            foundry.decide(ledger, pack, "kds", "hologram", "human")
+        e = foundry.decide(ledger, pack, "offline", "yes", "human")
+        self.assertIs(e["value"], True)
+        e2 = foundry.decide(ledger, pack, "offline", "false", "human")
+        self.assertIs(e2["value"], False)
+        self.assertEqual(sum(1 for d in ledger["decisions"] if d["id"] == "offline"), 1, "update, not append")
+
+    def test_ledger_roundtrip_and_schema(self):
+        sel, pack, ledger = self._setup("restaurant in Sharjah, dine-in only")
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            foundry.save_ledger(tmp, ledger)
+            back = foundry.load_ledger(tmp)
+            self.assertEqual(back["decisions"], ledger["decisions"])
+            self.assertEqual(foundry.validate_schema(back, foundry.load_schema("decisions.schema.json")), [])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class GateTests(unittest.TestCase):
+    def test_fixture_passes_all_gates(self):
+        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        for name in ("intake", "pack-match", "grill", "prd"):
+            self.assertEqual(foundry.GATES[name](fx, REPO), [], name)
+
+    def test_prd_gate_reports_missing_must_have_and_stale_hash(self):
+        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            shutil.copytree(fx / ".foundry", tmp / ".foundry")
+            prd = tmp / ".foundry" / "prd.md"
+            prd.write_text(prd.read_text(encoding="utf-8").replace("- `kds` —", "- kds —").replace("decisions_hash: ", "decisions_hash: x"), encoding="utf-8")
+            errs = foundry.gate_prd(tmp, REPO)
+            self.assertTrue(any("`kds`" in e for e in errs), errs)
+            self.assertTrue(any("stale" in e for e in errs), errs)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_unattended_flow_end_to_end(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            (tmp / ".foundry").mkdir()
+            (tmp / ".foundry" / "brief.md").write_text("# Brief\n\nBuild me everything. Don't ask me any questions.\n", encoding="utf-8")
+            self.assertEqual(run(foundry.main, ["match", "--brief", str(tmp / ".foundry" / "brief.md"), "--write", "--dir", str(tmp)])[0], 0)
+            self.assertEqual(run(foundry.main, ["decide", "--apply-prefilled", "--dir", str(tmp)])[0], 0)
+            self.assertEqual(run(foundry.main, ["decide", "--auto-unattended", "--dir", str(tmp)])[0], 0)
+            self.assertEqual(run(foundry.main, ["decide", "--apply-defaults", "--dir", str(tmp)])[0], 0)
+            self.assertEqual(run(foundry.main, ["gate", "2", "--dir", str(tmp)])[0], 0)
+            ledger = foundry.load_ledger(tmp)
+            self.assertEqual(ledger["mode"], "unattended")
+            self.assertIn("no-questions-requested", ledger["flags"])
+            self.assertEqual({d["source"] for d in ledger["decisions"]} - {"timeout-default", "pack-default", "brief"}, set())
+            self.assertEqual(run(foundry.main, ["metrics", "--phase", "2", "--start", "--dir", str(tmp)])[0], 0)
+            self.assertEqual(run(foundry.main, ["metrics", "--phase", "2", "--note", "x", "--dir", str(tmp)])[0], 0)
+            lines = (tmp / ".foundry" / "metrics.jsonl").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(lines), 2)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":

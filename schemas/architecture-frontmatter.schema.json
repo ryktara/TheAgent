@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foundry.dev/schemas/architecture-frontmatter.schema.json",
+  "title": "Foundry architecture.md frontmatter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["stack_id", "adr_ids", "trust_boundaries"],
+  "properties": {
+    "pack": { "type": "string" },
+    "stack_id": { "type": "string" },
+    "adr_ids": { "type": "array", "minItems": 9, "items": { "type": "string", "pattern": "^[0-9]{4}$" } },
+    "trust_boundaries": { "type": "array", "minItems": 5, "items": { "type": "string" } },
+    "decisions_hash": { "type": "string" }
+  }
+}

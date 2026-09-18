@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foundry.dev/schemas/events.schema.json",
+  "title": "Foundry event catalogue (.foundry/events.yaml)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["events"],
+  "properties": {
+    "pack": { "type": "string" },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "producer", "payload", "consumers"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "producer": { "type": "string" },
+          "payload": { "type": "string", "description": "JSON pointer into openapi.yaml components" },
+          "consumers": { "type": "array", "items": { "type": "string" } },
+          "external": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

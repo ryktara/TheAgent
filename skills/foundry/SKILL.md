@@ -1,18 +1,18 @@
 ---
 name: foundry
-description: Build an app from a one-line brief. Run phases 0–8 (intake, pack match, bounded grill, PRD, domain model, architecture, data and API, design system, screen specs) with at most 7 questions; use --unattended for zero questions; continue with /foundry-continue; resume with /foundry-resume.
+description: Build an app from a one-line brief. Run phases 0–10 (intake through threat model, compliance and tickets) with at most 7 questions; use --unattended for zero questions; continue with /foundry-continue; resume with /foundry-resume.
 invocation: user
 model: opus
 reads: [brief]
-writes: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, .foundry/prd.md, .foundry/domain.yaml, CONTEXT.md, .foundry/architecture.md, .foundry/adr/*.md, prisma/schema.prisma, openapi.yaml, .foundry/events.yaml, design-system/MASTER.md, design-system/tokens.json, .foundry/screens/*.md, .foundry/metrics.jsonl]
-gate: python scripts/foundry.py gate screens
+writes: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, .foundry/prd.md, .foundry/domain.yaml, CONTEXT.md, .foundry/architecture.md, .foundry/adr/*.md, prisma/schema.prisma, openapi.yaml, .foundry/events.yaml, design-system/MASTER.md, design-system/tokens.json, .foundry/screens/*.md, .foundry/threats.md, .foundry/compliance.yaml, .foundry/tickets/*.md, .foundry/metrics.jsonl]
+gate: python scripts/foundry.py gate tickets
 ---
 
-# /foundry — orchestrator, phases 0–8
+# /foundry — orchestrator, phases 0–10
 
 Argument: the brief in quotes, optionally followed by `--unattended`. Run every command from
 the project root (the folder that will hold the app); `scripts/foundry.py` resolves to the
-plugin. Phases 9–10 are P6+ pointers: docs/pipeline.md.
+plugin. Implementation (phases 11–15) runs under /foundry-build.
 
 ## Steps
 
@@ -61,11 +61,19 @@ plugin. Phases 9–10 are P6+ pointers: docs/pipeline.md.
    `metrics --phase 8 --note "<n> screens"`.
    Done when: gate 8 prints `pass`.
 
-9. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the
+9. **Threat model and compliance.** `metrics --phase 9 --start`; invoke threat-model, then
+   compliance; `gate 9`; `metrics --phase 9 --note "pci <scope>, <n> controls, top risk <id>"`.
+   Done when: gate 9 prints `pass`.
+
+10. **Tickets.** `metrics --phase 10 --start`; invoke to-tickets; `gate 10`;
+    `metrics --phase 10 --note "<n> tickets"`.
+    Done when: gate 10 prints `pass`.
+
+11. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the
    fix list. A second failure stops the run; print the gate output verbatim.
    Done when: every phase passed, or the run stopped with the failing gate printed.
 
-10. **Report.** Final message to the human, eight lines at most:
+12. **Report.** Final message to the human, ten lines at most:
 
    ```
    Pack: <slug> (confidence <c>, chosen by <chosen_by>)
@@ -73,8 +81,10 @@ plugin. Phases 9–10 are P6+ pointers: docs/pipeline.md.
    Assumptions: <count of pack-default + timeout-default entries> (prd.md §10)
    Model: <entities> entities, 9 ADRs, <operations> API operations
    Design: palette <id>, design-check <ok|n issues>, <screens> screens
-   Artifacts: .foundry/prd.md, .foundry/domain.yaml, .foundry/architecture.md, openapi.yaml, design-system/MASTER.md, .foundry/screens/
-   Next: /foundry-continue
+   Security: pci_scope <scope>; top risks <id1>, <id2>, <id3>
+   Tickets: <n> (next: T-000)
+   Artifacts: .foundry/prd.md, domain.yaml, architecture.md, openapi.yaml, design-system/MASTER.md, .foundry/screens/, threats.md, compliance.yaml, tickets/
+   Run /foundry-build to implement.
    ```
 
    Done when: the message is sent and nothing else follows it.
@@ -92,7 +102,8 @@ plugin. Phases 9–10 are P6+ pointers: docs/pipeline.md.
 | 6 | data-model, api-contract | `gate 6` | prisma/schema.prisma, openapi.yaml, .foundry/events.yaml |
 | 7 | design-system | `gate 7` | design-system/MASTER.md, tokens.json |
 | 8 | screen-spec | `gate 8` | .foundry/screens/*.md |
-| 9–10 | P6+ | docs/pipeline.md | |
+| 9 | threat-model, compliance | `gate 9` | .foundry/threats.md, compliance.yaml |
+| 10 | to-tickets | `gate 10` | .foundry/tickets/*.md |
 
 Counts for the report: ledger `budget` and `source` values; entity count from domain.yaml;
-operations = methods under `paths` in openapi.yaml; screens = files under .foundry/screens/.
+operations = methods under `paths` in openapi.yaml; screens = files under .foundry/screens/; top risks from threats.md "Top 10 risks"; tickets = files under .foundry/tickets/.

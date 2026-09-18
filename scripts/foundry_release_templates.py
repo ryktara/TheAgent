@@ -149,7 +149,7 @@ Required env (`.env` next to compose, never committed): `POSTGRES_PASSWORD`, `DE
 
 RELEASE_TEMPLATES["scripts/smoke.mjs"] = """// Release smoke (gate release): /health, login (enrol + whoami), table map. With --start it builds nothing but boots
 // the production servers from the local build (api via tsx, web via next start) on WEB_PORT/API_PORT, runs, then stops them.
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const args = process.argv.slice(2);
@@ -200,16 +200,17 @@ try {
 } catch (e) {
   check("smoke", false, e instanceof Error ? e.message : String(e));
 } finally {
+  // Teardown is synchronous: an async spawn during exit trips a libuv assertion on Windows.
   for (const p of procs) {
     try {
-      if (process.platform === "win32") spawn("taskkill", ["/pid", String(p.pid), "/T", "/F"]);
+      if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(p.pid), "/T", "/F"], { stdio: "ignore" });
       else p.kill("SIGTERM");
     } catch { /* already gone */ }
   }
 }
 const failed = checks.filter((c) => !c.ok);
 console.log(`smoke: ${checks.length - failed.length}/${checks.length} passed`);
-process.exit(failed.length ? 1 : 0);
+process.exitCode = failed.length ? 1 : 0;
 """
 
 

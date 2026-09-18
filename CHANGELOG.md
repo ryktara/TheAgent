@@ -4,6 +4,8 @@ One entry per build step. Newest first.
 
 ## P8 — Efficiency, metrics, wizard, release, handoff (2026-09-18)
 
+- fix: release smoke tears the prod servers down with a synchronous kill and sets exitCode (reason: an async
+  taskkill during exit tripped a libuv assertion on Windows and failed `gate release` after 5/5 checks passed).
 - Loop efficiency: `dod --tier fast|full` (fast = typecheck+lint+unit in parallel; stop hook uses it); one Playwright
   run (`tests/e2e/dod.spec.ts`) serves axe + screenshots for declared routes, `fullPage` off for list routes, dev
   servers reused between runs (`FOUNDRY_DOD` instead of `CI`); `build activate` prints the ticket card (the spec,

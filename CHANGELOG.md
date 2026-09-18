@@ -4,6 +4,12 @@ One entry per build step. Newest first.
 
 ## P7b — Build loop on real tickets (2026-09-18)
 
+- fix: `schema-skeleton` no longer appends `created_at`/`updated_at`/`deleted_at` when the pack entity already
+  lists them (reason: `prisma validate` failed on SyncEvent with a duplicate created_at in T-003).
+- fix: ESLint template declares `console`, `process`, `URL`, `Buffer` globals for `.mjs` scripts (reason:
+  build-tokens.mjs and pg-local.mjs failed `no-undef` in T-003).
+- fix: `tickets-skeleton` purges stale `T-*.md` before writing (reason: a re-run after re-ranking left two
+  ticket series with duplicate ids in proj7, and `build activate T-008` picked the stale one).
 - fix: DoD `e2e-smoke` runs every Playwright spec except axe and screenshot suites, so per-ticket
   screen state tests are part of the gate (reason: pin.spec.ts never ran under DoD).
 - fix: ESLint unused-vars ignores `_`-prefixed destructured names (reason: `{ pin_hash: _p, ...rest }`

@@ -624,9 +624,11 @@ def schema_skeleton(domain: dict, pack: dict, ledger: dict, orm: str = "prisma")
             out.append(f"  state      {name}State @default({re.sub(r'[^A-Za-z0-9]', '_', e['states'][0]).upper()})")
         if "branch_id" not in fields_seen and name not in ("Branch", "Role", "Tenant", "User") and "Branch" in names:
             out.append("  branch_id  String?  @db.Uuid")
-        out.append("  created_at DateTime @default(now())")
-        out.append("  updated_at DateTime @updatedAt")
-        if e["owned_by"] in ("ordering", "payments", "people"):
+        if "created_at" not in fields_seen:
+            out.append("  created_at DateTime @default(now())")
+        if "updated_at" not in fields_seen:
+            out.append("  updated_at DateTime @updatedAt")
+        if e["owned_by"] in ("ordering", "payments", "people") and "deleted_at" not in fields_seen:
             out.append("  deleted_at DateTime?")
         for child in relations.get(name, []):
             out.append(f"  {_snake(child)}s {child}[]")

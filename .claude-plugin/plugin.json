@@ -1,8 +1,16 @@
 {
   "name": "foundry",
-  "version": "0.1.0",
+  "version": "0.7.0",
   "description": "Autonomous app-engineering pipeline: brief in, designed + architected + implemented + tested app out, with at most 7 questions asked.",
-  "author": { "name": "Foundry contributors" },
+  "author": {
+    "name": "Foundry contributors"
+  },
   "skills": "./skills",
-  "keywords": ["app-engineering", "pipeline", "domain-packs", "autonomous"]
+  "keywords": [
+    "app-engineering",
+    "pipeline",
+    "domain-packs",
+    "autonomous"
+  ],
+  "hooks": "./hooks/hooks.json"
 }

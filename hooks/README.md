@@ -1,14 +1,21 @@
-# Hooks (planned, P7)
+# Hooks
 
-Claude Code hooks that make token discipline and gates structural rather than requested.
+Registered through `.claude-plugin/plugin.json` → `hooks/hooks.json`. Every hook is Python 3.11+
+stdlib, reads the Claude Code JSON payload on stdin, writes JSON on stdout, and fails open
+(any error → exit 0 with no output). `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin.
 
-| Hook | Event | Action | Writes |
-|------|-------|--------|--------|
-| metrics | PostToolUse | Append one record (tool, phase, ticket, wall_ms, token estimate) | .foundry/metrics.jsonl |
-| gate | Stop | Run `foundry.py gate <current phase>`; block stop on failure with the failing criterion | stdout |
-| graph-first | PreToolUse (Grep/Read on source) | Non-blocking reminder to prefer codebase-memory-mcp graph tools | none |
+| Hook | Event / matcher | Payload fields used | Output | Control |
+|------|-----------------|---------------------|--------|---------|
+| bash_guard.py | PreToolUse, `Bash` | `tool_name`, `tool_input.command` | `hookSpecificOutput.permissionDecision: deny` + reason for `rm -rf /`, force push, `curl \| sh`, writes to `.env*` or secrets files, `npm publish`, `git reset --hard`, `DROP TABLE`; nothing otherwise | SEC-AGT-02, SEC-AGT-03 |
+| edit_guard.py | PreToolUse, `Edit\|Write\|MultiEdit` | `tool_name`, `tool_input.file_path`, `cwd` | `permissionDecision: allow` with `additionalContext` when the path is outside the active ticket's `files_likely_touched` and outside `tests/` or `.foundry/`; never denies | SEC-AGT-10 |
+| metrics.py | PostToolUse, `.*` | `tool_name`, `tool_response`, `cwd` | none; appends `{ts, phase 11, event tool-call, tool, ticket, tool_calls 1, tokens_out ≈ chars/4, note}` to `.foundry/metrics.jsonl` | observability |
+| session_start.py | SessionStart | `cwd` | `additionalContext`: graph-first rule, `.foundry/handoff.md` (≤4000 chars), active ticket summary (≤30 lines) | SEC-AGT-06 |
+| stop_check.py | Stop | `cwd`, `stop_hook_active` | `systemMessage` with the tail of `foundry.py dod --ticket <active> --only typecheck,lint`; never blocks | SEC-AGT-09 |
 
-All hook scripts are Python 3.11+ stdlib, invoked through `foundry.ps1` / `foundry.sh`.
-Records validate against `schemas/metrics.schema.json`.
+Active ticket and done list come from `.foundry/build.yaml` (written by `foundry.py build
+activate|complete`). Hooks only act inside a project that has a `.foundry/` folder.
 
-Not implemented in P0.
+Test: `python -m unittest hooks/test_hooks.py` feeds sample payloads and asserts the contract.
+
+Not yet wired: a PreToolUse wrapper for WebFetch that marks fetched content as data
+(SEC-AGT-01); the skills carry the rule until then.

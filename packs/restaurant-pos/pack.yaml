@@ -1,4 +1,4 @@
-version: "1.5"
+version: "1.6"
 complete: true
 threshold: 0.7
 slug: restaurant-pos
@@ -101,7 +101,7 @@ compliance_must: [C-ALL-01, C-ALL-02, C-ALL-03, C-ALL-04, C-ALL-05, C-ALL-06]
 compliance_should: [C-ALL-07, C-ALL-08]
 nfr_defaults: {offline: required, p95_add_line_ms: 100, p95_send_to_kitchen_ms: 300, p95_tender_ms: 500, sync_recovery_s: 60, concurrent_terminals_min: 3, tablets: [ipad-10th-gen, android-10in, windows-pos-terminal], kitchen_screen: 15in, printers: thermal-80mm, rtl: required, font_min_px: 16, touch_min_dp: 48, uptime: "99.5%", backups: daily}
 stack_default: {web-pos: nextjs-pwa, api: hono-node, db: postgres, offline: pglite-event-sourced-sync, realtime: websocket, printing: escpos-local-bridge, mobile-waiter: expo, kds: nextjs-pwa}
-ui_profile: {style: operational-high-contrast, density: high, touch: 48dp, numpad_first: true, dark: kds-only, light: cashier, fonts: [Inter, tabular-numerals], order_age_colors: {green_under_min: 5, amber_under_min: 10, red_from_min: 10}, rtl: mirrored}
+ui_profile: {palette: ember-kitchen, typography: inter-system, style: high-contrast-operational, themes: {default: ember-kitchen, kds: kds-dark}, density: high, touch: 48dp, numpad_first: true, dark: kds-only, light: cashier, fonts: [Inter, tabular-numerals], order_age_colors: {green_under_min: 5, amber_under_min: 10, red_from_min: 10}, rtl: mirrored}
 questions:
   - {id: service-model, rank: 1, ask: "Dine-in with table service, quick-service counter, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, dine in, quick-service, quick service, qsr, takeaway only, table service, fine dining, food court, kiosk], brief_hints: {dine-in: [dine-in, dine in, table service, waiters, at the table, fine dining, hotel restaurant], quick-service: [quick-service, quick service, qsr, counter, takeaway only, fast food, food court, kiosk, cloud kitchen, shawarma shop], both: [dine-in and takeaway, both]}, followups: [{when: [dine-in, both], ask: [reservations]}, {when: quick-service, ask: [qr-self-order]}], enables: {quick-service: [qr-self-order], both: [qr-self-order]}, maps_to: service.model}
   - {id: region, rank: 2, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, QA, BH, KW, OM, EG, other], default: AE, reversible: true, enables: {SA: [e-invoicing], PK: [e-invoicing], EG: [e-invoicing]}, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, ajman, deira, uae, emirates, riyadh, jeddah, dammam, saudi, ksa, karachi, lahore, islamabad, pakistan, doha, qatar, bahrain, manama, kuwait, muscat, oman, cairo, egypt], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, deira, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan], QA: [doha, qatar], BH: [bahrain, manama], KW: [kuwait], OM: [muscat, oman], EG: [cairo, egypt]}, maps_to: region.country}

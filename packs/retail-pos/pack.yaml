@@ -1,4 +1,4 @@
-version: "1.5"
+version: "1.6"
 complete: false
 threshold: 0.7
 slug: retail-pos

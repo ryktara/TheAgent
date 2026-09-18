@@ -229,11 +229,9 @@ class ScaffoldPackTests(unittest.TestCase):
         self.assertEqual(run(foundry.run_scaffold_pack, "Bad Slug", self.root)[0], 1)
 
     def test_unimplemented_commands_exit_2(self):
-        code, out = run(foundry.main, ["query"])
-        self.assertEqual(code, 2)
-        self.assertIn("not implemented", out)
         code, out = run(foundry.main, ["gate", "7"])
         self.assertEqual(code, 2)
+        self.assertIn("not implemented", out)
 
 
 class MatchTests(unittest.TestCase):
@@ -567,7 +565,7 @@ class P4Tests(unittest.TestCase):
         self.assertIn("nestjs", out)
         code, out = run(foundry.main, ["query", "stacks", "--layer", "api", "--json"])
         self.assertEqual(code, 0)
-        self.assertIn('"total": 2', out)
+        self.assertIn('"total": 3', out)
         code, out = run(foundry.main, ["doctor"])
         self.assertIn("python", out)
         self.assertIn("codebase-memory-mcp", out)

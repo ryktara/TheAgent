@@ -266,7 +266,8 @@ def context_md(pack: dict, ledger: dict, project: Path, domain: dict, jobs: list
         out.append(f"| `{jid}` | {jid.replace('-', ' ')} (PRD §3) |")
     out += ["", "## Decisions vocabulary", "", "| Decision | Canonical word | Source |", "|----------|----------------|--------|"]
     for d in ledger.get("decisions", []):
-        out.append(f"| {d['id']} | {d['id'].replace('-', ' ')} = {F._yq(d['value']).strip(chr(34))} | {d['source']} |")
+        word = (d.get("maps_to") or d["id"]).replace(".", " ").replace("_", " ").replace("-", " ")
+        out.append(f"| {d['id']} | {word} = {F._yq(d['value']).strip(chr(34))} | {d['source']} |")
     out += ["", "## Project-specific terms", "", "<!-- model: add up to 10 terms the pack glossary lacks, same table shape -->", "", "| Term | Definition | Aliases |", "|------|------------|---------|", ""]
     return "\n".join(out)
 

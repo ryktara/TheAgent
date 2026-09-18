@@ -172,17 +172,17 @@ the term in this file; aliases are accepted in conversation and normalised in ar
 | Decision | Canonical word | Source |
 |----------|----------------|--------|
 | service-model | service model = dine-in | timeout-default |
-| region | region = AE | brief |
-| payments | payments = network-intl | brief |
-| branches | branches = single | timeout-default |
-| kds | kds = both | timeout-default |
-| delivery | delivery = false | timeout-default |
-| offline | offline = true | timeout-default |
-| reservations | reservations = false | timeout-default |
-| qr-self-order | qr self order = false | pack-default |
-| delivery-platforms | delivery platforms = talabat | pack-default |
-| central-menu-sync | central menu sync = central | pack-default |
-| payment-provider-name | payment provider name = Network International | agent-fact |
+| region | region country = AE | brief |
+| payments | payments provider = network-intl | brief |
+| branches | org branches = single | timeout-default |
+| kds | kitchen output = both | timeout-default |
+| delivery | integrations delivery = false | timeout-default |
+| offline | nfr offline = true | timeout-default |
+| reservations | features reservations = false | timeout-default |
+| qr-self-order | features qr self order = false | pack-default |
+| delivery-platforms | integrations delivery platforms = talabat | pack-default |
+| central-menu-sync | org menu sync = central | pack-default |
+| payment-provider-name | payments provider name = Network International | agent-fact |
 
 ## Project-specific terms
 

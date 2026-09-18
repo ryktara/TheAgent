@@ -552,7 +552,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.3"
+PACK_TEMPLATE = """version: "1.4"
 complete: false
 threshold: 0.7
 slug: {slug}

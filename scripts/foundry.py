@@ -9,6 +9,7 @@ Subcommands:
   grill-plan     compute the round 1 / round 2 question list (implemented)
   decide         append or update .foundry/decisions.yaml  (implemented)
   gate           run a phase gate: pack-match, grill, prd  (implemented for 0-3)
+  prd-skeleton   emit PRD sections 2-8 and 10 from pack + ledger (implemented)
   metrics        append a phase record to .foundry/metrics.jsonl (implemented)
   query          query data/*.csv                         (P5)
 """
@@ -391,6 +392,17 @@ def validate_pack(path: Path, schema: dict) -> list[FoundryError]:
         for hint_key in (q.get("brief_hints") or {}):
             if q.get("choices") and hint_key not in q["choices"]:
                 errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: brief_hints key '{hint_key}' not in choices"))
+    seen_maps: set[str] = set()
+    for q in data.get("questions") or []:
+        if isinstance(q, dict) and q.get("maps_to"):
+            if q["maps_to"] in seen_maps:
+                errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: maps_to '{q['maps_to']}' is not unique"))
+            seen_maps.add(q["maps_to"])
+        if isinstance(q, dict) and q.get("derive_from"):
+            if q["derive_from"]["question"] not in {x.get("id") for x in data.get("questions") or []}:
+                errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: derive_from.question not a question id"))
+    if data.get("complete"):
+        errs += lint_complete_pack(path, data)
     ids = {q.get("id") for q in data.get("questions") or [] if isinstance(q, dict)}
     for q in data.get("questions") or []:
         for fu in (q.get("followups") or []) if isinstance(q, dict) else []:
@@ -399,6 +411,49 @@ def validate_pack(path: Path, schema: dict) -> list[FoundryError]:
                     errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: followup target '{target}' is not a question id"))
                 if target == q.get("id"):
                     errs.append(FoundryError(path, 1, f"questions[{q.get('id')}]: followup targets itself"))
+    return errs
+
+
+ENTITY_TOKEN = re.compile(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b")
+
+
+def lint_complete_pack(path: Path, data: dict) -> list[FoundryError]:
+    """Extra checks for packs marked complete: true."""
+    errs: list[FoundryError] = []
+    base = path.parent
+    ref = data.get("reference") or {}
+
+    def read(key: str) -> str:
+        p = base / ref.get(key, f"reference/{key}.md")
+        return p.read_text(encoding="utf-8") if p.exists() else ""
+
+    screens = read("screens")
+    headings = {m.group(1).strip().lower() for m in re.finditer(r"^##\s+([a-z0-9][a-z0-9-]*)", screens, re.M)}
+    for job in data.get("jobs") or []:
+        for sc in job.get("screens") or []:
+            if sc.lower() not in headings:
+                errs.append(FoundryError(path, 1, f"complete pack: job '{job.get('id')}' screen '{sc}' has no '## {sc}' heading in screens.md"))
+    entities = set((data.get("entities") or {}).keys())
+    inv_text = " ".join(data.get("invariants") or [])
+    for tok in set(ENTITY_TOKEN.findall(inv_text)):
+        if tok not in entities and not (tok.endswith("s") and tok[:-1] in entities):
+            errs.append(FoundryError(path, 1, f"complete pack: invariant references '{tok}' which is not an entity"))
+    for ent in entities:
+        if not re.search(rf"\b{re.escape(ent)}\b", inv_text + " " + screens):
+            errs.append(FoundryError(path, 1, f"complete pack: entity '{ent}' appears in no invariant or screen"))
+    compliance = read("compliance")
+    for cid in data.get("compliance_must") or []:
+        if cid not in compliance:
+            errs.append(FoundryError(path, 1, f"complete pack: compliance_must '{cid}' not found in compliance.md"))
+    gl = base / ref.get("glossary", "reference/glossary.csv")
+    rows = 0
+    if gl.exists():
+        with gl.open(encoding="utf-8", newline="") as fh:
+            rows = max(0, sum(1 for _ in csv.reader(fh)) - 1)
+    if rows < 80:
+        errs.append(FoundryError(path, 1, f"complete pack: glossary has {rows} rows; complete packs need 80"))
+    if not (base / "reference" / "sources.md").exists():
+        errs.append(FoundryError(path, 1, "complete pack: reference/sources.md missing"))
     return errs
 
 
@@ -476,7 +531,8 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.2"
+PACK_TEMPLATE = """version: "1.3"
+complete: false
 threshold: 0.7
 slug: {slug}
 name: {title}
@@ -533,7 +589,7 @@ def run_scaffold_pack(slug: str, root: Path = ROOT, force: bool = False) -> int:
 # --------------------------------------------------------------------------- match
 MATCHER_VERSION = "1.1"
 ALIAS_W, KEYWORD_W, STEM_W = 3.0, 1.0, 0.5
-SATURATION_HITS = 3          # distinct matched terms for full confidence
+SATURATION_HITS = 2          # distinct matched terms for full confidence
 NO_QUESTION_PATTERNS = (r"\bno questions?\b", r"\bdon'?t ask\b", r"\bdo not ask\b", r"\bwithout asking\b", r"\bno need to ask\b")
 STOPWORDS = {
     "a", "an", "the", "and", "or", "but", "for", "to", "of", "in", "on", "at", "by", "with", "from", "my", "our",
@@ -750,13 +806,29 @@ def selection_from_match(result: dict) -> dict:
     }
 
 
-def run_match(brief_arg: str, root: Path, as_json: bool, write_dir: Path | None = None) -> int:
+def rematch_text(brief: str, ledger: dict) -> str:
+    """Brief plus every free-text answer in the ledger (product-summary first)."""
+    extras = [str(d["value"]) for d in ledger.get("decisions", [])
+              if isinstance(d.get("value"), str) and d["value"].strip() and d["source"] in ("human", "agent-fact")
+              and len(d["value"].split()) >= 2]
+    return brief + ("\n" + "\n".join(extras) if extras else "")
+
+
+def run_match(brief_arg: str, root: Path, as_json: bool, write_dir: Path | None = None, answers: Path | None = None) -> int:
     text = sys.stdin.read() if brief_arg == "-" else Path(brief_arg).read_text(encoding="utf-8")
     text = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#")).strip()
     if not text:
         print("match: brief is empty")
         return 1
+    previous = None
+    if answers is not None:
+        ledger = parse_yaml(answers.read_text(encoding="utf-8"))
+        previous = ledger.get("pack")
+        text = rematch_text(text, ledger)
     result = match_brief(text, root)
+    if previous is not None and result["chosen"] != previous:
+        result["flags"].append("rematched")
+        result["previous"] = previous
     if write_dir is not None:
         out = write_dir / ".foundry" / "pack.yaml"
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -863,6 +935,13 @@ def load_ledger(project: Path, slug: str | None = None) -> dict:
         d = parse_yaml(p.read_text(encoding="utf-8"))
         d.setdefault("flags", [])
         d.setdefault("decisions", [])
+        sel_path = project / ".foundry" / "pack.yaml"
+        if sel_path.exists():
+            sel = parse_yaml(sel_path.read_text(encoding="utf-8"))
+            if sel["chosen"] != d["pack"]:
+                fresh = empty_ledger(sel["chosen"], d.get("mode", "attended"), sorted(set(d["flags"]) | set(sel.get("flags") or []) | {"rematched"}))
+                fresh["budget"]["round1_used"] = d["budget"].get("round1_used", 0)
+                return fresh
         return d
     flags: list[str] = []
     if (project / ".foundry" / "pack.yaml").exists():
@@ -896,6 +975,8 @@ def _is_decided(entry: dict | None, q: dict) -> bool:
 
 
 def _match_when(when: Any, value: Any) -> bool:
+    if isinstance(when, list):
+        return any(_match_when(w, value) for w in when)
     if when == "*":
         return True
     return str(when).lower() == str(value).lower()
@@ -907,6 +988,7 @@ def grill_plan(pack: dict, ledger: dict, prefilled: list[dict], round_no: int) -
     questions = sorted(pack.get("questions") or [], key=lambda q: q["rank"])
     by_id = {q["id"]: q for q in questions}
     followup_only = {t for q in questions for fu in q.get("followups") or [] for t in fu["ask"]}
+    followup_only |= {q["id"] for q in questions if q.get("derive_from")}
     idx = _ledger_index(ledger)
     pre = {p["question_id"]: p for p in prefilled}
 
@@ -968,7 +1050,7 @@ def decide(ledger: dict, pack: dict, qid: str, value: Any, source: str, rational
     if q is None:
         raise KeyError(f"unknown question id '{qid}' for pack {pack['slug']}")
     value = _coerce(q, value)
-    if q["answer_type"] == "choice" and value not in (q.get("choices") or []) and q["id"] != "payment-provider-name":
+    if q["answer_type"] == "choice" and value not in (q.get("choices") or []):
         raise ValueError(f"{qid}: '{value}' not in choices {q.get('choices')}")
     entry = {"id": qid, "question": q["ask"], "value": value, "source": source, "reversible": q.get("reversible", True)}
     if rationale:
@@ -986,6 +1068,40 @@ def decide(ledger: dict, pack: dict, qid: str, value: Any, source: str, rational
     else:
         decisions.append(entry)
     return entry
+
+
+def derive_value(q: dict, ledger: dict) -> tuple[Any, str] | None:
+    """Resolve a derive_from question from its parent's ledger value. None when the map yields null."""
+    df = q.get("derive_from")
+    if not df:
+        return None
+    parent = _ledger_index(ledger).get(df["question"])
+    if parent is None:
+        return None
+    key = str(parent["value"]).lower() if not isinstance(parent["value"], str) else parent["value"]
+    mapped = (df.get("map") or {}).get(key)
+    if mapped is None:
+        return None
+    return mapped, f"derived from {df['question']}={parent['value']}"
+
+
+def apply_defaults(ledger: dict, pack: dict, prefilled: list[dict], source: str = "pack-default") -> int:
+    n = 0
+    for _ in range(2):  # two passes so a derived question can depend on another default
+        idx = _ledger_index(ledger)
+        for q in pack.get("questions") or []:
+            if _is_decided(idx.get(q["id"]), q):
+                continue
+            pf = next((p for p in prefilled if p["question_id"] == q["id"]), None)
+            derived = derive_value(q, ledger)
+            if derived is not None:
+                decide(ledger, pack, q["id"], derived[0], "agent-fact", derived[1], None)
+            elif pf:
+                decide(ledger, pack, q["id"], pf["value"], source, "brief prefill kept", None)
+            else:
+                decide(ledger, pack, q["id"], q["default"], source, "pack default", None)
+            n += 1
+    return n
 
 
 def _coerce(q: dict, value: Any) -> Any:
@@ -1033,13 +1149,7 @@ def run_decide(a, project: Path, root: Path) -> int:
                 n += 1
             _bump_budget(ledger, rnd, len(plan))
     if a.apply_defaults:
-        idx = _ledger_index(ledger)
-        for q in pack.get("questions") or []:
-            if not _is_decided(idx.get(q["id"]), q):
-                pf = next((p for p in prefilled if p["question_id"] == q["id"]), None)
-                decide(ledger, pack, q["id"], pf["value"] if pf else q["default"], a.source or "pack-default",
-                       "brief prefill kept" if pf else "pack default", None)
-                n += 1
+        n += apply_defaults(ledger, pack, prefilled, a.source or "pack-default")
     if a.id:
         if a.value is None:
             print("decide: --value is required with --id")
@@ -1139,6 +1249,8 @@ def gate_prd(project: Path, root: Path) -> list[str]:
     ledger = load_ledger(project, sel["chosen"])
     if fm.get("decisions_hash") != decisions_hash(ledger):
         errs.append("prd.md decisions_hash is stale; regenerate from the current ledger")
+    if MODEL_BLOCK in body:
+        errs.append(f"prd.md still contains {MODEL_BLOCK}; sections 1 and 9 are unfilled")
     sec = _prd_sections(body)
     scope_in, scope_out, assumptions, nfr = sec.get("4", ""), sec.get("5", ""), sec.get("10", ""), sec.get("6", "")
     for fid in pack.get("must_have") or []:
@@ -1207,6 +1319,126 @@ def run_metrics(a, project: Path, root: Path) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- prd-skeleton
+MODEL_BLOCK = "<!-- model: write -->"
+
+
+def _cite(d: dict | None) -> str:
+    return f" [D:{d['id']}]" if d else ""
+
+
+def _toks(text: Any) -> set[str]:
+    return {_stem(t) for t in _norm(str(text)).split() if t not in STOPWORDS}
+
+
+def should_have_enabled(fid: str, decisions: list[dict]) -> dict | None:
+    """A should_have is ON when a decision whose id or value shares a token with it holds a truthy, non-negative value."""
+    weak = {"sync", "integration", "basic", "core", "management", "name", "provider"}
+    ft = _toks(fid.replace("-", " ")) - weak
+    for d in decisions:
+        v = d["value"]
+        if d["source"] not in ("human", "brief", "agent-fact"):
+            continue
+        if v in (False, None, "", "none", "single", "no", "cash-only", 0, "unknown"):
+            continue
+        if ft & ((_toks(d["id"].replace("-", " ")) | _toks(str(v).replace("-", " "))) - weak):
+            return d
+    return None
+
+
+def prd_skeleton(pack: dict, ledger: dict, brief: str) -> str:
+    decisions = ledger.get("decisions", [])
+    idx = {d["id"]: d for d in decisions}
+    by_map = {d.get("maps_to"): d for d in decisions if d.get("maps_to")}
+    region_d = by_map.get("region.country") or idx.get("region")
+    region = str(region_d["value"]) if region_d else next(iter(pack.get("regional") or {"AE": {}}))
+    reg = (pack.get("regional") or {}).get(region) or {}
+    nfr = pack.get("nfr_defaults") or {}
+    offline_d = by_map.get("nfr.offline") or idx.get("offline")
+    out: list[str] = []
+    out += ["---", f"pack: {pack['slug']}", "version: 1", f"decisions_hash: {decisions_hash(ledger)}", "generated_by: prd-skeleton", "---", "",
+            f"# PRD — {pack['name']}", "", "## 1. Product", "", MODEL_BLOCK,
+            f"<!-- one paragraph: what, for whom, where it runs, the one thing it must never fail at; cite decisions as [D:id]. Brief: {brief.strip()[:300]} -->", ""]
+    out += ["## 2. Personas", "", "| Persona | Role in the product | Kept because |", "|---------|---------------------|--------------|"]
+    for p in pack.get("personas") or []:
+        out.append(f"| {p} | pack persona | pack |")
+    out += ["", "## 3. Jobs to be done", "", "| Id | Persona | Job | must/should | Screens |", "|----|---------|-----|-------------|---------|"]
+    for j in pack.get("jobs") or []:
+        out.append(f"| `{j['id']}` | {j.get('persona', '-')} | {j['id'].replace('-', ' ')} | {'must' if j.get('must') else 'should'} | {', '.join(j.get('screens') or [])} |")
+    out += ["", "## 4. Scope IN", ""]
+    for fid in pack.get("must_have") or []:
+        out.append(f"- `{fid}` — pack must-have")
+    on: dict[str, dict] = {}
+    for fid in pack.get("should_have") or []:
+        d = should_have_enabled(fid, decisions)
+        if d:
+            on[fid] = d
+            out.append(f"- `{fid}` — enabled by {d['id']} = {_yq(d['value'])}{_cite(d)}")
+    out += ["", "## 5. Scope OUT", ""]
+    for fid in pack.get("should_have") or []:
+        if fid not in on:
+            out.append(f"- `{fid}` — not enabled by any decision; later phase")
+    out += ["", "## 6. Non-functional requirements", ""]
+    off_val = offline_d["value"] if offline_d else nfr.get("offline", "optional")
+    off_txt = {True: "required", False: "optional"}.get(off_val, str(off_val))
+    out.append(f"- Offline: {off_txt}{_cite(offline_d)}")
+    lat = [f"{k.replace('p95_', '').replace('_ms', '').replace('_', ' ')} p95 {v} ms" for k, v in nfr.items() if str(k).endswith("_ms")]
+    out.append("- Latency: " + ("; ".join(lat) if lat else "p95 targets per pack nfr_defaults"))
+    dev = [f"{k}: {v}" for k, v in nfr.items() if k in ("tablets", "terminals", "printers", "scanners", "screens", "devices", "kitchen_screen")]
+    plat = by_map.get("platform.targets")
+    out.append("- Devices: " + ("; ".join(map(str, dev)) if dev else "per platform decision") + _cite(plat))
+    langs = reg.get("receipt_lang") or reg.get("languages") or ["en"]
+    rtl = " (RTL for ar/ur)" if any(l in ("ar", "ur") for l in langs) else ""
+    out.append(f"- Languages: {', '.join(map(str, langs))}{rtl}{_cite(region_d)}")
+    rest = {k: v for k, v in nfr.items() if not str(k).endswith("_ms") and k not in ("offline", "tablets", "terminals", "printers", "scanners", "screens", "devices", "kitchen_screen")}
+    if rest:
+        out.append("- Other: " + "; ".join(f"{k} {v}" for k, v in rest.items()))
+    out += ["", "## 7. Integrations", "", "| Category | Chosen | Source |", "|----------|--------|--------|"]
+    for cat, options in (pack.get("integrations") or {}).items():
+        chosen, src = None, "pack default"
+        for d in decisions:
+            mt = d.get("maps_to") or ""
+            if mt.startswith(f"integrations.{cat}") or mt.startswith(f"{cat}.") or (cat == "payments" and mt.startswith("payments.provider")):
+                if d["value"] not in (False, None, ""):
+                    chosen, src = d["value"], f"[D:{d['id']}]"
+                    if d["value"] is True:
+                        chosen = ", ".join(map(str, options))
+                    break
+        out.append(f"| {cat} | {chosen if chosen is not None else (options[0] if options else '-')} | {src} |")
+    out += ["", "## 8. Regional and compliance", "", f"- Region: {region}{_cite(region_d)}"]
+    for k, v in reg.items():
+        out.append(f"- {k.replace('_', ' ')}: {v if not isinstance(v, list) else ', '.join(map(str, v))}")
+    out.append("- Must controls: " + ", ".join(f"`{c}`" for c in pack.get("compliance_must") or []))
+    if pack.get("compliance_should"):
+        out.append("- Should controls: " + ", ".join(f"`{c}`" for c in pack["compliance_should"]))
+    out += ["", "## 9. Success metrics", "", MODEL_BLOCK, "<!-- 3 to 5 metrics, each with a number, a unit and a time window -->", ""]
+    out += ["## 10. Open assumptions", "", "Confirmed decisions (human, brief, derived):", ""]
+    for d in decisions:
+        if d["source"] in ("human", "brief", "agent-fact"):
+            out.append(f"- `{d['id']}` = {_yq(d['value'])} — {d['source']}{': ' + d['rationale'] if d.get('rationale') else ''} [D:{d['id']}]")
+    out += ["", "Assumptions taken from pack defaults; each can be changed by editing `.foundry/decisions.yaml`:", ""]
+    for d in decisions:
+        if d["source"] in ("pack-default", "timeout-default"):
+            out.append(f"- `{d['id']}` = {_yq(d['value'])} — {d['source']}; changeable [D:{d['id']}]")
+    return "\n".join(out) + "\n"
+
+
+def run_prd_skeleton(project: Path, root: Path, out_path: Path | None) -> int:
+    sel = load_selection(project)
+    pack = load_pack(root, sel["chosen"])
+    ledger = load_ledger(project, sel["chosen"])
+    brief_p = project / ".foundry" / "brief.md"
+    brief = "\n".join(l for l in brief_p.read_text(encoding="utf-8").splitlines() if not l.startswith("#")) if brief_p.exists() else ""
+    text = prd_skeleton(pack, ledger, brief)
+    if out_path is None:
+        print(text)
+        return 0
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(text, encoding="utf-8", newline="\n")
+    print(f"prd-skeleton: wrote {out_path} ({text.count(MODEL_BLOCK)} model blocks to fill)")
+    return 0
+
+
 # --------------------------------------------------------------------------- main
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="foundry", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1222,6 +1454,8 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--brief", required=True, help="path to brief, or - for stdin")
     m.add_argument("--json", action="store_true")
     m.add_argument("--write", action="store_true", help="write .foundry/pack.yaml under --dir")
+    m.add_argument("--rematch", action="store_true", help="append free-text ledger answers to the brief before scoring")
+    m.add_argument("--answers", type=Path, help="ledger to read answers from (with --rematch)")
     m.add_argument("--dir", type=Path, default=Path.cwd())
     m.add_argument("--root", type=Path, default=ROOT)
     si = sub.add_parser("sync-index", help="regenerate packs/index.csv from packs/*/pack.yaml")
@@ -1254,6 +1488,10 @@ def main(argv: list[str] | None = None) -> int:
     mt.add_argument("--tool-calls", type=int, default=None)
     mt.add_argument("--dir", type=Path, default=Path.cwd())
     mt.add_argument("--root", type=Path, default=ROOT)
+    ps = sub.add_parser("prd-skeleton", help="emit PRD sections 2-8 and 10 from pack + ledger")
+    ps.add_argument("--out", type=Path, help="write to this path (default: stdout)")
+    ps.add_argument("--dir", type=Path, default=Path.cwd())
+    ps.add_argument("--root", type=Path, default=ROOT)
     for name in ("query",):
         p = sub.add_parser(name, help="not implemented yet")
         p.add_argument("args", nargs="*")
@@ -1263,7 +1501,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "scaffold-pack":
         return run_scaffold_pack(a.slug, a.root.resolve(), a.force)
     if a.cmd == "match":
-        return run_match(a.brief, a.root.resolve(), a.json, a.dir.resolve() if a.write else None)
+        answers = (a.answers or (a.dir / ".foundry" / "decisions.yaml")) if a.rematch else None
+        return run_match(a.brief, a.root.resolve(), a.json, a.dir.resolve() if a.write else None, answers)
     if a.cmd == "sync-index":
         return run_sync_index(a.root.resolve())
     try:
@@ -1275,6 +1514,8 @@ def main(argv: list[str] | None = None) -> int:
             return run_gate(a.phase, a.dir.resolve(), a.root.resolve())
         if a.cmd == "metrics":
             return run_metrics(a, a.dir.resolve(), a.root.resolve())
+        if a.cmd == "prd-skeleton":
+            return run_prd_skeleton(a.dir.resolve(), a.root.resolve(), a.out)
     except (FileNotFoundError, KeyError, ValueError, YamlError) as e:
         print(f"foundry {a.cmd}: {e}")
         return 1

@@ -1,0 +1,13 @@
+{
+  "name": "foundry-local",
+  "owner": { "name": "Foundry contributors" },
+  "metadata": { "description": "Local marketplace exposing the foundry plugin from this checkout." },
+  "plugins": [
+    {
+      "name": "foundry",
+      "source": "./",
+      "description": "Autonomous app-engineering pipeline: brief in, tested app out, at most 7 questions.",
+      "version": "0.1.0"
+    }
+  ]
+}

@@ -10,6 +10,9 @@ Subcommands:
   decide         append or update .foundry/decisions.yaml  (implemented)
   gate           run a phase gate: pack-match, grill, prd  (implemented for 0-3)
   prd-skeleton   emit PRD sections 2-8 and 10 from pack + ledger (implemented)
+  doctor         check toolchain (python, node, npm, git, codebase-memory-mcp, docker)
+  query          query data/<csv> with --col value filters
+  domain-skeleton / arch-skeleton / schema-skeleton / api-skeleton   phases 4-6 (see foundry_phases.py)
   metrics        append a phase record to .foundry/metrics.jsonl (implemented)
   query          query data/*.csv                         (P5)
 """
@@ -41,7 +44,7 @@ TRIGGER_WORDS = {
     "draft", "model", "design", "specify", "spec", "threat", "map", "split", "release",
     "hand", "handoff", "generate", "create", "validate", "audit", "plan", "run", "scaffold",
     "produce", "derive", "check", "convert", "extract", "compile", "verify", "record",
-    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask",
+    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask", "decide", "produce",
     # trigger nouns
     "brief", "pack", "prd", "domain", "architecture", "adr", "schema", "api", "openapi",
     "tokens", "screen", "screens", "ticket", "tickets", "wizard", "metrics", "gate",
@@ -203,8 +206,11 @@ def _parse_list(lines, idx, indent):
             out.append(_flow(rest, n))
             idx += 1
             continue
-        if ":" in rest and not rest.startswith(("\"", "'")):
-            raise YamlError(n, "block mapping inside a list item is outside the subset; use {k: v}")
+        if re.match(r"^[^\s\"'\[{][^:]*:( |$)", rest) or re.match(r"^\"[^\"]*\":( |$)", rest):
+            lines[idx] = (n, indent + 2, rest)
+            val, idx = _parse_map(lines, idx, indent + 2)
+            out.append(val)
+            continue
         out.append(_scalar(rest))
         idx += 1
     return out, idx
@@ -445,6 +451,21 @@ def lint_complete_pack(path: Path, data: dict) -> list[FoundryError]:
     for cid in data.get("compliance_must") or []:
         if cid not in compliance:
             errs.append(FoundryError(path, 1, f"complete pack: compliance_must '{cid}' not found in compliance.md"))
+    for rcode, rspec in (data.get("regional") or {}).items():
+        for cid in list(rspec.get("compliance_must") or []) + list(rspec.get("compliance_should") or []):
+            if cid not in compliance:
+                errs.append(FoundryError(path, 1, f"complete pack: regional.{rcode} control '{cid}' not found in compliance.md"))
+    should_ids = set(data.get("should_have") or [])
+    for q in data.get("questions") or []:
+        for when, ids in (q.get("enables") or {}).items():
+            for fid in ids:
+                if fid not in should_ids:
+                    errs.append(FoundryError(path, 1, f"questions[{q.get('id')}].enables[{when}]: '{fid}' is not a should_have id"))
+    src = base / "reference" / "sources.md"
+    if src.exists():
+        for n, line in enumerate(src.read_text(encoding="utf-8").splitlines(), 1):
+            if line.startswith("|") and "VERIFIED" in line and "UNVERIFIED" not in line and "orchestrator" not in line and "http" not in line:
+                errs.append(FoundryError(src, n, "VERIFIED row has no URL"))
     gl = base / ref.get("glossary", "reference/glossary.csv")
     rows = 0
     if gl.exists():
@@ -1164,7 +1185,8 @@ def run_decide(a, project: Path, root: Path) -> int:
 
 # --------------------------------------------------------------------------- gates
 PHASE_ALIASES = {"0": "intake", "intake": "intake", "1": "pack-match", "pack-match": "pack-match",
-                 "2": "grill", "grill": "grill", "3": "prd", "prd": "prd"}
+                 "2": "grill", "grill": "grill", "3": "prd", "prd": "prd", "4": "domain", "domain": "domain",
+                 "5": "architecture", "architecture": "architecture", "6": "data", "data": "data", "api": "api"}
 
 
 def gate_intake(project: Path, root: Path) -> list[str]:
@@ -1269,6 +1291,12 @@ def gate_prd(project: Path, root: Path) -> list[str]:
     for word in ("offline", "latency", "devices", "languages"):
         if word not in nfr.lower():
             errs.append(f"NFR section (6) does not name '{word}'")
+    region_d = next((d for d in ledger.get("decisions", []) if d.get("maps_to") == "region.country" or d["id"] == "region"), None)
+    decided = {str(region_d["value"]).upper()} if region_d else set()
+    for cid in set(re.findall(r"`(C-([A-Z]+)-\d+)`", sec.get("8", ""))):
+        code = cid[1]
+        if code != "ALL" and code not in decided:
+            errs.append(f"section 8 lists control {cid[0]} for region {code}, which is not the decided region")
     return errs
 
 
@@ -1283,9 +1311,15 @@ GATES = {"intake": gate_intake, "pack-match": gate_pack_match, "grill": gate_gri
 def run_gate(phase: str, project: Path, root: Path) -> int:
     name = PHASE_ALIASES.get(phase)
     if name is None:
-        print(f"gate {phase}: not implemented in P2 (phases 0-3 only)")
+        print(f"gate {phase}: not implemented yet (phases 0-6 only)")
         return 2
-    errs = GATES[name](project, root)
+    if name in GATES:
+        errs = GATES[name](project, root)
+    else:
+        import foundry_phases as P
+        errs = P.GATES[name](project, root)
+        if name == "data":
+            errs = errs or P.GATES["api"](project, root) if (project / "openapi.yaml").exists() else errs
     if errs:
         for e in errs:
             print(f"gate {name}: FAIL: {e}")
@@ -1331,18 +1365,17 @@ def _toks(text: Any) -> set[str]:
     return {_stem(t) for t in _norm(str(text)).split() if t not in STOPWORDS}
 
 
-def should_have_enabled(fid: str, decisions: list[dict]) -> dict | None:
-    """A should_have is ON when a decision whose id or value shares a token with it holds a truthy, non-negative value."""
-    weak = {"sync", "integration", "basic", "core", "management", "name", "provider"}
-    ft = _toks(fid.replace("-", " ")) - weak
+def should_have_enabled(fid: str, decisions: list[dict], pack: dict | None = None) -> dict | None:
+    """A should_have is ON when a question's `enables` maps the decided value to it (schema 1.4)."""
+    qmap = {q["id"]: q for q in (pack or {}).get("questions") or []}
     for d in decisions:
-        v = d["value"]
-        if d["source"] not in ("human", "brief", "agent-fact"):
+        q = qmap.get(d["id"])
+        if not q or not q.get("enables"):
             continue
-        if v in (False, None, "", "none", "single", "no", "cash-only", 0, "unknown"):
-            continue
-        if ft & ((_toks(d["id"].replace("-", " ")) | _toks(str(v).replace("-", " "))) - weak):
-            return d
+        key = str(d["value"]).lower() if isinstance(d["value"], bool) else str(d["value"])
+        for when, ids in q["enables"].items():
+            if str(when).lower() == key.lower() and fid in ids:
+                return d
     return None
 
 
@@ -1370,7 +1403,7 @@ def prd_skeleton(pack: dict, ledger: dict, brief: str) -> str:
         out.append(f"- `{fid}` — pack must-have")
     on: dict[str, dict] = {}
     for fid in pack.get("should_have") or []:
-        d = should_have_enabled(fid, decisions)
+        d = should_have_enabled(fid, decisions, pack)
         if d:
             on[fid] = d
             out.append(f"- `{fid}` — enabled by {d['id']} = {_yq(d['value'])}{_cite(d)}")
@@ -1407,10 +1440,24 @@ def prd_skeleton(pack: dict, ledger: dict, brief: str) -> str:
         out.append(f"| {cat} | {chosen if chosen is not None else (options[0] if options else '-')} | {src} |")
     out += ["", "## 8. Regional and compliance", "", f"- Region: {region}{_cite(region_d)}"]
     for k, v in reg.items():
+        if k in ("compliance_must", "compliance_should"):
+            continue
+        if isinstance(v, dict) and v and all(isinstance(x, dict) for x in v.values()):
+            cols = list(next(iter(v.values())).keys())
+            out.append(f"- {k.replace('_', ' ')}:")
+            out.append("")
+            out.append("| " + " | ".join(["name"] + cols) + " |")
+            out.append("|" + "---|" * (len(cols) + 1))
+            for name, row in v.items():
+                out.append("| " + " | ".join([str(name)] + [str(row.get(c, "")) for c in cols]) + " |")
+            out.append("")
+            continue
         out.append(f"- {k.replace('_', ' ')}: {v if not isinstance(v, list) else ', '.join(map(str, v))}")
-    out.append("- Must controls: " + ", ".join(f"`{c}`" for c in pack.get("compliance_must") or []))
-    if pack.get("compliance_should"):
-        out.append("- Should controls: " + ", ".join(f"`{c}`" for c in pack["compliance_should"]))
+    must = list(pack.get("compliance_must") or []) + list(reg.get("compliance_must") or [])
+    should = list(pack.get("compliance_should") or []) + list(reg.get("compliance_should") or [])
+    out.append("- Must controls: " + ", ".join(f"`{c}`" for c in must))
+    if should:
+        out.append("- Should controls: " + ", ".join(f"`{c}`" for c in should))
     out += ["", "## 9. Success metrics", "", MODEL_BLOCK, "<!-- 3 to 5 metrics, each with a number, a unit and a time window -->", ""]
     out += ["## 10. Open assumptions", "", "Confirmed decisions (human, brief, derived):", ""]
     for d in decisions:
@@ -1492,10 +1539,38 @@ def main(argv: list[str] | None = None) -> int:
     ps.add_argument("--out", type=Path, help="write to this path (default: stdout)")
     ps.add_argument("--dir", type=Path, default=Path.cwd())
     ps.add_argument("--root", type=Path, default=ROOT)
-    for name in ("query",):
-        p = sub.add_parser(name, help="not implemented yet")
-        p.add_argument("args", nargs="*")
-    a = ap.parse_args(argv)
+    sub.add_parser("doctor", help="check python, node, npm, git, codebase-memory-mcp, docker")
+    qy = sub.add_parser("query", help="query data/<csv>: query stacks --layer api [--n 20] [--json]")
+    qy.add_argument("csv")
+    qy.add_argument("--n", type=int, default=20)
+    qy.add_argument("--json", action="store_true")
+    qy.add_argument("--root", type=Path, default=ROOT)
+    for name, helptext in (("domain-skeleton", "emit .foundry/domain.yaml and CONTEXT.md"), ("arch-skeleton", "emit 9 ADRs and architecture.md"),
+                           ("api-skeleton", "emit openapi.yaml and .foundry/events.yaml")):
+        sk = sub.add_parser(name, help=helptext)
+        sk.add_argument("--dir", type=Path, default=Path.cwd())
+        sk.add_argument("--root", type=Path, default=ROOT)
+    ss = sub.add_parser("schema-skeleton", help="emit prisma/schema.prisma (or db/schema.ts)")
+    ss.add_argument("--orm", choices=("prisma", "drizzle"), default="prisma")
+    ss.add_argument("--dir", type=Path, default=Path.cwd())
+    ss.add_argument("--root", type=Path, default=ROOT)
+    a, extra = ap.parse_known_args(argv)
+    if a.cmd == "query":
+        import foundry_phases as P
+        filters: dict[str, str] = {}
+        i = 0
+        while i < len(extra):
+            if extra[i].startswith("--") and i + 1 < len(extra):
+                filters[extra[i][2:]] = extra[i + 1]
+                i += 2
+            else:
+                i += 1
+        return P.run_query(a.root.resolve(), a.csv, filters, a.n, a.json)
+    if extra:
+        ap.error(f"unrecognized arguments: {' '.join(extra)}")
+    if a.cmd == "doctor":
+        import foundry_phases as P
+        return P.run_doctor()
     if a.cmd == "validate":
         return run_validate(a.root.resolve(), a.quiet)
     if a.cmd == "scaffold-pack":
@@ -1516,6 +1591,15 @@ def main(argv: list[str] | None = None) -> int:
             return run_metrics(a, a.dir.resolve(), a.root.resolve())
         if a.cmd == "prd-skeleton":
             return run_prd_skeleton(a.dir.resolve(), a.root.resolve(), a.out)
+        import foundry_phases as P
+        if a.cmd == "domain-skeleton":
+            return P.run_domain_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "arch-skeleton":
+            return P.run_arch_skeleton(a.dir.resolve(), a.root.resolve())
+        if a.cmd == "schema-skeleton":
+            return P.run_schema_skeleton(a.dir.resolve(), a.root.resolve(), a.orm)
+        if a.cmd == "api-skeleton":
+            return P.run_api_skeleton(a.dir.resolve(), a.root.resolve())
     except (FileNotFoundError, KeyError, ValueError, YamlError) as e:
         print(f"foundry {a.cmd}: {e}")
         return 1

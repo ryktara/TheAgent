@@ -92,7 +92,7 @@ export default tseslint.config(
   { ignores: ["**/node_modules/**", "**/.next/**", "**/dist/**", "**/sw.js", "**/next-env.d.ts", "**/generated/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  { files: ["**/*.mjs", "**/*.cjs"], languageOptions: { globals: { console: "readonly", process: "readonly" } } },
+  { files: ["**/*.mjs", "**/*.cjs"], languageOptions: { globals: { console: "readonly", process: "readonly", URL: "readonly", Buffer: "readonly" } } },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],

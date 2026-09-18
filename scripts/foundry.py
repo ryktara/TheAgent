@@ -1545,8 +1545,12 @@ def main(argv: list[str] | None = None) -> int:
     gt.add_argument("phase")
     gt.add_argument("--dir", type=Path, default=Path.cwd())
     gt.add_argument("--root", type=Path, default=ROOT)
-    mt = sub.add_parser("metrics", help="append a phase record to .foundry/metrics.jsonl")
-    mt.add_argument("--phase", type=int, required=True)
+    mt = sub.add_parser("metrics", help="append a phase record to .foundry/metrics.jsonl; `metrics report` prints per-ticket totals")
+    mt.add_argument("report", nargs="?", choices=("report",))
+    mt.add_argument("--phase", type=int)
+    mt.add_argument("--ticket")
+    mt.add_argument("--tokens-in", type=int); mt.add_argument("--tokens-out", type=int); mt.add_argument("--graph-calls", type=int)
+    mt.add_argument("--grep-read-calls", type=int); mt.add_argument("--dod-loops", type=int); mt.add_argument("--review-blocking", type=int); mt.add_argument("--wall-ms", type=int)
     mt.add_argument("--start", action="store_true")
     mt.add_argument("--note")
     mt.add_argument("--tool-calls", type=int, default=None)
@@ -1639,6 +1643,15 @@ def main(argv: list[str] | None = None) -> int:
         if a.cmd == "gate":
             return run_gate(a.phase, a.dir.resolve(), a.root.resolve())
         if a.cmd == "metrics":
+            import foundry_build as B
+            if a.report == "report":
+                return B.run_metrics_report(a.dir.resolve())
+            if a.ticket:
+                B.record_ticket_metrics(a.dir.resolve(), a.ticket, tokens_in=a.tokens_in, tokens_out=a.tokens_out, tool_calls=a.tool_calls, wall_ms=a.wall_ms,
+                                        graph_calls=a.graph_calls, grep_read_calls=a.grep_read_calls, dod_loops=a.dod_loops, review_blocking_count=a.review_blocking)
+                print(f"metrics: ticket-end {a.ticket}"); return 0
+            if a.phase is None:
+                print("metrics: --phase or --ticket required"); return 1
             return run_metrics(a, a.dir.resolve(), a.root.resolve())
         if a.cmd == "prd-skeleton":
             return run_prd_skeleton(a.dir.resolve(), a.root.resolve(), a.out)

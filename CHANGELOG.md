@@ -2,6 +2,17 @@
 
 One entry per build step. Newest first.
 
+## P7b — Build loop on real tickets (2026-09-18)
+
+- fix: DoD `e2e-smoke` runs every Playwright spec except axe and screenshot suites, so per-ticket
+  screen state tests are part of the gate (reason: pin.spec.ts never ran under DoD).
+- fix: ESLint unused-vars ignores `_`-prefixed destructured names (reason: `{ pin_hash: _p, ...rest }`
+  failed lint in T-001).
+- fix: Playwright screenshot cookie URL uses WEB_PORT (reason: P7a answer 4).
+- `foundry.py metrics report` and `metrics --ticket … --tokens-in …` ticket-end records with
+  graph_calls, grep_read_calls, dod_loops, review_blocking_count.
+- doctor warns about semgrep (CI-only on Windows).
+
 ## P7a — Build loop machinery and T-000 (2026-09-18)
 
 - schema 1.7 `jobs[].priority`; tickets ordered by priority, entity graph, pack job order.

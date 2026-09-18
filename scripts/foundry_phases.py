@@ -142,6 +142,8 @@ def run_doctor(require_cbm: bool = False) -> int:
     rows.append(("codebase-memory-mcp", cbm or "missing", "ok" if cbm else f"required for /foundry-build; install: {CBM_INSTALL}", require_cbm))
     reg = cbm_registered()
     rows.append(("cbm mcp registered", "yes" if reg else "no", "ok" if reg else f"add to ~/.claude.json or ./.mcp.json: {CBM_MCP_JSON}", require_cbm))
+    sg = shutil.which("semgrep")
+    rows.append(("semgrep", sg or "missing", "ok" if sg else "optional; runs in CI. Install: pip install semgrep (or pipx); no native Windows wheel, use WSL or CI", False))
     docker = _version(["docker", "--version"])
     rows.append(("docker", docker or "missing", "ok" if docker else "optional (local postgres via compose)", False))
     print(f"{'tool':<22} {'found':<40} {'status'}")

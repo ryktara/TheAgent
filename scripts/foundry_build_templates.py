@@ -14,7 +14,7 @@ TEMPLATES["package.json"] = """{
     "lint": "eslint .",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "e2e:smoke": "playwright test tests/e2e/smoke.spec.ts",
+    "e2e:smoke": "playwright test --grep-invert \"axe:|shot \"",
     "a11y": "playwright test tests/e2e/a11y.spec.ts",
     "screenshot": "playwright test tests/e2e/screenshot.spec.ts",
     "db:migrate": "pnpm --filter @__APP_NAME__/db run migrate",
@@ -95,7 +95,7 @@ export default tseslint.config(
   { files: ["**/*.mjs", "**/*.cjs"], languageOptions: { globals: { console: "readonly", process: "readonly" } } },
   {
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
@@ -173,7 +173,7 @@ for (const route of routes) {
     for (const lang of ["en", "ar"] as const) {
       test(`shot ${route} ${theme} ${lang}`, async ({ browser }) => {
         const context = await browser.newContext({ colorScheme: theme, viewport: { width: 1280, height: 800 } });
-        await context.addCookies([{ name: "NEXT_LOCALE", value: lang, url: "http://localhost:3000" }]);
+        await context.addCookies([{ name: "NEXT_LOCALE", value: lang, url: `http://localhost:${process.env.WEB_PORT ?? 3000}` }]);
         const page = await context.newPage();
         await page.goto(route);
         const name = (route === "/" ? "home" : route.replace(/^\\//, "").replace(/\\//g, "-")) + `-${theme}-${lang === "ar" ? "rtl" : "ltr"}.png`;

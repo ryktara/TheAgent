@@ -271,3 +271,51 @@ def run_scaffold(project: Path, root: Path, stack: str, install: bool = True) ->
         if code != 0:
             print("\n".join(_tail(out, 15)))
     return 0
+
+
+# ----------------------------------------------------------------------------- metrics report
+def run_metrics_report(project: Path) -> int:
+    p = project / ".foundry" / "metrics.jsonl"
+    if not p.exists():
+        print("metrics report: no .foundry/metrics.jsonl"); return 1
+    rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    per: dict[str, dict] = {}
+    for r in rows:
+        t = r.get("ticket") or "(none)"
+        d = per.setdefault(t, {"tokens_in": 0, "tokens_out": 0, "tool_calls": 0, "graph_calls": 0, "grep_read_calls": 0, "dod_loops": 0, "review_blocking": 0, "wall_ms": 0})
+        d["tokens_in"] += int(r.get("tokens_in") or 0)
+        d["tokens_out"] += int(r.get("tokens_out") or 0)
+        d["tool_calls"] += int(r.get("tool_calls") or 0)
+        tool = str(r.get("tool") or "")
+        if tool.startswith("mcp__codebase-memory") or r.get("graph_calls"):
+            d["graph_calls"] += int(r.get("graph_calls") or 1)
+        if tool in ("Grep", "Read", "Glob"):
+            d["grep_read_calls"] += 1
+        if tool == "dod:typecheck":
+            d["dod_loops"] += 1
+        d["review_blocking"] += int(r.get("review_blocking_count") or 0)
+        d["wall_ms"] += int(r.get("wall_ms") or 0)
+    cols = ["ticket", "tokens_in", "tokens_out", "tool_calls", "graph_calls", "grep_read_calls", "dod_loops", "review_blocking", "wall_ms"]
+    print(" | ".join(c.ljust(13) for c in cols))
+    print("-+-".join("-" * 13 for _ in cols))
+    tot = {c: 0 for c in cols[1:]}
+    for t in sorted(per):
+        d = per[t]
+        print(" | ".join([t.ljust(13)] + [str(d[c]).ljust(13) for c in cols[1:]]))
+        for c in cols[1:]:
+            tot[c] += d[c]
+    print(" | ".join(["TOTAL".ljust(13)] + [str(tot[c]).ljust(13) for c in cols[1:]]))
+    return 0
+
+
+def record_ticket_metrics(project: Path, tid: str, **fields) -> None:
+    """Append one ticket-end record with agent-reported counters."""
+    rec = {"ts": F._now(), "phase": 11, "ticket": tid, "event": "ticket-end"}
+    for k in ("tokens_in", "tokens_out", "tool_calls", "wall_ms"):
+        if k in fields and fields[k] is not None:
+            rec[k] = int(fields[k])
+    note = {k: fields[k] for k in ("graph_calls", "grep_read_calls", "dod_loops", "review_blocking_count") if k in fields}
+    rec["note"] = json.dumps(note)
+    for k, v in note.items():
+        rec[k] = v
+    _append_metrics(project, rec)

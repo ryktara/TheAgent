@@ -4,25 +4,136 @@
   "title": "Foundry metrics record (one line of .foundry/metrics.jsonl)",
   "type": "object",
   "additionalProperties": false,
-  "required": ["ts", "phase", "event"],
+  "required": [
+    "ts",
+    "phase",
+    "event"
+  ],
   "properties": {
-    "ts": { "type": "string", "description": "ISO-8601 timestamp" },
-    "phase": { "type": "integer", "minimum": 0, "maximum": 15 },
-    "ticket": { "type": "string" },
-    "skill": { "type": "string" },
-    "event": { "type": "string", "enum": ["phase-start", "phase-end", "tool-call", "gate", "ticket-start", "ticket-end", "review"] },
-    "tool": { "type": "string" },
-    "started": { "type": ["string", "null"] },
-    "ended": { "type": ["string", "null"] },
-    "tokens_in": { "type": ["integer", "null"], "minimum": 0 },
-    "tokens_out": { "type": ["integer", "null"], "minimum": 0 },
-    "tool_calls": { "type": ["integer", "null"], "minimum": 0 },
-    "tool_calls_estimate": { "type": ["integer", "null"], "minimum": 0 },
-    "wall_ms": { "type": ["integer", "null"], "minimum": 0 },
-    "model": { "type": "string", "enum": ["haiku", "sonnet", "opus"] },
-    "gate_passed": { "type": "boolean" },
-    "screenshot": { "type": "string" },
-    "note": { "type": "string" },
-    "notes": { "type": "string" }
+    "ts": {
+      "type": "string",
+      "description": "ISO-8601 timestamp"
+    },
+    "phase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "ticket": {
+      "type": "string"
+    },
+    "skill": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "phase-start",
+        "phase-end",
+        "tool-call",
+        "gate",
+        "ticket-start",
+        "ticket-end",
+        "review"
+      ]
+    },
+    "tool": {
+      "type": "string"
+    },
+    "started": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ended": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tokens_in": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "tokens_out": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "tool_calls": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "tool_calls_estimate": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "wall_ms": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "model": {
+      "type": "string",
+      "enum": [
+        "haiku",
+        "sonnet",
+        "opus"
+      ]
+    },
+    "gate_passed": {
+      "type": "boolean"
+    },
+    "screenshot": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "graph_calls": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "grep_read_calls": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "dod_loops": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "review_blocking_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    }
   }
 }

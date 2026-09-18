@@ -136,7 +136,13 @@ def _routes_for_ticket(project: Path, tid: str) -> list[str]:
         sp = project / ".foundry" / "screens" / f"{sc}.md"
         if sp.exists():
             fm = F.parse_yaml(F.split_frontmatter(sp.read_text(encoding="utf-8"))[0])
-            routes.append(fm.get("route") or f"/{sc}")
+            variants = fm.get("routes") or []
+            if variants:
+                for r in variants:
+                    if isinstance(r, dict) and r.get("path"):
+                        routes.append(str(r["path"]) + (f"?{r['query']}" if r.get("query") else ""))
+            else:
+                routes.append(fm.get("route") or f"/{sc}")
     if t.get("type") == "scaffold":
         routes = ["/"]
     return routes
@@ -360,7 +366,7 @@ def run_metrics_report(project: Path) -> int:
 
 def record_ticket_metrics(project: Path, tid: str, **fields) -> None:
     """Append one ticket-end record with agent-reported counters."""
-    rec = {"ts": F._now(), "phase": 11, "ticket": tid, "event": "ticket-end"}
+    rec = {"ts": F._now(), "phase": 11, "ticket": tid, "event": "ticket-end", "escalated": bool(fields.pop("escalated", False))}
     for k in ("tokens_in", "tokens_out", "tool_calls", "wall_ms"):
         if k in fields and fields[k] is not None:
             rec[k] = int(fields[k])

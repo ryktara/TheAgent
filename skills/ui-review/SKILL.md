@@ -2,7 +2,7 @@
 name: ui-review
 description: Review a ticket's screens as a subagent from screenshots, screen specs and axe results, returning a fixed JSON verdict to .foundry/reviews/T-xxx.ui.json.
 invocation: model
-model: sonnet
+model: haiku
 reads: [.foundry/reviews/T-xxx.pack.md, .foundry/reviews/T-xxx.diff, .foundry/screenshots/T-xxx/, .foundry/tickets/T-xxx.status.yaml]
 writes: [.foundry/reviews/T-xxx.ui.json]
 gate: python -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('verdict') in ('pass','fail') else 1)" .foundry/reviews/T-xxx.ui.json

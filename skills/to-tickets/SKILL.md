@@ -2,7 +2,7 @@
 name: to-tickets
 description: Slice the build into tracer-bullet tickets for phase 10: scaffold, auth, tenancy, schema, design shell, offline sync, one vertical slice per must-have job, integrations, compliance, release.
 invocation: model
-model: sonnet
+model: haiku
 reads: [.foundry/prd.md, .foundry/domain.yaml, openapi.yaml, .foundry/screens/*.md, .foundry/architecture.md, .foundry/compliance.yaml, data/stacks.csv]
 writes: [.foundry/tickets/*.md, .foundry/compliance.yaml]
 gate: python scripts/foundry.py gate tickets

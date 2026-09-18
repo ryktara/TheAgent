@@ -2,7 +2,7 @@
 name: compliance
 description: Map compliance for phase 9: every PRD §8 control and every applicable security control gets a status, an evidence method and, later, an owning ticket in .foundry/compliance.yaml.
 invocation: model
-model: sonnet
+model: haiku
 reads: [.foundry/prd.md, .foundry/compliance.yaml, .foundry/threats.md, packs/<slug>/reference/compliance.md, data/security-controls.csv]
 writes: [.foundry/compliance.yaml, .foundry/compliance-evidence-plan.md]
 gate: python scripts/foundry.py gate security

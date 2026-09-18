@@ -10,7 +10,7 @@ stdlib, reads the Claude Code JSON payload on stdin, writes JSON on stdout, and 
 | edit_guard.py | PreToolUse, `Edit\|Write\|MultiEdit` | `tool_name`, `tool_input.file_path`, `cwd` | `permissionDecision: allow` with `additionalContext` when the path is outside the active ticket's `files_likely_touched` and outside `tests/` or `.foundry/`; never denies | SEC-AGT-10 |
 | metrics.py | PostToolUse, `.*` | `tool_name`, `tool_response`, `cwd` | none; appends `{ts, phase 11, event tool-call, tool, ticket, tool_calls 1, tokens_out ≈ chars/4, note}` to `.foundry/metrics.jsonl` | observability |
 | session_start.py | SessionStart | `cwd` | `additionalContext` ≤15 lines: graph-first rule with the re-index check, handoff.md frontmatter (phase, active_ticket, done, blocked, wizards_pending, next_command, cbm_project, generation) | SEC-AGT-06 |
-| stop_check.py | Stop | `cwd`, `stop_hook_active` | `systemMessage` with the tail of `foundry.py dod --ticket <active> --tier fast` (typecheck, lint, unit in parallel); never blocks | SEC-AGT-09 |
+| stop_check.py (runs for the parent and every subagent; the parent has no active edits so it is a no-op there) | Stop | `cwd`, `stop_hook_active` | `systemMessage` with the tail of `foundry.py dod --ticket <active> --tier fast` (typecheck, lint, unit in parallel); never blocks | SEC-AGT-09 |
 
 Active ticket and done list come from `.foundry/build.yaml` (written by `foundry.py build
 activate|complete`). Hooks only act inside a project that has a `.foundry/` folder.

@@ -233,7 +233,10 @@ def _phase_windows(project: Path) -> list[dict]:
     return wins
 
 
-def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts: Path | None) -> int:
+def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts: Path | None, cwds: list[str] | None = None) -> int:
+    """Turns are attributed to a ticket window only when their session cwd is one of: the project, the plugin root,
+    CLAUDE_PROJECT_DIR, the current directory, or --cwd values; a concurrent unrelated session is never counted."""
+    allowed = {str(Path(x).resolve()).lower() for x in [project, root, os.environ.get("CLAUDE_PROJECT_DIR") or ".", os.getcwd(), *(cwds or [])] if x}
     dirs = transcript_dirs(project, transcripts)
     wins = _windows(project)
     pwins = _phase_windows(project)
@@ -266,6 +269,9 @@ def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts
                 ts = d.get("timestamp")
                 if not u or not ts:
                     continue
+                cwd = d.get("cwd")
+                if cwd and str(Path(cwd).resolve()).lower() not in allowed:
+                    continue
                 mid = msg.get("id") or f"{f.name}:{ts}"
                 if mid in seen:
                     continue
@@ -276,12 +282,17 @@ def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts
                 model = msg.get("model") or "unknown"
                 keys = [w["ticket"] for w in wins if w["start"] <= ts <= w["end"]] + [f"phase-{w['phase']}" for w in pwins if w["start"] <= ts <= w["end"]]
                 for k in keys:
-                    acc = per.setdefault(k, {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "turns": 0, "cost_usd": 0.0, "models": set()})
+                    acc = per.setdefault(k, {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "turns": 0, "cost_usd": 0.0, "models": set(), "by_model": {}, "context_peak": 0, "subagent_turns": 0})
                     i_, o_, cr, cw = int(u.get("input_tokens") or 0), int(u.get("output_tokens") or 0), int(u.get("cache_read_input_tokens") or 0), int(u.get("cache_creation_input_tokens") or 0)
                     acc["input"] += i_; acc["output"] += o_; acc["cache_read"] += cr; acc["cache_write"] += cw; acc["turns"] += 1; acc["models"].add(model)
+                    acc["context_peak"] = max(acc["context_peak"], i_ + cr + cw)  # tokens the model saw on its largest turn
+                    if "subagents" in f.parts:
+                        acc["subagent_turns"] += 1
                     pr = _price_for(model, prices)
-                    if pr:
-                        acc["cost_usd"] += (i_ * float(pr["input_per_m"]) + o_ * float(pr["output_per_m"]) + cr * float(pr["cache_read_per_m"]) + cw * float(pr["cache_write_per_m"])) / 1_000_000
+                    cost = (i_ * float(pr["input_per_m"]) + o_ * float(pr["output_per_m"]) + cr * float(pr["cache_read_per_m"]) + cw * float(pr["cache_write_per_m"])) / 1_000_000 if pr else 0.0
+                    acc["cost_usd"] += cost
+                    bm = acc["by_model"].setdefault(model, {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "turns": 0, "cost_usd": 0.0})
+                    bm["input"] += i_; bm["output"] += o_; bm["cache_read"] += cr; bm["cache_write"] += cw; bm["turns"] += 1; bm["cost_usd"] += cost
     mp = project / ".foundry" / "metrics.jsonl"
     now = F._now()
     # replace earlier transcript rows for the same keys (idempotent ingest)
@@ -289,14 +300,15 @@ def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts
     kept = [l for l in rows if not (json.loads(l).get("source") == "transcript" and json.loads(l).get("key") in per)]
     for k, acc in sorted(per.items()):
         rec = {"ts": now, "phase": 11 if k.startswith("T-") else int(k.split("-")[1]), "event": "transcript", "source": "transcript", "key": k,
-               "tokens_in": acc["input"], "tokens_out": acc["output"], "cache_read": acc["cache_read"], "cache_write": acc["cache_write"], "turns": acc["turns"], "cost_usd": round(acc["cost_usd"], 4), "models": sorted(acc["models"])}
+               "tokens_in": acc["input"], "tokens_out": acc["output"], "cache_read": acc["cache_read"], "cache_write": acc["cache_write"], "turns": acc["turns"], "cost_usd": round(acc["cost_usd"], 4), "models": sorted(acc["models"]),
+               "context_peak": acc["context_peak"], "subagent_turns": acc["subagent_turns"], "by_model": {m: {**v, "cost_usd": round(v["cost_usd"], 4)} for m, v in acc["by_model"].items()}}
         if k.startswith("T-"):
             rec["ticket"] = k
         kept.append(json.dumps(rec))
     mp.write_text("\n".join(kept) + "\n", encoding="utf-8", newline="\n")
-    print(f"metrics ingest: {scanned} assistant turns in {len(files)} transcript files → {len(per)} keys written (source: transcript)")
+    print(f"metrics ingest: {scanned} assistant turns in {len(files)} transcript files (cwd-scoped) → {len(per)} keys written (source: transcript)")
     for k, acc in sorted(per.items()):
-        print(f"  {k:<10} in {acc['input']:>7} out {acc['output']:>7} cache_read {acc['cache_read']:>9} cache_write {acc['cache_write']:>8} turns {acc['turns']:>4} cost ${acc['cost_usd']:.2f}")
+        print(f"  {k:<10} in {acc['input']:>7} out {acc['output']:>7} cache_read {acc['cache_read']:>9} cache_write {acc['cache_write']:>8} turns {acc['turns']:>4} (subagent {acc['subagent_turns']:>3}) peak {acc['context_peak']:>7} cost ${acc['cost_usd']:.2f}")
     return 0
 
 
@@ -307,11 +319,17 @@ def _aggregate(path: Path) -> dict[str, dict]:
         t = r.get("ticket") or (r.get("key") if str(r.get("key", "")).startswith("T-") else None)
         if not t:
             continue
-        d = per.setdefault(t, {"self_in": 0, "self_out": 0, "t_in": 0, "t_out": 0, "t_cache_read": 0, "t_cache_write": 0, "cost_usd": 0.0, "tool_calls": 0, "graph": 0, "grep_read": 0, "dod_runs": 0, "full_s": 0.0, "blocking": 0, "wall_ms": 0})
+        d = per.setdefault(t, {"self_in": 0, "self_out": 0, "t_in": 0, "t_out": 0, "t_cache_read": 0, "t_cache_write": 0, "cost_usd": 0.0, "tool_calls": 0, "graph": 0, "grep_read": 0, "dod_runs": 0, "full_s": 0.0, "blocking": 0, "wall_ms": 0, "context_peak": 0, "escalated": 0, "by_model": {}})
         if r.get("source") == "transcript":
             d["t_in"] += int(r.get("tokens_in") or 0); d["t_out"] += int(r.get("tokens_out") or 0)
             d["t_cache_read"] += int(r.get("cache_read") or 0); d["t_cache_write"] += int(r.get("cache_write") or 0); d["cost_usd"] += float(r.get("cost_usd") or 0)
+            d["context_peak"] = max(d["context_peak"], int(r.get("context_peak") or 0))
+            for m, v in (r.get("by_model") or {}).items():
+                bm = d["by_model"].setdefault(m, {"output": 0, "cache_read": 0, "cost_usd": 0.0})
+                bm["output"] += int(v.get("output") or 0); bm["cache_read"] += int(v.get("cache_read") or 0); bm["cost_usd"] += float(v.get("cost_usd") or 0)
             continue
+        if r.get("event") == "ticket-end" and r.get("escalated"):
+            d["escalated"] = 1
         d["self_in"] += int(r.get("tokens_in") or 0) if r.get("event") == "ticket-end" else 0
         d["self_out"] += int(r.get("tokens_out") or 0) if r.get("event") == "ticket-end" else 0
         d["tool_calls"] += int(r.get("tool_calls") or 0)
@@ -331,27 +349,37 @@ def _aggregate(path: Path) -> dict[str, dict]:
     return per
 
 
-COLS = ["ticket", "self_in", "self_out", "t_in", "t_out", "t_cache_read", "t_cache_write", "cost_usd", "tool_calls", "graph", "grep_read", "dod_runs", "full_s", "blocking", "wall_min"]
+COLS = ["ticket", "self_in", "self_out", "t_out", "t_cache_read", "ctx_peak", "cost_usd", "tools", "graph", "grep_rd", "dod", "full_s", "block", "esc", "wall_min"]
+WIDTHS = [8, 8, 8, 8, 12, 9, 8, 6, 5, 7, 4, 6, 5, 3, 8]
 
 
 def _fmt_row(t: str, d: dict) -> str:
-    vals = [t, d["self_in"], d["self_out"], d["t_in"], d["t_out"], d["t_cache_read"], d["t_cache_write"], f"{d['cost_usd']:.2f}", d["tool_calls"], d["graph"], d["grep_read"], d["dod_runs"], f"{d['full_s']:.0f}", d["blocking"], f"{d['wall_ms']/60000:.0f}"]
-    return " | ".join(f"{str(v):<{w}}" for v, w in zip(vals, [8, 8, 8, 8, 8, 12, 12, 8, 9, 5, 9, 8, 6, 8, 8]))
+    vals = [t, d["self_in"], d["self_out"], d["t_out"], d["t_cache_read"], d["context_peak"], f"{d['cost_usd']:.2f}", d["tool_calls"], d["graph"], d["grep_read"], d["dod_runs"], f"{d['full_s']:.0f}", d["blocking"], "y" if d.get("escalated") else "-", f"{d['wall_ms']/60000:.0f}"]
+    return " | ".join(f"{str(v):<{w}}" for v, w in zip(vals, WIDTHS))
 
 
 def _print_table(per: dict[str, dict]) -> None:
-    print(" | ".join(f"{c:<{w}}" for c, w in zip(COLS, [8, 8, 8, 8, 8, 12, 12, 8, 9, 5, 9, 8, 6, 8, 8])))
-    print("-" * 150)
-    tot = {k: 0 for k in per[next(iter(per))]} if per else {}
+    print(" | ".join(f"{c:<{w}}" for c, w in zip(COLS, WIDTHS)))
+    print("-" * 140)
+    tot: dict = {}
     for t in sorted(per):
         print(_fmt_row(t, per[t]))
         for k, v in per[t].items():
-            tot[k] = tot.get(k, 0) + v
+            if isinstance(v, (int, float)):
+                tot[k] = (max if k == "context_peak" else (lambda a, b: a + b))(tot.get(k, 0), v)
     if per:
+        tot.setdefault("by_model", {}); tot["escalated"] = sum(1 for d in per.values() if d.get("escalated"))
         print(_fmt_row("TOTAL", tot))
 
 
-def run_metrics_report(project: Path, compare: list[Path] | None = None, phases: bool = False) -> int:
+def _print_by_model(per: dict[str, dict]) -> None:
+    print(f"\n{'ticket':<8} {'model':<26} {'output':>8} {'cache_read':>12} {'cost_usd':>9}")
+    for t in sorted(per):
+        for m, v in sorted(per[t]["by_model"].items()):
+            print(f"{t:<8} {m:<26} {v['output']:>8} {v['cache_read']:>12} {v['cost_usd']:>9.2f}")
+
+
+def run_metrics_report(project: Path, compare: list[Path] | None = None, phases: bool = False, by_model: bool = False) -> int:
     if compare:
         a, b = compare
         pa, pb = _aggregate(a), _aggregate(b)
@@ -362,7 +390,7 @@ def run_metrics_report(project: Path, compare: list[Path] | None = None, phases:
         for t in keys:
             print(f"\n{t}")
             print(f"  {'metric':<14}{'A':>12}{'B':>12}{'Δ':>12}{'Δ%':>8}")
-            for k in ("self_in", "self_out", "t_in", "t_out", "t_cache_read", "cost_usd", "tool_calls", "graph", "grep_read", "dod_runs", "full_s", "blocking", "wall_ms"):
+            for k in ("self_in", "self_out", "t_in", "t_out", "t_cache_read", "context_peak", "cost_usd", "tool_calls", "graph", "grep_read", "dod_runs", "full_s", "blocking", "wall_ms"):
                 va, vb = pa[t][k], pb[t][k]
                 pct = f"{(vb - va) / va * 100:+.0f}%" if va else "n/a"
                 fa, fb, fd = (f"{va:.2f}", f"{vb:.2f}", f"{vb - va:+.2f}") if isinstance(va, float) else (str(va), str(vb), f"{vb - va:+d}")
@@ -383,8 +411,10 @@ def run_metrics_report(project: Path, compare: list[Path] | None = None, phases:
     per = _aggregate(p)
     if not per:
         print("metrics report: no ticket rows"); return 1
-    print("self_* = agent-reported at ticket end; t_* = transcript ingest (metrics ingest); cost from data/model-prices.csv")
+    print("self_* = agent-reported at ticket end; t_* = transcript ingest incl. subagents; ctx_peak = largest single-turn context; cost from data/model-prices.csv")
     _print_table(per)
+    if by_model:
+        _print_by_model(per)
     return 0
 
 
@@ -413,7 +443,8 @@ def run_status(project: Path, root: Path) -> int:
         f"FOUNDRY STATUS  {project.name}",
         f"phase: {phase}   tickets: {len(done)}/{total} done   active: {st.get('active_ticket') or '-'}   generation: {st.get('generation')}",
         f"dod: {passes}/{attempts} runs passed ({(passes / attempts * 100) if attempts else 0:.0f}%)   blockers: {len(st.get('blockers') or [])}   wizards pending: {len(pending)}" + (" (" + ", ".join(w['slug'] for w in pending) + ")" if pending else ""),
-        f"tokens so far: self {self_tokens:,}  transcript {t_tokens:,}  cost ${cost:.2f}   avg/ticket {avg:,.0f}   est. remaining {remaining} tickets ≈ {avg * remaining:,.0f} tokens (${cost / n_done * remaining if n_done else 0:.2f})",
+        f"tokens so far: self {self_tokens:,}  transcript {t_tokens:,}  cost ${cost:.2f} (blended ${cost / n_done if n_done else 0:.2f}/ticket; models: {', '.join(sorted({m for d in per.values() for m in d.get('by_model', {})})) or '-'})   avg/ticket {avg:,.0f}   est. remaining {remaining} tickets ≈ {avg * remaining:,.0f} tokens (${cost / n_done * remaining if n_done else 0:.2f})",
+        f"escalations: {sum(1 for d in per.values() if d.get('escalated'))}",
     ]
     nxt = _next_ticket(project, done)
     lines.append(f"next: {nxt or '-'}   command: {'/foundry-build' if total else '/foundry'}")

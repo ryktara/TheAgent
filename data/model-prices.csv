@@ -4,3 +4,5 @@ claude-opus-4-1,15.00,75.00,1.50,18.75,2025-10-01,public list price USD per mill
 claude-haiku-4-5,1.00,5.00,0.10,1.25,2025-10-01,public list price USD per million tokens
 claude-fable-5-1,15.00,75.00,1.50,18.75,2025-10-01,estimate: billed at the opus tier until a public price exists
 default,3.00,15.00,0.30,3.75,2025-10-01,fallback = sonnet tier
+claude-sonnet-5,3.00,15.00,0.30,3.75,2025-10-01,estimate: sonnet tier until a public price exists
+claude-opus-5,15.00,75.00,1.50,18.75,2025-10-01,estimate: opus tier until a public price exists

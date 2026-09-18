@@ -578,6 +578,7 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
     print_scope = screen_id in ("receipt-preview", "shift-close", "end-of-day", "reports", "refund") or "print" in section.lower()
     layout = f"{ptype['nav_pattern']} / {ptype['density']} density"
     fm = ["---", f"id: {F._yq(screen_id)}", f"jobs: {F._yq([j['id'] for j in jobs])}", f"personas: {F._yq(personas)}", f"route: {F._yq(route_prefix + screen_id)}",
+          f"routes: {F._yq([{'path': route_prefix + screen_id}])}",
           f"layout: {F._yq(layout)}", f"components: {F._yq(comps)}", "data:", f"  reads: {F._yq(reads)}", f"  writes: {F._yq(writes)}", "  events: []",
           f"offline: {'true' if offline else 'false'}", f"print: {'true' if print_scope else 'false'}", "---", ""]
     out = fm + [f"# {screen_id}", "", "## Purpose", "", purpose, "", f"Role access: {role}.", "", "## Layout zones", "", "Desktop / tablet:", "", "```"]
@@ -685,6 +686,11 @@ def gate_screens(project: Path, root: Path) -> list[str]:
         if route in routes:
             errs.append(f"{f.name}: route {route} duplicates {routes[route]}")
         routes[route] = f.name
+        for r in fm.get("routes") or []:
+            if not isinstance(r, dict) or not r.get("path"):
+                errs.append(f"{f.name}: routes entries need a path (got {r!r})")
+            elif not str(r["path"]).startswith(route):
+                errs.append(f"{f.name}: routes path {r['path']} is not under route {route}")
         for c in fm.get("components") or []:
             if c not in comp_ids:
                 errs.append(f"{f.name}: component `{c}` not in components.csv")

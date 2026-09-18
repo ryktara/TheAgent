@@ -2,6 +2,23 @@
 
 One entry per build step. Newest first.
 
+## P9 — Isolation, routing, evals, dogfood (2026-09-18)
+
+- Context isolation: /foundry-build is a thin parent (card → one implementer subagent → ≤300-token return →
+  complete → handoff); implement-ticket writes `T-xxx.progress.md` after RED, GREEN and each DoD run and returns
+  a JSON contract; reviewers are dispatched by the implementer with their frontmatter models.
+- Model routing enforced (docs/models.md): ui-review, compliance, to-tickets on haiku; architecture and threat-model
+  on opus; escalation to opus once after three failed DoD loops (`metrics --escalated true`).
+- Metrics: ingest records per-model tokens/cost, context peak and subagent turns; `metrics report --by-model`;
+  status shows blended cost per ticket and escalations; `data/model-prices.csv` rows for sonnet/haiku/opus.
+- Screens: `routes: [{path, query?, state?}]` in screen frontmatter (skeleton + gate); the DoD screenshot pass
+  iterates the variants.
+- security-review cites SYNC-RULES.md ids for offline/REST parity.
+- Evals: `evals/thresholds.yaml` with regression ceilings; stages `golden` (artefact diffs against
+  evals/expected/restaurant-pos with an allowlist), `triggers` (40 prompts → skill via `claude -p`), `e2e`
+  (unattended phases 0–10 + `/foundry-build --n 2` + release smoke via `claude -p`); `--update-thresholds`,
+  `--update-golden`.
+
 ## P8 — Efficiency, metrics, wizard, release, handoff (2026-09-18)
 
 - fix: release smoke tears the prod servers down with a synchronous kill and sets exitCode (reason: an async

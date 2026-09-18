@@ -1,0 +1,41 @@
+prompt,expected
+"I need a restaurant POS for my café in Sharjah",foundry
+"Build me a retail point of sale for a phone shop",foundry
+"/foundry a trading app for crypto",foundry
+"Continue the build from where we left off yesterday",foundry-resume
+"Resume the foundry run in this repo",foundry-resume
+"Implement the next tickets",foundry-build
+"Run the build loop for four more tickets",foundry-build
+"Ship it: changelog, docker, runbook and smoke test",release
+"Prepare the release and the user docs",release
+"Which industry pack fits this brief about a pharmacy?",pack-match
+"Ask me the seven questions about my restaurant idea",bounded-grilling
+"Write the PRD from the decisions we made",prd
+"Model the domain: entities, invariants, state machines",domain-model
+"Decide the architecture and write the ADRs",architecture
+"Generate the Prisma schema and migrations plan",data-model
+"Write the OpenAPI contract for the orders API",api-contract
+"Produce the design system tokens and palette",design-system
+"Spec every screen with its six states",screen-spec
+"Threat model the sync boundary with STRIDE",threat-model
+"Map the security controls to owners and evidence",compliance
+"Turn the specs into a ticket DAG",to-tickets
+"Implement ticket T-011 as a vertical slice",implement-ticket
+"Review this diff for spec conformance",code-review
+"Check the screenshots and the six states of the kds screen",ui-review
+"Security review the payment webhook change",security-review
+"We need Stripe keys before this ticket can finish",wizard
+"The DNS for production has to be set up by a human",wizard
+"Write a skill in the house style",writing-for-agents
+"What's the weather in Dubai?",none
+"Explain how React hooks work",none
+"Fix the typo in README",none
+"Summarise this PDF",none
+"Start a new POS project from a one-line brief",foundry
+"Pick up phase 6 again after the crash",foundry-resume
+"Bump the kds ticket build loop for two tickets",foundry-build
+"Tag v1.0 and produce the deploy config",release
+"Create the payments wizard for the merchant account",wizard
+"Run the UI checklist on the tender screen shots",ui-review
+"Does the offline sync path enforce the same roles as REST?",security-review
+"Draft the STRIDE table for the api<->db boundary",threat-model

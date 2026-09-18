@@ -1558,6 +1558,7 @@ def main(argv: list[str] | None = None) -> int:
     mt.add_argument("--phases", action="store_true")
     mt.add_argument("--since")
     mt.add_argument("--transcripts", type=Path)
+    mt.add_argument("--cwd", action="append", help="extra session cwd to attribute (repeatable)")
     mt.add_argument("--phase", type=int)
     mt.add_argument("--ticket")
     mt.add_argument("--tokens-in", type=int); mt.add_argument("--tokens-out", type=int); mt.add_argument("--graph-calls", type=int)
@@ -1565,6 +1566,8 @@ def main(argv: list[str] | None = None) -> int:
     mt.add_argument("--start", action="store_true")
     mt.add_argument("--note")
     mt.add_argument("--tool-calls", type=int, default=None)
+    mt.add_argument("--escalated", choices=("true", "false"), default="false")
+    mt.add_argument("--by-model", action="store_true")
     mt.add_argument("--dir", type=Path, default=Path.cwd())
     mt.add_argument("--root", type=Path, default=ROOT)
     ps = sub.add_parser("prd-skeleton", help="emit PRD sections 2-8 and 10 from pack + ledger")
@@ -1678,12 +1681,12 @@ def main(argv: list[str] | None = None) -> int:
             import foundry_build as B
             import foundry_ops as O
             if a.report == "report":
-                return O.run_metrics_report(a.dir.resolve(), a.compare, a.phases)
+                return O.run_metrics_report(a.dir.resolve(), a.compare, a.phases, a.by_model)
             if a.report == "ingest":
-                return O.run_metrics_ingest(a.dir.resolve(), a.root.resolve(), a.since, a.transcripts)
+                return O.run_metrics_ingest(a.dir.resolve(), a.root.resolve(), a.since, a.transcripts, a.cwd)
             if a.ticket:
                 B.record_ticket_metrics(a.dir.resolve(), a.ticket, tokens_in=a.tokens_in, tokens_out=a.tokens_out, tool_calls=a.tool_calls, wall_ms=a.wall_ms,
-                                        graph_calls=a.graph_calls, grep_read_calls=a.grep_read_calls, dod_loops=a.dod_loops, review_blocking_count=a.review_blocking)
+                                        graph_calls=a.graph_calls, grep_read_calls=a.grep_read_calls, dod_loops=a.dod_loops, review_blocking_count=a.review_blocking, escalated=(a.escalated == "true"))
                 print(f"metrics: ticket-end {a.ticket}"); return 0
             if a.phase is None:
                 print("metrics: --phase or --ticket required"); return 1

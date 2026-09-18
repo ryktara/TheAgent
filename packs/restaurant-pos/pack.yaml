@@ -1,4 +1,4 @@
-version: "1.6"
+version: "1.7"
 complete: true
 threshold: 0.7
 slug: restaurant-pos
@@ -7,19 +7,19 @@ aliases: [restaurant point of sale, restaurant pos, cafe pos, f&b pos, qsr pos, 
 confidence_keywords: [restaurant, cafe, cafeteria, coffee shop, kitchen, kds, kitchen display, table, dine-in, dining, fine dining, takeaway, parcel, menu, modifiers, order, waiter, chef, bill, split bill, tips, reservations, food, f&b, qsr, fast food, shisha, hookah, mandi, shawarma, karak, chai, tea shop, bakery, cloud kitchen, dark kitchen, delivery, talabat, deliveroo, careem, noon food, pos, ipad, tablet, food court, kiosk, self-order, qr menu, qr ordering, hotel restaurant, room charge, room service, buffet, catering, canteen, bistro, grill, pizzeria, burger, juice bar, dhaba, biryani, kebab, falafel, lounge, brunch, eatery, diner, kot, covers, brands]
 personas: [cashier, waiter, kitchen, manager, owner, accountant, customer, delivery-rider]
 jobs:
-  - {id: take-order-table, entity: Order, persona: waiter, must: true, screens: [table-map, order-entry]}
-  - {id: take-order-counter, entity: Order, persona: cashier, must: true, screens: [order-entry]}
-  - {id: take-order-qr, entity: Order, persona: customer, must: false, screens: [qr-self-order]}
-  - {id: modify-order, entity: OrderLine, persona: waiter, must: true, screens: [order-entry, modifier-sheet]}
-  - {id: send-to-kitchen, entity: Order, persona: waiter, must: true, screens: [order-entry, kds]}
-  - {id: kds-bump, entity: KitchenTicket, persona: kitchen, must: true, screens: [kds]}
-  - {id: hold-void-comp, entity: OrderLine, persona: manager, must: true, screens: [order-entry, manager-pin]}
-  - {id: split-bill, entity: Order, persona: cashier, must: true, screens: [split-bill]}
+  - {id: take-order-table, priority: 1, entity: Order, persona: waiter, must: true, screens: [table-map, order-entry]}
+  - {id: take-order-counter, priority: 1, entity: Order, persona: cashier, must: true, screens: [order-entry]}
+  - {id: take-order-qr, priority: 1, entity: Order, persona: customer, must: false, screens: [qr-self-order]}
+  - {id: modify-order, priority: 2, entity: OrderLine, persona: waiter, must: true, screens: [order-entry, modifier-sheet]}
+  - {id: send-to-kitchen, priority: 2, entity: Order, persona: waiter, must: true, screens: [order-entry, kds]}
+  - {id: kds-bump, priority: 2, entity: KitchenTicket, persona: kitchen, must: true, screens: [kds]}
+  - {id: hold-void-comp, priority: 4, entity: OrderLine, persona: manager, must: true, screens: [order-entry, manager-pin]}
+  - {id: split-bill, priority: 4, entity: Order, persona: cashier, must: true, screens: [split-bill]}
   - {id: merge-transfer-tables, entity: Table, persona: waiter, must: true, screens: [table-map]}
-  - {id: apply-discount, entity: Order, persona: cashier, must: true, screens: [tender, manager-pin]}
-  - {id: tips-service-charge, entity: Order, persona: cashier, must: true, screens: [tender]}
-  - {id: take-payment, entity: Payment, persona: cashier, must: true, screens: [tender]}
-  - {id: print-receipt, entity: Receipt, persona: cashier, must: true, screens: [receipt-preview]}
+  - {id: apply-discount, priority: 4, entity: Order, persona: cashier, must: true, screens: [tender, manager-pin]}
+  - {id: tips-service-charge, priority: 4, entity: Order, persona: cashier, must: true, screens: [tender]}
+  - {id: take-payment, priority: 3, entity: Payment, persona: cashier, must: true, screens: [tender]}
+  - {id: print-receipt, priority: 3, entity: Receipt, persona: cashier, must: true, screens: [receipt-preview]}
   - {id: refund, entity: Refund, persona: manager, must: true, screens: [refund, manager-pin]}
   - {id: open-close-shift, entity: Shift, persona: cashier, must: true, screens: [shift-open, shift-close]}
   - {id: end-of-day, entity: Shift, persona: manager, must: true, screens: [end-of-day]}

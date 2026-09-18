@@ -542,13 +542,14 @@ def _copy_rows() -> dict[str, dict]:
 
 
 def copy_for(state: str, screen_id: str, langs: list[str]) -> tuple[str, str, str]:
-    """(en, ar, ur) for a screen state; falls back to generic type rows."""
+    """(en, ar, ur) for a screen state; falls back to generic type rows. Unreviewed rows carry a marker."""
     rows = _copy_rows()
     stype = SCREEN_TYPES.get(screen_id, "generic")
     for key in (f"state.{state}.{screen_id}", f"state.{state}.{stype}", f"state.{state}.generic"):
         r = rows.get(key)
         if r:
-            return r["en"], r["ar"] if "ar" in langs else "", r["ur"] if "ur" in langs else ""
+            mark = " <!-- unreviewed -->" if str(r.get("reviewed", "false")).lower() != "true" else ""
+            return r["en"], (r["ar"] + mark) if "ar" in langs else "", (r["ur"] + mark) if "ur" in langs else ""
     return "", "", ""
 
 

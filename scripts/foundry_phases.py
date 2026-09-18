@@ -110,7 +110,23 @@ def _semver(text: str | None) -> tuple[int, ...]:
     return tuple(int(x) for x in m.groups(default="0")) if m else (0,)
 
 
-def run_doctor() -> int:
+CBM_INSTALL = "powershell -c \"irm https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.ps1 | iex\""
+CBM_MCP_JSON = '{"mcpServers": {"codebase-memory": {"command": "codebase-memory-mcp", "args": []}}}'
+
+
+def cbm_registered() -> bool:
+    """True when an MCP server named codebase-memory* appears in ~/.claude.json or ./.mcp.json."""
+    for p in (Path.home() / ".claude.json", Path.cwd() / ".mcp.json"):
+        try:
+            text = p.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if "codebase-memory" in text:
+            return True
+    return False
+
+
+def run_doctor(require_cbm: bool = False) -> int:
     rows: list[tuple[str, str, str, bool]] = []
     py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     rows.append(("python", py, "ok" if sys.version_info >= (3, 11) else "need 3.11+", True))
@@ -123,8 +139,9 @@ def run_doctor() -> int:
     git = _version(["git", "--version"])
     rows.append(("git", git or "missing", "ok" if git else "install git", True))
     cbm = shutil.which("codebase-memory-mcp")
-    rows.append(("codebase-memory-mcp", cbm or "missing", "ok" if cbm else
-                 "optional until P7; Windows: powershell -c \"irm https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.ps1 | iex\"", False))
+    rows.append(("codebase-memory-mcp", cbm or "missing", "ok" if cbm else f"required for /foundry-build; install: {CBM_INSTALL}", require_cbm))
+    reg = cbm_registered()
+    rows.append(("cbm mcp registered", "yes" if reg else "no", "ok" if reg else f"add to ~/.claude.json or ./.mcp.json: {CBM_MCP_JSON}", require_cbm))
     docker = _version(["docker", "--version"])
     rows.append(("docker", docker or "missing", "ok" if docker else "optional (local postgres via compose)", False))
     print(f"{'tool':<22} {'found':<40} {'status'}")
@@ -134,7 +151,7 @@ def run_doctor() -> int:
         print(f"{name:<22} {found[:40]:<40} {status}")
         if hard and status != "ok":
             hard_fail = True
-    print("\ndoctor: " + ("FAIL (python, node or git missing)" if hard_fail else "ok"))
+    print("\ndoctor: " + ("FAIL (python, node, git" + (", codebase-memory-mcp" if require_cbm else "") + " missing)" if hard_fail else "ok"))
     return 1 if hard_fail else 0
 
 

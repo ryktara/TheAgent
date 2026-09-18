@@ -343,9 +343,12 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
       slice_="pglite store, outbox, push/pull endpoints with seq validation, receipt block allocation, conflict rules from ADR 0005.")
     # feature tickets per must-have job in entity order
     order = _entity_order(domain)
-    def job_rank(jid: str) -> tuple[int, str]:
-        ent = job_by_id.get(jid, {}).get("entity")
-        return (order.index(ent) if ent in order else len(order), jid)
+    job_index = {j["id"]: i for i, j in enumerate(pack.get("jobs") or [])}
+
+    def job_rank(jid: str) -> tuple[int, int, int]:
+        j = job_by_id.get(jid, {})
+        ent = j.get("entity")
+        return (int(j.get("priority", 5)), order.index(ent) if ent in order else len(order), job_index.get(jid, 999))
     must_jobs = [j for j in jobs_in_scope if job_by_id.get(j, {}).get("must")]
     should_jobs = [j for j in jobs_in_scope if j in job_by_id and not job_by_id[j].get("must")]
     n = 6

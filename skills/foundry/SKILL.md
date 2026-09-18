@@ -1,18 +1,18 @@
 ---
 name: foundry
-description: Build an app from a one-line brief. Run phases 0–6 (intake, pack match, bounded grill, PRD, domain model, architecture, data and API) with at most 7 questions; use --unattended for zero questions; continue with /foundry-continue; resume with /foundry-resume.
+description: Build an app from a one-line brief. Run phases 0–8 (intake, pack match, bounded grill, PRD, domain model, architecture, data and API, design system, screen specs) with at most 7 questions; use --unattended for zero questions; continue with /foundry-continue; resume with /foundry-resume.
 invocation: user
 model: opus
 reads: [brief]
-writes: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, .foundry/prd.md, .foundry/domain.yaml, CONTEXT.md, .foundry/architecture.md, .foundry/adr/*.md, prisma/schema.prisma, openapi.yaml, .foundry/events.yaml, .foundry/metrics.jsonl]
-gate: python scripts/foundry.py gate api
+writes: [.foundry/brief.md, .foundry/pack.yaml, .foundry/decisions.yaml, .foundry/prd.md, .foundry/domain.yaml, CONTEXT.md, .foundry/architecture.md, .foundry/adr/*.md, prisma/schema.prisma, openapi.yaml, .foundry/events.yaml, design-system/MASTER.md, design-system/tokens.json, .foundry/screens/*.md, .foundry/metrics.jsonl]
+gate: python scripts/foundry.py gate screens
 ---
 
-# /foundry — orchestrator, phases 0–6
+# /foundry — orchestrator, phases 0–8
 
 Argument: the brief in quotes, optionally followed by `--unattended`. Run every command from
 the project root (the folder that will hold the app); `scripts/foundry.py` resolves to the
-plugin. Phases 7–10 are P5+ pointers: docs/pipeline.md.
+plugin. Phases 9–10 are P6+ pointers: docs/pipeline.md.
 
 ## Steps
 
@@ -53,18 +53,27 @@ plugin. Phases 7–10 are P5+ pointers: docs/pipeline.md.
    `gate 6`; `metrics --phase 6 --note "<models> models, <operations> operations"`.
    Done when: gate 6 prints `pass`.
 
-7. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the
+7. **Design system.** `metrics --phase 7 --start`; invoke design-system; `gate 7`;
+   `metrics --phase 7 --note "palette <id>, design-check ok"`.
+   Done when: gate 7 prints `pass`.
+
+8. **Screen specs.** `metrics --phase 8 --start`; invoke screen-spec; `gate 8`;
+   `metrics --phase 8 --note "<n> screens"`.
+   Done when: gate 8 prints `pass`.
+
+9. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the
    fix list. A second failure stops the run; print the gate output verbatim.
    Done when: every phase passed, or the run stopped with the failing gate printed.
 
-8. **Report.** Final message to the human, seven lines at most:
+10. **Report.** Final message to the human, eight lines at most:
 
    ```
    Pack: <slug> (confidence <c>, chosen by <chosen_by>)
    Questions: <round1_used>/7 + <round2_used>/3, mode <mode>
    Assumptions: <count of pack-default + timeout-default entries> (prd.md §10)
    Model: <entities> entities, 9 ADRs, <operations> API operations
-   Artifacts: .foundry/prd.md, .foundry/domain.yaml, .foundry/architecture.md, openapi.yaml
+   Design: palette <id>, design-check <ok|n issues>, <screens> screens
+   Artifacts: .foundry/prd.md, .foundry/domain.yaml, .foundry/architecture.md, openapi.yaml, design-system/MASTER.md, .foundry/screens/
    Next: /foundry-continue
    ```
 
@@ -81,7 +90,9 @@ plugin. Phases 7–10 are P5+ pointers: docs/pipeline.md.
 | 4 | domain-model | `gate 4` | .foundry/domain.yaml, CONTEXT.md |
 | 5 | architecture | `gate 5` | .foundry/architecture.md, .foundry/adr/ |
 | 6 | data-model, api-contract | `gate 6` | prisma/schema.prisma, openapi.yaml, .foundry/events.yaml |
-| 7–10 | P5+ | docs/pipeline.md | |
+| 7 | design-system | `gate 7` | design-system/MASTER.md, tokens.json |
+| 8 | screen-spec | `gate 8` | .foundry/screens/*.md |
+| 9–10 | P6+ | docs/pipeline.md | |
 
 Counts for the report: ledger `budget` and `source` values; entity count from domain.yaml;
-operations = methods under `paths` in openapi.yaml.
+operations = methods under `paths` in openapi.yaml; screens = files under .foundry/screens/.

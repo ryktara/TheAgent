@@ -12,8 +12,8 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | 4 | Domain model | domain-model (`domain-skeleton` + workflow walk) | prd, pack entities, workflows.md sections in scope | CONTEXT.md, .foundry/domain.yaml | `gate 4`: schema; every PRD job and feature id resolves in CONTEXT.md; every entity has an invariant and a transition; every transition names a persona; every event has a consumer or is external |
 | 5 | Architecture | architecture (`arch-skeleton`) | domain, ledger, stacks.csv | .foundry/architecture.md, .foundry/adr/0001–0009 | `gate 5`: nine ADRs exist, validate, accepted, cite [D:] or pack-default, ≤60 lines; architecture.md frontmatter validates, ≥5 trust boundaries, stack_id in stacks.csv |
 | 6 | Data + API | data-model (`schema-skeleton`), api-contract (`api-skeleton`) | domain, architecture | prisma/schema.prisma, openapi.yaml, .foundry/events.yaml | `gate 6`: model per entity and enum per state list (`npx prisma validate` when available); OpenAPI 3.1 with unique operationIds, x-foundry.authz and 2xx/4xx on every operation, a path per entity, an operation per job; events.yaml validates |
-| 7 | Design system | design-system | pack ui_profile, brand answers | design-system/MASTER.md, tokens.json | contrast/type/spacing validator passes |
-| 8 | Screens | screen-spec | prd, domain, design system | .foundry/screens/*.md | every job has a screen; every screen has empty/loading/error states |
+| 7 | Design system | design-system (`design-skeleton`) | pack ui_profile, product-types.csv, palettes/typography/styles/components/ux-rules.csv, brand answers | design-system/MASTER.md, tokens.json, tailwind.tokens.css, pages/README.md | `gate 7`: files exist; `design-check` passes (palette contrast, token scales); MASTER.md has Intent, Palette, Typography, Scales, Components, Do and avoid, RTL, Print; every component in components.csv |
+| 8 | Screens | screen-spec (`screens-skeleton`) | PRD §3, pack screens.md sections, openapi.yaml, components.csv, ux-rules.csv | .foundry/screens/<id>.md | `gate 8`: every PRD job has a screen; six states with copy; components, operationIds and rule ids exist; ≥3 a11y rules and ≥1 RTL rule (RTL regions); unique routes |
 | 9 | Security | threat-model, compliance | architecture, api, pack compliance | .foundry/threats.md, .foundry/compliance.yaml | every endpoint mapped to a control |
 | 10 | Tickets | to-tickets | all | .foundry/tickets/*.md | DAG acyclic; every feature covered |
 | 11 | Implement | /foundry-build → implement-ticket | ticket, code graph | code, tests, .foundry/metrics.jsonl | typecheck+tests+lint+semgrep+axe green; screenshot captured |
@@ -22,7 +22,7 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | 14 | Release | release | all | CHANGELOG.md, deploy config, runbook | smoke test on deployed URL |
 | 15 | Handoff | handoff | .foundry/ | .foundry/handoff.md | fresh session resumes from file alone |
 
-Gates 0–6 are enforced by `scripts/foundry.py gate <phase>` (number or name). `doctor` runs before phase 4. Later gates arrive with
+Gates 0–8 are enforced by `scripts/foundry.py gate <phase>` (number or name). `doctor` runs before phase 4; `design-check` runs inside gate 7. Later gates arrive with
 their phases; until then each skill states its gate in frontmatter.
 
 ## Phase 2 mechanics

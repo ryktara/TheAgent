@@ -38,7 +38,7 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | P2 | Bounded grilling + decision ledger + PRD + /foundry phases 0–3 | done |
 | P3 | restaurant-pos pack (full reference), prd-skeleton, rematch, pack lint | done |
 | P4 | Domain model, architecture + 9 ADRs, data model, API contract, doctor, query | done |
-| P5 | Design layer: data CSVs, design-system, screen-spec, `foundry.py query` | planned |
+| P5 | Design layer: 7 data CSVs, design-check, design-system, screen specs | done |
 | P6 | Security controls, threat-model, compliance, to-tickets | planned |
 | P7 | Implementation loop: /foundry-build, implement-ticket, review subagents, hooks | planned |
 | P8 | Wizard, release, handoff, /foundry-resume | planned |

@@ -2,6 +2,17 @@
 
 One entry per build step. Newest first.
 
+## P5 — Design layer and screens (2026-09-18)
+
+- fix: schema 1.5 `entities[].exposure` (public|internal|derived) prunes the API to 87 operations
+  on the Sharjah run; `jobs[].entity` required for complete packs replaces the job hint table.
+- data/: ux-rules (243), palettes (60, all pairs pass), typography (32), styles (26),
+  product-types (64), charts (27), components (50); data/SOURCES.md.
+- `foundry.py design-check` (WCAG contrast + token scale checks), `design-skeleton`,
+  `screens-skeleton`; gates design and screens; scripts/foundry_design.py.
+- Skills: design-system, screen-spec; /foundry and /foundry-resume cover phases 0–8.
+- Evals: stages design and screens; CI runs design-check on palettes.
+
 ## P4 — Domain, architecture, data, API (2026-09-18)
 
 - fix: schema 1.4 `questions[].enables` replaces the should-have token heuristic; region-scoped

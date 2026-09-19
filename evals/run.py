@@ -321,10 +321,16 @@ def _claude_available() -> str | None:
     exe = shutil.which("claude")
     if not exe:
         return "claude CLI not on PATH"
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        r = subprocess.run([exe, "auth", "status"], capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
-        if r.returncode != 0 and "logged" not in (r.stdout + r.stderr).lower():
-            return "no ANTHROPIC_API_KEY and `claude auth status` is not logged in"
+    # A real probe: `claude auth status` reports ok even when -p cannot run non-interactively; ask for one token instead.
+    try:
+        code, out = _claude_p("Reply with the single word ok.", ROOT, 120, "haiku")
+    except subprocess.TimeoutExpired:
+        return "claude -p probe timed out"
+    low = out.lower()
+    if "not logged in" in low or "please run /login" in low or "api key" in low and "invalid" in low:
+        return "claude CLI is not logged in for non-interactive use (run `claude /login` or set ANTHROPIC_API_KEY)"
+    if code != 0 and "ok" not in low:
+        return f"claude -p probe failed (exit {code}): {out.strip()[:120]}"
     return None
 
 

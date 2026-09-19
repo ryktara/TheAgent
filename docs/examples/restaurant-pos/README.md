@@ -5,3 +5,6 @@ Produced by the P7b build loop in the scratch project (Sharjah brief, phases 0�
 - `order-entry-{light,dark}-{ltr,rtl}.png`: `/order-entry` captured by the DoD screenshot step (1280×800, en/ar).
 - `order-entry.e2e.spec.ts`: the Playwright acceptance test verbatim (table map → order entry → two items, one modifier →
   send to kitchen → state Sent, AED 34.00 → synced through the outbox → kds ticket → bump/recall; Arabic mirror + axe).
+
+- `cashier-flow.webm`: 60-second Playwright recording (P9) of table → order → send → pay cash → receipt, from
+  `tests/e2e/cashier-flow.video.spec.ts` in the scratch project.

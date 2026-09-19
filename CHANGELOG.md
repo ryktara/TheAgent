@@ -14,6 +14,14 @@ One entry per build step. Newest first.
 - Screens: `routes: [{path, query?, state?}]` in screen frontmatter (skeleton + gate); the DoD screenshot pass
   iterates the variants.
 - security-review cites SYNC-RULES.md ids for offline/REST parity.
+- fix: reviewers are dispatched by SKILL.md path (reason: an implementer invoked Claude Code's built-in
+  `/security-review`, a name collision, and got an error instead of a verdict).
+- fix: evals probe `claude -p` with a real call before triggers/e2e (reason: `claude auth status` reported ok while
+  non-interactive runs answered "not logged in"); both stages report the exact skip reason.
+- fix: release smoke/gate must not run while a dev server writes `.next` (reason: `next build` failed on a
+  half-written nft.json); the release skill says so.
+- dogfood: 12 more tickets (T-011…T-021, T-024) built by sonnet implementer subagents through the thin parent;
+  0 escalations; deploy wizard `deploy-vps` scaffolded; cashier-flow video under docs/examples/restaurant-pos.
 - Evals: `evals/thresholds.yaml` with regression ceilings; stages `golden` (artefact diffs against
   evals/expected/restaurant-pos with an allowlist), `triggers` (40 prompts → skill via `claude -p`), `e2e`
   (unattended phases 0–10 + `/foundry-build --n 2` + release smoke via `claude -p`); `--update-thresholds`,

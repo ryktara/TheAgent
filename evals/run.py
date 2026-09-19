@@ -435,7 +435,7 @@ def update_thresholds(project: Path | None) -> int:
         walls = {}
         for name, fn in (("domain", lambda: P.run_domain_skeleton(tmp, ROOT)), ("architecture", lambda: P.run_arch_skeleton(tmp, ROOT)), ("data", lambda: P.run_schema_skeleton(tmp, ROOT, "prisma")), ("api", lambda: P.run_api_skeleton(tmp, ROOT)),
                          ("design", lambda: D.run_design_skeleton(tmp, ROOT)), ("screens", lambda: D.run_screens_skeleton(tmp, ROOT)), ("security", lambda: X.run_threat_skeleton(tmp, ROOT)), ("tickets", lambda: X.run_tickets_skeleton(tmp, ROOT))):
-            t0 = time.time(); fn(); walls[name] = max(2, round((time.time() - t0) * 1.25 + 1))
+            t0 = time.time(); fn(); walls[name] = max(10, round((time.time() - t0) * 1.25 + 1))  # floor 10 s: CI machines are slower than the dev box
         th["skeleton_wall_s"] = walls
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

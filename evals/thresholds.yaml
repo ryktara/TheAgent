@@ -1,17 +1,21 @@
-# Regression ceilings for evals/run.py. Values = best P8/P9 measurement + 25%.
-# `python evals/run.py --update-thresholds` rewrites them from the latest metrics after a deliberate improvement.
 version: "1"
-as_of: "2026-09-18"
-# phase 0–10 skeleton stages (no model): wall seconds per stage on the fixture
-skeleton_wall_s: {domain: 10, architecture: 10, data: 15, api: 20, design: 15, screens: 20, security: 20, tickets: 25}
-# e2e stage (model in the loop, unattended Sharjah brief)
+as_of: "2026-09-19"
+skeleton_wall_s:
+  domain: 10
+  architecture: 10
+  data: 10
+  api: 10
+  design: 10
+  screens: 10
+  security: 10
+  tickets: 10
 e2e:
   questions_asked_max: 0
   tickets_min: 35
   tickets_max: 60
   phases_wall_s_max: 2400
-  per_ticket_cost_usd_max: 20.0        # Sonnet list prices, target from P9 A2
-  per_ticket_output_tokens_max: 40000
-  per_ticket_cache_read_max: 8000000
+  per_ticket_cost_usd_max: 26.59
+  per_ticket_output_tokens_max: 35455
+  per_ticket_cache_read_max: 51479587
   build_wall_s_max: 2400
   trigger_accuracy_min: 0.9

@@ -48,10 +48,12 @@ When the diff touches `apps/api/src/sync/*` or a screen writes outbox events, wa
 that path. A transition applied offline without the REST route's role guard, with client money,
 or without an audit row is blocking by rule.
 
-## Inputs (P8)
+## Inputs (P10)
 
-The subagent receives three things: this skill's name, the project root and the review pack
-(`.foundry/reviews/T-xxx.pack.md` ≤1.5k tokens: acceptance tests, operations with authz, controls,
-changed files; `.foundry/reviews/T-xxx.diff`: the diff plus new files). Read those two files first;
-open another file only to verify a finding, at most three. Every blocking item carries `file`,
-`line` and a concrete `fix` so implement-ticket applies it without re-reading the codebase.
+The subagent receives three things: this skill's SKILL.md path, the project root and the review pack
+(`.foundry/reviews/T-xxx.pack.md`, a header of at most 600 tokens: acceptance tests, operations with authz,
+controls, changed files; `.foundry/reviews/T-xxx.diff`: the diff plus new files). Read those two files
+first; open another file only to verify a finding, at most three. Reply with the findings JSON only.
+On a re-review the pack header says `re-review: hunks since <sha>` and lists your previous blocking items:
+judge only those hunks and that list; areas that passed stay passed. Every blocking item carries `file`,
+`line` and a concrete `fix` so the finisher applies it without re-reading the codebase.

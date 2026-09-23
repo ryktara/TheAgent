@@ -28,7 +28,7 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.8"
+PACK_EXAMPLE = """version: "1.9"
 threshold: 0.7
 slug: restaurant-pos
 name: Restaurant POS

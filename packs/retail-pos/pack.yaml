@@ -1,47 +1,112 @@
-version: "1.8"
-complete: false
+version: "1.9"
+complete: true
 threshold: 0.7
 slug: retail-pos
 name: Retail POS
-aliases: [retail point of sale, retail pos, shop pos, store pos, supermarket pos, grocery pos, pharmacy pos]
-confidence_keywords: [retail, shop, store, boutique, supermarket, hypermarket, grocery, baqala, bakala, minimart, pharmacy, barcode, sku, stock, inventory, shelf, size, colour, returns, exchanges, refund, till, cashier, receipt, e-invoice, zatca, fatoora, loyalty points, clothing, garments, electronics, wholesale, pos]
-personas: [cashier, store-manager, stock-keeper, owner, customer]
+aliases: [retail point of sale, retail pos, shop pos, store pos, supermarket pos, grocery pos, pharmacy pos, boutique pos, baqala pos, minimart pos, electronics store pos, clothing store pos, garment shop pos, hypermarket pos]
+confidence_keywords: [retail, shop, store, boutique, supermarket, hypermarket, grocery, baqala, bakala, minimart, mini mart, convenience store, pharmacy, chemist, barcode, barcodes, scanner, sku, stock, inventory, shelf, size, colour, color, returns, exchanges, refund, till, cashier, receipt, e-invoice, zatca, fatoora, fbr, loyalty points, gift cards, gift card, store credit, layaway, clothing, garments, garment, apparel, fashion, electronics, mobile phones, serial numbers, warranty, wholesale, weighing scale, scales, weighed, per kilo, labels, shelf labels, purchase orders, suppliers, stock take, khaata, udhaar, pos]
+personas: [cashier, store-manager, owner, stock-keeper, accountant, customer]
 jobs:
-  - {id: sell, entity: Sale, must: true, screens: [checkout, product-search]}
-  - {id: manage-stock, entity: Variant, must: true, screens: [inventory, receive-stock]}
-  - {id: return-exchange, entity: Return, must: true, screens: [returns]}
-  - {id: close-day, entity: Sale, must: true, screens: [z-report]}
-must_have: [checkout, barcode-scan, variants, inventory, returns-exchanges, receipts, e-invoice, z-report, loyalty, offline-queue]
-should_have: [multi-store, purchase-orders, supplier-management, promotions, gift-cards, ecommerce-sync]
+  - {id: scan-and-sell, priority: 1, entity: Sale, persona: cashier, must: true, screens: [checkout, product-search]}
+  - {id: sell-weighed-item, priority: 1, entity: SaleLine, persona: cashier, must: true, screens: [checkout, weighed-item], merge_into: scan-and-sell}
+  - {id: take-payment, priority: 2, entity: Tender, persona: cashier, must: true, screens: [tender]}
+  - {id: issue-receipt, priority: 2, entity: Receipt, persona: cashier, must: true, screens: [receipt-preview]}
+  - {id: return-exchange, priority: 3, entity: Return, persona: cashier, must: true, screens: [returns, receipt-lookup, manager-pin]}
+  - {id: price-override, priority: 3, entity: SaleLine, persona: store-manager, must: true, screens: [checkout, manager-pin]}
+  - {id: manage-promotions, priority: 4, entity: Promotion, persona: store-manager, must: true, screens: [promotions]}
+  - {id: loyalty-points, priority: 5, entity: LoyaltyAccount, persona: cashier, must: false, screens: [customer-lookup, tender]}
+  - {id: gift-card-store-credit, priority: 5, entity: GiftCard, persona: cashier, must: false, screens: [gift-cards, tender]}
+  - {id: layaway, priority: 7, entity: Layaway, persona: cashier, must: false, screens: [layaway]}
+  - {id: manage-catalog, priority: 2, entity: Product, persona: store-manager, must: true, screens: [product-catalog]}
+  - {id: purchase-orders, priority: 5, entity: PurchaseOrder, persona: stock-keeper, must: false, screens: [purchase-orders]}
+  - {id: receive-goods, priority: 4, entity: GoodsReceipt, persona: stock-keeper, must: true, screens: [goods-receipt]}
+  - {id: stock-take, priority: 4, entity: StockCount, persona: stock-keeper, must: true, screens: [stock-count]}
+  - {id: stock-adjust, priority: 4, entity: StockMovement, persona: stock-keeper, must: true, screens: [stock-count, manager-pin], merge_into: stock-take}
+  - {id: stock-transfer, priority: 6, entity: Transfer, persona: stock-keeper, must: false, screens: [transfers]}
+  - {id: manage-suppliers, priority: 5, entity: Supplier, persona: store-manager, must: false, screens: [suppliers]}
+  - {id: e-invoicing, priority: 3, entity: Receipt, persona: accountant, must: true, screens: [einvoice-status]}
+  - {id: customer-display, priority: 6, entity: Sale, persona: customer, must: false, screens: [customer-display]}
+  - {id: cash-management, priority: 3, entity: CashDrawerSession, persona: cashier, must: true, screens: [cash-management, z-report]}
+  - {id: reports-shrinkage, priority: 6, entity: none, persona: owner, must: true, screens: [reports]}
+  - {id: print-labels, priority: 5, entity: Barcode, persona: stock-keeper, must: true, screens: [labels]}
+  - {id: staff-roles, priority: 2, entity: Staff, persona: owner, must: true, screens: [staff-roles]}
+  - {id: multi-store, priority: 7, entity: Store, persona: owner, must: false, screens: [store-switcher]}
+  - {id: offline-sync, priority: 2, entity: SyncEvent, persona: cashier, must: true, screens: [sync-status]}
+must_have: [checkout, barcode-scan, plu-lookup, weighed-items, variants, tender-cash-card-wallet, split-tender, receipt-bilingual-qr, returns-exchanges, price-override, promotions-engine, catalog-management, goods-receipt, stock-count, stock-adjustments, label-printing, cash-management, z-report, e-invoice, reports-core, shrinkage-report, staff-roles, offline-queue, audit-log]
+should_have: [loyalty, gift-cards, store-credit, layaway, purchase-orders, supplier-management, multi-store, stock-transfers, customer-display, accounting-sync, marketplace-sync, serial-warranty, khaata-credit, whatsapp-receipts]
 entities:
-  Product: {states: [active, discontinued]}
-  Variant: {states: [active, out-of-stock, discontinued]}
-  Sale: {states: [open, paid, refunded, void]}
-  Return: {states: [requested, approved, refunded, rejected]}
-  StockMovement: {states: [recorded]}
+  Product: {states: [draft, active, discontinued], exposure: public, fields: [id, name_en, name_ar, category_id, brand, tax_rule_id, sold_by, track_stock, allow_negative, image]}
+  Variant: {states: [active, out-of-stock, discontinued], exposure: public, fields: [product_id, sku, size, colour, price, cost, mrp, reorder_point]}
+  Barcode: {states: [active, retired], exposure: derived, fields: [variant_id, code, symbology, kind, embedded, pack_qty]}
+  Sale: {states: [open, parked, tendering, paid, partially-returned, returned, void], exposure: public, fields: [id, client_uuid, device_seq, store_id, staff_id, customer_id, subtotal, discount_total, tax_total, total, opened_at, closed_at]}
+  SaleLine: {states: [active, voided, returned], exposure: derived, fields: [sale_id, variant_id, qty, weight_g, unit_price, list_price, override_by, promotion_id, discount, tax, line_total, serial]}
+  Tender: {states: [pending, authorised, captured, declined, refunded, voided], exposure: public, fields: [sale_id, kind, amount, provider_ref, approval_code, gift_card_id, captured_at]}
+  Return: {states: [requested, approved, refunded, exchanged, rejected], exposure: public, fields: [sale_id, lines, reason, refund_method, approver_id, restock]}
+  Promotion: {states: [draft, scheduled, active, expired], exposure: internal, fields: [name, kind, rules, priority, stackable, starts_at, ends_at, store_ids]}
+  LoyaltyAccount: {states: [active, frozen, closed], exposure: public, fields: [customer_id, points, tier, lifetime_spend]}
+  Customer: {states: [guest, registered, blocked], exposure: public, fields: [name, phone, email, khaata_balance, credit_limit, language]}
+  GiftCard: {states: [issued, active, redeemed, expired, void], exposure: public, fields: [code_hash, kind, balance, currency, expires_at, issued_sale_id]}
+  Layaway: {states: [open, paid, collected, cancelled, expired], exposure: public, fields: [customer_id, sale_id, deposit, balance, due_at]}
+  PurchaseOrder: {states: [draft, sent, partially-received, received, closed, cancelled], exposure: public, fields: [supplier_id, store_id, lines, expected_at, total_cost]}
+  GoodsReceipt: {states: [draft, posted], exposure: public, fields: [purchase_order_id, supplier_id, store_id, lines, received_by, invoice_ref]}
+  StockCount: {states: [planned, counting, review, posted], exposure: public, fields: [store_id, scope, kind, lines, variance_value, approved_by]}
+  StockMovement: {states: [recorded], exposure: derived, fields: [variant_id, store_id, qty, kind, reference, reason, at]}
+  Transfer: {states: [draft, dispatched, in-transit, received, discrepancy], exposure: public, fields: [from_store_id, to_store_id, lines, dispatched_by, received_by]}
+  Supplier: {states: [active, blocked], exposure: public, fields: [name, trn, contact, terms, lead_time_days, return_policy]}
+  CashDrawerSession: {states: [open, closed, reconciled], exposure: internal, fields: [store_id, device_id, opened_by, opening_float, drops, pickups, counted, expected, variance]}
+  Receipt: {states: [issued, reprinted, voided, reported, report-failed], exposure: internal, fields: [sale_id, store_id, number, fiscal_qr, fiscal_ref, language, issued_at]}
+  SyncEvent: {states: [pending, sent, acked, conflict], exposure: internal, fields: [device_id, seq, entity, payload, created_at]}
+  TaxRule: {states: [active, retired], exposure: internal, fields: [region, name, rate, inclusive, applies_to]}
+  Staff: {states: [active, suspended], exposure: internal, fields: [name, pin_hash, role, store_ids, override_limit_pct]}
+  Store: {states: [active, suspended], exposure: internal, fields: [name, region, currency, timezone, receipt_prefix, fiscal_regime, allow_negative_stock]}
 invariants:
-  - "Sale total == sum(lines) - discounts + tax"
-  - "Stock on hand == sum(StockMovements) per Variant per Store"
-  - "A Return references lines of exactly one paid Sale"
-integrations: {payments: [stripe, network-intl, tap, mada], einvoice: [zatca, fta], accounting: [zoho, quickbooks], ecommerce: [shopify, salla]}
+  - "Sale.total == sum(SaleLine.line_total) - Sale.discount_total + Sale.tax_total, computed once in minor units at tender"
+  - "A Sale in state paid has captured Tender amounts summing exactly to Sale.total; change is given only from cash"
+  - "Returned qty per SaleLine never exceeds sold qty minus prior Return qty on that SaleLine"
+  - "A Return refunds to the original Tender kind unless the approver Staff id authorises store credit on a GiftCard"
+  - "Variant on hand == sum(StockMovement.qty) per Store and never negative unless Store.allow_negative_stock is true"
+  - "A SaleLine whose unit_price differs from list_price carries override_by, an approver Staff id with override rights"
+  - "GiftCard.balance >= 0 at all times; each redemption is a Tender of kind gift-card that decrements balance atomically"
+  - "GoodsReceipt qty per line <= PurchaseOrder ordered qty minus received qty plus the Supplier tolerance percent"
+  - "A StockCount posted writes exactly one StockMovement of kind count-variance per Variant with non-zero variance"
+  - "A Transfer received writes a StockMovement out at the source Store and in at the target Store with equal qty, or a discrepancy"
+  - "A weighed SaleLine takes weight_g from the scale or an embedded Barcode; price == unit_price per kg * weight rounded once"
+  - "Promotion evaluation is deterministic: best non-stackable Promotion per line by priority, stackable ones applied after"
+  - "LoyaltyAccount.points == sum of earned minus redeemed; points are earned on the paid amount net of Return"
+  - "A Layaway is collected only when balance == 0; stock is reserved by a StockMovement of kind reserve while open"
+  - "Receipt numbers are gapless and increasing per Store; a reprint reuses the number and marks Receipt reprinted"
+  - "Every offline Sale carries a client_uuid and a device_seq monotonic per device; each SyncEvent acks exactly once"
+  - "A CashDrawerSession closes with expected == opening_float + cash Tender - cash refunds - pickups; variance needs a Staff approver above policy"
+  - "Prices are stored tax-inclusive when TaxRule.inclusive is true and tax is extracted once per Sale"
+  - "Every state change on Sale, Tender, Return, CashDrawerSession, Promotion and StockCount writes one audit log event"
+  - "A Product in state discontinued or a Variant out-of-stock with no allow_negative cannot be added to a new SaleLine"
+  - "A Customer khaata_balance never exceeds credit_limit; a Supplier blocked receives no new PurchaseOrder"
+integrations: {payments: [network-intl, tap, stripe, checkout, magnati, telr, paytabs, cash, softpos], accounting: [zoho, quickbooks, xero, odoo], marketplaces: [noon, amazon-ae], scanners: [usb-hid, camera, bluetooth], label_printers: [zebra-zpl, tsc-tspl, dymo], scales: [scale-ean13-prefix-2, serial-scale-rs232], printers: [escpos-network, escpos-usb, epson, star], hardware: [cash-drawer, customer-display, pole-display], messaging: [whatsapp-receipts], einvoicing: [sa-zatca, pk-fbr, eg-eta, ae-fta-asp, om-fawtara-peppol]}
 regional:
-  AE: {tax: "VAT 5%", receipt_lang: [en, ar]}
-  SA: {tax: "VAT 15%", einvoice: "ZATCA Fatoora phase 2", receipt_lang: [ar, en]}
-  PK: {tax: "GST by province", fbr_pos_integration: true}
-compliance_must: [PCI-DSS SAQ-A via hosted fields, e-invoice where mandated, receipt retention 5y]
-nfr_defaults: {offline: required, p95_checkout_ms: 300, scanners: [usb-hid, camera]}
-stack_default: {web: nextjs, api: hono, db: postgres, offline: pglite-sync, mobile: expo}
-ui_profile: {style: high-contrast-operational, density: high, touch: 48dp, fonts: [Inter, tabular-numerals]}
+  AE: {tax: "VAT 5%", inclusive_default: true, price_display: "VAT-inclusive shelf and label prices", receipt_lang: [en, ar], einvoice: "FTA e-invoicing B2B/B2G via accredited provider from 2027; B2C receipts exempt until notified", currency: AED, minor_units: 2, rounding: "nearest fils, once per sale", weights: "metric net quantity labels (GSO/UAE.S); scales verified by MoIAT", returns: "return and exchange policy displayed in store", compliance_must: [C-AE-01, C-AE-02, C-AE-03], compliance_should: [C-AE-04]}
+  SA: {tax: "VAT 15%", inclusive_default: true, receipt_lang: [ar, en], einvoice: "ZATCA Fatoora phase 2: simplified tax invoice with TLV QR, reported within 24h", currency: SAR, minor_units: 2, rounding: "nearest halala, once per sale", returns: "7-day return or exchange for unused goods; policy in clear Arabic", compliance_must: [C-SA-01, C-SA-02, C-SA-03], compliance_should: [C-SA-04]}
+  PK: {tax: "GST 18% federal on goods (VERIFY-BEFORE-GO-LIVE)", inclusive_default: false, receipt_lang: [en, ur], einvoice: "FBR POS integration for tier-1 retailers: FBR invoice number and verifiable QR printed, real time", currency: PKR, minor_units: 0, rounding: "nearest rupee", price_display: "MRP printed on packs", credit: "khaata / udhaar ledger common", compliance_must: [C-PK-01, C-PK-02], compliance_should: [C-PK-03]}
+  QA: {tax: "no VAT in force", inclusive_default: true, receipt_lang: [ar, en], einvoice: "none", currency: QAR, minor_units: 2, rounding: "nearest dirham", compliance_must: [C-QA-01], compliance_should: []}
+  BH: {tax: "VAT 10%", inclusive_default: true, receipt_lang: [ar, en], einvoice: "none announced", currency: BHD, minor_units: 3, rounding: "nearest fils", price_display: "VAT-inclusive", compliance_must: [C-BH-01], compliance_should: []}
+  KW: {tax: "no VAT in force", inclusive_default: true, receipt_lang: [ar, en], einvoice: "none", currency: KWD, minor_units: 3, rounding: "nearest fils", compliance_must: [C-KW-01], compliance_should: []}
+  OM: {tax: "VAT 5%", inclusive_default: true, receipt_lang: [ar, en], einvoice: "Fawtara Peppol PINT OM: phase 1 Aug 2026 (100 large), phase 2 Feb 2027, phase 3 Aug 2027", currency: OMR, minor_units: 3, rounding: "nearest baisa", compliance_must: [C-OM-01], compliance_should: [C-OM-02]}
+  EG: {tax: "VAT 14%", inclusive_default: true, receipt_lang: [ar, en], einvoice: "ETA e-receipt for B2C, submitted within 24h", currency: EGP, minor_units: 2, rounding: "nearest piastre", compliance_must: [C-EG-01], compliance_should: []}
+compliance_must: [C-ALL-01, C-ALL-02, C-ALL-03, C-ALL-04, C-ALL-05, C-ALL-06, C-ALL-07, C-ALL-08]
+compliance_should: [C-ALL-09, C-ALL-10]
+nfr_defaults: {offline: required, p95_scan_to_line_ms: 100, p95_search_ms: 200, p95_tender_ms: 500, sync_recovery_s: 60, catalog_size_min: 50000, concurrent_terminals_min: 4, scanners: [usb-hid, camera, bluetooth], label_printer: [zebra-zpl, tsc-tspl], receipt_printer: thermal-80mm, scale: [ean13-prefix-2, serial], rtl: required, font_min_px: 16, touch_min_dp: 48, uptime: "99.5%", backups: daily}
+stack_default: {web-pos: nextjs-pwa, api: hono-node, db: postgres, offline: pglite-event-sourced-sync, search: postgres-trigram-local-index, printing: escpos-local-bridge, labels: zpl-local-bridge, mobile-stock: expo}
+ui_profile: {palette: retail-counter, typography: inter-system, style: high-contrast-operational, themes: {default: retail-counter, colourblind: retail-counter-cb}, density: high, touch: 48dp, numpad_first: true, scan_first: true, big_search: true, dark: optional, light: cashier, fonts: [Inter, tabular-numerals], rtl: mirrored}
 questions:
-  - {id: region, rank: 1, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, uae, riyadh, jeddah, saudi, ksa, karachi, lahore, pakistan], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}, maps_to: region.country}
-  - {id: payments, rank: 2, ask: "Card payments via which provider?", answer_type: choice, choices: [stripe, network-intl, tap, mada, cash-only, other], default: stripe, reversible: true, followups: [{when: other, ask: [payment-provider-name]}], skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, mada, cash only], brief_hints: {network-intl: [network international, n-genius], tap: [tap payments], mada: [mada], cash-only: [cash only]}, maps_to: payments.provider}
-  - {id: branches, rank: 3, ask: "Single store or multi-store?", answer_type: choice, choices: [single, multi], default: single, reversible: true, followups: [{when: multi, ask: [stock-transfer]}], enables: {multi: [multi-store]}, skip_if_brief_mentions: [one store, second store, stores, branches, outlets, chain], brief_hints: {multi: [stores, branches, outlets, chain, second store next year], single: [one store, single store]}, maps_to: org.branches}
+  - {id: region, rank: 1, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, QA, BH, KW, OM, EG, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, abu dhabi, sharjah, ajman, deira, uae, emirates, riyadh, jeddah, dammam, saudi, ksa, karachi, lahore, islamabad, pakistan, doha, qatar, bahrain, manama, kuwait, muscat, oman, cairo, egypt], brief_hints: {AE: [dubai, abu dhabi, sharjah, ajman, deira, uae, emirates], SA: [riyadh, jeddah, dammam, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan], QA: [doha, qatar], BH: [bahrain, manama], KW: [kuwait], OM: [muscat, oman], EG: [cairo, egypt]}, followups: [{when: PK, ask: [customer-credit]}], maps_to: region.country}
+  - {id: payments, rank: 2, ask: "Card payments via which provider?", answer_type: choice, choices: [network-intl, tap, stripe, checkout, magnati, telr, paytabs, cash-only, other], default: network-intl, reversible: true, skip_if_brief_mentions: [stripe, network international, n-genius, tap payments, checkout.com, magnati, telr, paytabs, cash only, cash and cards], brief_hints: {stripe: [stripe], network-intl: [network international, n-genius, cash and cards], tap: [tap payments], checkout: [checkout.com], magnati: [magnati], telr: [telr], paytabs: [paytabs], cash-only: [cash only]}, followups: [{when: other, ask: [payment-provider-name]}], maps_to: payments.provider}
+  - {id: branches, rank: 3, ask: "Single store or multiple stores?", answer_type: choice, choices: [single, multi], default: single, reversible: true, followups: [{when: multi, ask: [stock-transfer]}], enables: {multi: [multi-store, stock-transfers]}, skip_if_brief_mentions: [one store, single store, one shop, stores, branches, outlets, chain, second store], brief_hints: {multi: [stores, branches, outlets, chain, second store], single: [one store, single store, one shop]}, maps_to: org.branches}
   - {id: variants, rank: 4, ask: "Do products come in sizes or colours?", answer_type: bool, default: true, reversible: true, skip_if_brief_mentions: [size, sizes, colour, colours, color, colors, variants], maps_to: catalog.variants}
-  - {id: einvoice, rank: 5, ask: "Government e-invoicing required?", answer_type: bool, default: false, reversible: false, followups: [{when: true, ask: [einvoice-provider]}], enables: {true: [ecommerce-sync]}, skip_if_brief_mentions: [zatca, fatoora, e-invoice, e-invoices, einvoice, fbr], maps_to: compliance.einvoice}
-  - {id: loyalty, rank: 6, ask: "Loyalty programme?", answer_type: bool, default: false, reversible: true, followups: [{when: true, ask: [loyalty-type]}], skip_if_brief_mentions: [loyalty, points, rewards], maps_to: features.loyalty}
+  - {id: weighed-items, rank: 5, ask: "Do you sell weighed items from a scale (fruit, meat, bulk)?", answer_type: bool, default: false, reversible: true, skip_if_brief_mentions: [weighing scale, weighing scales, scales, weighed, per kilo, per kg, fresh produce], maps_to: catalog.weighed_items}
+  - {id: einvoice, rank: 6, ask: "Government e-invoicing or fiscal reporting required?", answer_type: bool, default: false, reversible: false, derive_from: {question: region, map: {SA: true, PK: null, EG: true, AE: false, QA: false, KW: false, BH: false, OM: null, other: null}}, skip_if_brief_mentions: [zatca, fatoora, e-invoice, e-invoices, einvoice, fbr, eta e-receipt], maps_to: compliance.einvoice}
   - {id: offline, rank: 7, ask: "Must checkout keep working when internet drops?", answer_type: bool, default: true, reversible: false, skip_if_brief_mentions: [offline, internet drops, without internet], maps_to: nfr.offline}
-  - {id: stock-transfer, rank: 8, ask: "Transfer stock between stores inside the app?", answer_type: bool, default: true, reversible: true, maps_to: inventory.transfers}
-  - {id: einvoice-provider, rank: 9, ask: "E-invoice via a certified provider or direct integration?", answer_type: choice, choices: [provider, direct], default: provider, reversible: true, maps_to: compliance.einvoice_mode}
-  - {id: loyalty-type, rank: 10, ask: "Points per spend, stamps, or tiers?", answer_type: choice, choices: [points, stamps, tiers], default: points, reversible: true, maps_to: features.loyalty_type}
-  - {id: payment-provider-name, rank: 11, ask: "Name the payment provider.", answer_type: text, default: "unknown", reversible: true, derive_from: {question: payments, map: {network-intl: "Network International", tap: "Tap Payments", stripe: "Stripe", mada: "mada via bank", cash-only: "none", other: null}}, maps_to: payments.provider_name}
-reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}
+  - {id: loyalty, rank: 8, ask: "Loyalty points programme?", answer_type: bool, default: false, reversible: true, enables: {true: [loyalty]}, skip_if_brief_mentions: [loyalty, points, rewards], maps_to: features.loyalty}
+  - {id: gift-cards, rank: 9, ask: "Sell gift cards or give store credit on returns?", answer_type: bool, default: false, reversible: true, enables: {true: [gift-cards, store-credit]}, skip_if_brief_mentions: [gift card, gift cards, store credit, vouchers], maps_to: features.gift_cards}
+  - {id: customer-credit, rank: 10, ask: "Do regular customers buy on credit (khaata / udhaar)?", answer_type: bool, default: false, reversible: true, enables: {true: [khaata-credit]}, skip_if_brief_mentions: [khaata, udhaar, credit customers, on credit], maps_to: features.customer_credit}
+  - {id: stock-transfer, rank: 11, ask: "Transfer stock between stores inside the app?", answer_type: bool, default: true, reversible: true, enables: {true: [stock-transfers]}, maps_to: inventory.transfers}
+  - {id: payment-provider-name, rank: 12, ask: "Name the payment provider so integration research can start.", answer_type: text, default: "unknown", reversible: true, derive_from: {question: payments, map: {network-intl: "Network International", tap: "Tap Payments", stripe: "Stripe", checkout: "Checkout.com", magnati: "Magnati", telr: "Telr", paytabs: "PayTabs", cash-only: "none", other: null}}, maps_to: payments.provider_name}
+reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md, sources: reference/sources.md}

@@ -1,0 +1,6 @@
+brief: retail-pos-variants/garment-shop-lahore
+expected_pack: retail-pos
+min_confidence: 0.8
+max_questions: 7
+required_artifacts:
+  - .foundry/pack.yaml

@@ -38,10 +38,10 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example (schema 1.8)
+## pack.yaml example (schema 1.9)
 
 ```yaml
-version: "1.8"
+version: "1.9"
 complete: false
 threshold: 0.7
 slug: restaurant-pos

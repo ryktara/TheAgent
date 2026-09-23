@@ -1,0 +1,6 @@
+brief: trading-app-variants/riyadh-tadawul-islamic
+expected_pack: trading-app
+min_confidence: 0.8
+max_questions: 7
+required_artifacts:
+  - .foundry/pack.yaml

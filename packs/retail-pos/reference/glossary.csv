@@ -1,1 +1,97 @@
 term,definition,aliases
+Sale,One customer transaction from first scan to paid; owns lines tenders and receipt,transaction;basket;ticket
+SaleLine,One product variant with qty or weight and price on a Sale,line;basket line
+Product,A sellable item grouping its variants,item;article
+Variant,A specific size/colour/pack of a Product with its own SKU and stock,SKU variant;option
+SKU,Stock keeping unit; the internal code for one Variant,item code;article number
+PLU,Price look-up code typed for items without a barcode such as produce,PLU code
+Barcode,A scannable code linked to a Variant,bar code
+EAN-13,13-digit GS1 barcode used on most retail goods,European Article Number;GTIN-13
+UPC,12-digit GS1 barcode common on US goods,UPC-A;GTIN-12
+GTIN,Global Trade Item Number; the number inside EAN/UPC barcodes,
+Restricted circulation number,GS1 prefix 02 or 20-29 code for in-store use such as weighed items,RCN;in-store code
+Variable measure item,An item sold by weight or length whose price varies per unit,weighed item;random weight
+Prefix-2 barcode,EAN-13 starting with 2 carrying an item code and embedded weight or price,scale barcode;weight barcode
+Tare,Container weight subtracted from the scale reading,tare weight
+Scale label,Label printed by a label-printing scale with price and prefix-2 barcode,scale ticket
+Tender,A payment method used on a Sale,payment;tender type
+Split tender,Paying one Sale with more than one tender,split payment
+Float,Cash placed in the drawer at the start of a session,opening float;change fund
+Cash drop,Removing excess cash from the drawer to the safe during a shift,safe drop;skim
+Pickup,Manager collection of cash from a till,cash pickup
+Paid-out,Cash paid from the drawer for an expense with reason,petty cash out
+Blind count,Counting the drawer without seeing the expected amount,blind close
+X report,Mid-day sales summary that does not reset totals,X read
+Z report,End-of-day report that closes and locks the day,Z read;day end
+Cash drawer session,Period a drawer is assigned to a cashier from float to count,till session;shift
+Over/short,Difference between expected and counted cash,variance
+Receipt,Printed or sent proof of sale with fiscal fields,bill;slip
+Gift receipt,Receipt without prices for gifting and returns,
+Return,Customer bringing back items for refund,refund
+Exchange,Return where the value is used for other items,swap
+Store credit,Balance given instead of cash refund usable on future purchases,credit note;voucher
+Gift card,Prepaid stored-value card or code,gift voucher
+Layaway,Reserving goods against a deposit and paying in instalments before collecting,lay-by;layby
+Price override,Changing a line price at the till with approval,price change;manual price
+Markdown,Permanent price reduction to clear stock,clearance;reduction
+Promotion,A rule-based discount such as BOGO or tiered,promo;offer;deal
+BOGO,Buy one get one free or discounted,buy one get one;2 for 1
+Mix and match,Promotion across a group of different items e.g. any 3 for 10,M&M;any-of
+Tiered promotion,Discount that grows with spend or qty thresholds,spend and save
+Bundle,Set of items sold together at one price,kit;combo
+Coupon,Code or paper giving a discount,voucher code
+Loyalty points,Points earned per spend and redeemed as tender,rewards;points
+Loyalty tier,Customer level with better earn rate,membership level
+Customer display,Screen facing the customer showing lines and total,pole display;second screen
+Shrinkage,Stock lost to theft damage error or expiry,shrink;stock loss
+Stock take,Full physical count of stock,inventory count;physical inventory
+Cycle count,Counting a subset of stock on a rotating schedule,rolling count
+Stock adjustment,Manual change of stock with a reason,write-off;adjustment
+Stock movement,Ledger record of any stock change,inventory transaction
+On hand,Current stock quantity in a store,SOH;stock on hand
+Reorder point,Stock level that triggers a purchase suggestion,min level;ROP
+Dead stock,Items with no sales for a long period,slow movers;non-moving
+Stock valuation,Value of stock at cost,inventory value
+Purchase order,Order sent to a supplier,PO
+Goods receipt note,Record of goods received against a PO,GRN;receiving
+Return to vendor,Sending goods back to the supplier,RTV;purchase return
+Supplier,Vendor who supplies goods,vendor
+Lead time,Days between order and delivery,
+Transfer,Moving stock between stores,stock transfer;inter-branch transfer
+Planogram,Diagram of where products sit on shelves,POG;shelf plan
+Facing,Number of product fronts visible on a shelf,front
+Shelf edge label,Price label on the shelf edge,SEL;shelf talker
+MRP,Maximum retail price printed on pack (Pakistan India),maximum retail price
+Baqala,Small neighbourhood grocery in the Gulf,bakala;grocery;corner shop
+Hypermarket,Very large store selling groceries and general goods,hyper
+Minimart,Small self-service grocery,convenience store
+Khaata,Customer credit ledger kept by the shop (Pakistan),khata;udhaar;credit book
+Udhaar,Buying on credit to pay later,udhar;credit
+Serial number,Unique id of one unit such as a phone,IMEI;serial
+Warranty,Seller or maker promise to repair or replace,guarantee
+Park,Put a Sale on hold to serve another customer,hold;suspend
+Recall,Bring back a parked Sale,resume
+Void,Cancel a line or Sale before payment,cancel
+TRN,UAE tax registration number printed on invoices,tax registration number
+VAT-inclusive price,Price shown to the customer including VAT,gross price
+Simplified tax invoice,ZATCA B2C invoice with QR,simplified invoice
+TLV QR,Tag-length-value encoded QR required by ZATCA,ZATCA QR
+FBR invoice number,Number returned by FBR for each POS sale in Pakistan,IRN;FBR number
+NTN,Pakistan national tax number,
+STRN,Pakistan sales tax registration number,
+E-receipt,Egypt ETA electronic B2C receipt,ETA receipt
+Fawtara,Oman Tax Authority e-invoicing programme,Oman e-invoicing
+Fiscal report,Submitting a sale to the tax authority,reporting;clearance
+Minor units,Smallest currency unit (fils halala paisa),cents
+Unit price,Price per kg litre or 100 g shown on labels,price per unit
+Label printer,Printer for barcodes and shelf labels,thermal label printer
+ZPL,Zebra printer language,Zebra
+TSPL,TSC printer language,TSC
+Keyboard wedge,Scanner that types into the app like a keyboard,USB HID scanner
+Category,Grouping of products for search and reports,department
+Brand,Maker or label of a product,
+Cost price,Price paid to the supplier,cost
+Margin,Price minus cost,gross profit
+ABC analysis,Ranking stock by value to set count frequency,ABC class
+Offline queue,Sales stored on device until sync,sync queue
+Audit log,Append-only record of sensitive actions,audit trail

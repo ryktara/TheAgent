@@ -482,8 +482,31 @@ def run_tickets_skeleton(project: Path, root: Path) -> int:
         old.unlink()
     for t in tickets:
         (out / f"{t['id']}-{_slug(t['title'])[:40]}.md").write_text(_ticket_md(t), encoding="utf-8", newline="\n")
+    _regulated_wizard(project, root)
     print(f"tickets-skeleton: {len(tickets)} tickets -> .foundry/tickets/ ({sum(1 for t in tickets if t['type'] == 'feature')} feature, {sum(1 for t in tickets if t['type'] == 'integration')} integration, {sum(1 for t in tickets if t['type'] == 'compliance')} compliance)")
     return 0
+
+
+def _regulated_wizard(project: Path, root: Path) -> None:
+    """Schema 1.9 `regulated: true`: scaffold the regulator-licence wizard once; `gate release` stays red until a human
+    runs `release confirm` after it."""
+    import foundry_ops as O
+    if not O.pack_regulated(project, root) or (project / ".foundry" / "wizard" / "regulator-licence.md").exists():
+        return
+    sel = F.load_selection(project)
+    pack = F.load_pack(root, sel["chosen"])
+    ledger = F.load_ledger(project, sel["chosen"])
+    region = str((ledger.get("decisions") or {}).get("region", {}).get("value") if isinstance((ledger.get("decisions") or {}).get("region"), dict) else "") or "generic"
+    reg = (pack.get("regional") or {}).get(region) or {}
+    regulator = str(reg.get("regulator") or "the regulator for your jurisdiction")
+    from types import SimpleNamespace
+    a = SimpleNamespace(action="scaffold", slug="regulator-licence", ticket="T-000",
+                        why=f"{pack.get('name', 'this domain')} is a regulated activity: {regulator} must license or register the operator before real users trade, deposit or withdraw. Foundry cannot obtain a licence; it ships every regulated flow behind FEATURE_REGULATED_LIVE=false until a human confirms.",
+                        validate="python scripts/foundry.py wizard status",
+                        var=["REGULATOR_NAME:Regulator that issued the licence or registration:^.{2,80}$", "LICENCE_REF:Licence or registration reference:^.{3,64}$", "LICENCE_EXPIRY:Licence expiry (YYYY-MM-DD):^\\d{4}-\\d{2}-\\d{2}$", "COMPLIANCE_OFFICER_EMAIL:Compliance officer contact:^[^@\\s]+@[^@\\s]+$"],
+                        step=[f"Confirm with {regulator} which licence category covers the decided asset classes and custody model (see .foundry/compliance.yaml).", "Obtain the licence or registration, or a written no-objection for a sandbox pilot.", "Appoint a compliance officer and record the contact below.", "Paste each value when the script prompts; then run `python scripts/foundry.py release confirm --by <your name>`."])
+    O.run_wizard(a, project)
+    print("tickets-skeleton: regulated pack → wizard regulator-licence scaffolded; `gate release` needs `release confirm --by <name>`")
 
 
 def load_tickets(project: Path) -> list[dict]:

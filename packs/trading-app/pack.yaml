@@ -1,48 +1,114 @@
-version: "1.8"
-complete: false
+version: "1.9"
+complete: true
+regulated: true
 threshold: 0.7
 slug: trading-app
 name: Trading App
-aliases: [trading app, stock trading app, brokerage app, investment app, forex app, crypto exchange app]
-confidence_keywords: [trading, trade, trader, stocks, shares, equities, brokerage, broker, investor, investors, portfolio, p&l, pnl, market order, limit order, order book, depth chart, candlestick, forex, fx, crypto, bitcoin, exchange, dfm, adx, tadawul, psx, nasdaq, kyc, leverage, margin, watchlist, live prices, ticker, deposit, withdraw, securities, sec, mifid, capital markets]
-personas: [investor, trader, compliance-officer, support, admin]
+aliases: [trading app, stock trading app, brokerage app, investment app, investing app, forex app, cfd app, crypto exchange app, crypto trading app, trading platform, trading terminal, paper trading app, copy trading app, stock market app]
+confidence_keywords: [trading, trade, trader, traders, stocks, shares, equities, brokerage, broker, investor, investors, investing, portfolio, p&l, pnl, market order, limit order, stop order, oco, bracket order, order book, depth chart, candlestick, candles, forex, fx, cfd, cfds, crypto, bitcoin, ethereum, usdt, exchange, dfm, adx, tadawul, psx, nasdaq, kyc, aml, leverage, leveraged, margin, margin call, watchlist, live prices, ticker, deposit, withdraw, securities, sec, secp, vara, mifid, capital markets, paper trading, copy trading, swap-free, islamic account, sharia-compliant, dividends, ipo, pips, spread]
+personas: [retail-trader, pro-trader, compliance-officer, support, admin]
 jobs:
-  - {id: onboard, must: true, screens: [kyc, account-open]}
-  - {id: fund, must: true, screens: [deposit, withdraw]}
-  - {id: trade, must: true, screens: [watchlist, instrument, order-ticket]}
-  - {id: monitor, must: true, screens: [portfolio, pnl]}
-  - {id: comply, must: true, screens: [disclosures, risk-warning]}
-must_have: [kyc, account-open, deposit-withdraw, live-prices, order-ticket, market-limit-orders, portfolio, pnl, risk-warnings, disclosures, statements, audit-trail]
-should_have: [price-alerts, depth-chart, leverage, ipo-subscription, research-feed, two-factor]
+  - {id: open-account, priority: 1, entity: Account, persona: retail-trader, must: true, screens: [signup, kyc-capture]}
+  - {id: kyc-tier-upgrade, priority: 2, entity: KycCase, persona: retail-trader, must: true, screens: [kyc-capture, kyc-status]}
+  - {id: review-kyc-case, priority: 2, entity: KycCase, persona: compliance-officer, must: true, screens: [kyc-review-queue, kyc-case-detail], extra_readers: [support]}
+  - {id: deposit-funds, priority: 2, entity: Transfer, persona: retail-trader, must: true, screens: [deposit]}
+  - {id: withdraw-funds, priority: 3, entity: Transfer, persona: retail-trader, must: true, screens: [withdraw], extra_readers: [{role: compliance-officer, states: [requested, held, approved]}]}
+  - {id: manage-watchlist, priority: 3, entity: Watchlist, persona: retail-trader, must: true, screens: [watchlist]}
+  - {id: view-market-data, priority: 2, entity: Instrument, persona: retail-trader, must: true, screens: [instrument-detail, depth-ladder, chart]}
+  - {id: place-order, priority: 1, entity: Order, persona: retail-trader, must: true, screens: [order-ticket, risk-warning], extra_readers: [compliance-officer, support]}
+  - {id: amend-cancel-order, entity: Order, persona: retail-trader, must: true, screens: [open-orders, order-ticket], merge_into: place-order}
+  - {id: view-positions, priority: 2, entity: Position, persona: retail-trader, must: true, screens: [positions]}
+  - {id: view-portfolio, priority: 3, entity: Account, persona: retail-trader, must: true, screens: [portfolio]}
+  - {id: manage-risk-limits, priority: 3, entity: RiskLimit, persona: compliance-officer, must: true, screens: [risk-limits]}
+  - {id: handle-margin-call, priority: 2, entity: MarginCall, persona: retail-trader, must: true, screens: [margin-call, positions], extra_readers: [support]}
+  - {id: set-leverage, priority: 4, entity: RiskLimit, persona: retail-trader, must: false, screens: [leverage-settings, risk-warning]}
+  - {id: price-alerts, priority: 5, entity: Alert, persona: retail-trader, must: true, screens: [alerts]}
+  - {id: statements-tax, priority: 4, entity: Statement, persona: retail-trader, must: true, screens: [statements, tax-report]}
+  - {id: read-news, priority: 6, entity: NewsItem, persona: retail-trader, must: false, screens: [news]}
+  - {id: paper-trade, priority: 5, entity: PaperAccount, persona: retail-trader, must: false, screens: [paper-mode, order-ticket]}
+  - {id: refer-friend, priority: 8, entity: Referral, persona: retail-trader, must: false, screens: [referrals]}
+  - {id: copy-trade, priority: 7, entity: CopyLink, persona: pro-trader, must: false, screens: [copy-leaders, copy-settings]}
+  - {id: compliance-case-review, priority: 3, entity: ComplianceCase, persona: compliance-officer, must: true, screens: [surveillance-alerts, compliance-case-detail]}
+  - {id: support-tickets, priority: 4, entity: SupportTicket, persona: support, must: true, screens: [support-inbox, ticket-detail]}
+  - {id: manage-instruments, priority: 3, entity: Instrument, persona: admin, must: true, screens: [instrument-admin]}
+  - {id: staff-roles, priority: 4, entity: Staff, persona: admin, must: true, screens: [staff-roles]}
+  - {id: audit-trail, priority: 5, entity: AuditEvent, persona: compliance-officer, must: true, screens: [audit-log]}
+must_have: [kyc-tiers, account-open, deposit, withdrawal-cooldown, watchlists, live-quotes, depth-ladder, candlestick-charts, order-ticket, market-limit-stop-orders, oco-bracket-orders, positions-pnl, portfolio, risk-limits, margin-calls, risk-warnings, best-execution-disclosure, price-alerts, statements, tax-reports, compliance-cases, market-abuse-surveillance, support-tickets, instrument-admin, staff-roles, audit-trail, double-entry-ledger]
+should_have: [leverage, swap-free-accounts, crypto-trading, travel-rule, paper-trading, copy-trading, referrals, news-feed, pro-terminal, two-factor-hardware-key, open-banking-funding]
 entities:
-  Account: {states: [pending-kyc, active, restricted, closed]}
-  Order: {states: [new, accepted, partially-filled, filled, cancelled, rejected]}
-  Position: {states: [open, closed]}
-  Transaction: {states: [pending, settled, failed]}
-  Instrument: {states: [tradable, halted, delisted]}
+  Account: {states: [pending-kyc, active, restricted, frozen, closed], fields: [id, owner_id, kind, base_currency, kyc_tier, jurisdiction, islamic, leverage_enabled, risk_ack_at, opened_at]}
+  Wallet: {states: [active, frozen], exposure: derived, fields: [account_id, currency, balance, reserved, available]}
+  Instrument: {states: [draft, tradable, halted, close-only, delisted], fields: [symbol, venue, asset_class, currency, tick_size, lot_size, max_leverage, shariah_flag, session_hours]}
+  Order: {states: [new, accepted, partially-filled, filled, cancelled, rejected], fields: [id, client_order_id, account_id, instrument_id, side, type, tif, qty, limit_price, stop_price, parent_id, oco_group, filled_qty, avg_price, reject_reason, submitted_at]}
+  Fill: {states: [booked, busted], exposure: derived, fields: [order_id, exec_id, qty, price, fee, venue, executed_at]}
+  Position: {states: [open, closed], exposure: derived, fields: [account_id, instrument_id, qty, avg_cost, realised_pnl, unrealised_pnl, margin_used]}
+  LedgerEntry: {states: [posted], exposure: internal, fields: [txn_id, wallet_id, debit, credit, currency, kind, reference, posted_at]}
+  Transfer: {states: [requested, held, approved, sent, settled, failed, cancelled], fields: [account_id, direction, rail, amount, currency, beneficiary_id, cooldown_until, travel_rule_ref]}
+  RiskLimit: {states: [active, suspended], exposure: internal, fields: [scope, scope_id, jurisdiction, max_leverage, max_order_value, max_position_value, maintenance_margin_pct, stop_out_pct]}
+  MarginCall: {states: [open, met, liquidating, closed], fields: [account_id, equity, maintenance, deficit, deadline, opened_at]}
+  KycCase: {states: [draft, submitted, in-review, approved, rejected, needs-info, expired], fields: [account_id, tier_requested, vendor, vendor_ref, pep_hit, sanctions_hit, risk_score, reviewer_id, decided_at]}
+  ComplianceCase: {states: [open, investigating, escalated, closed-no-action, reported], exposure: internal, fields: [kind, subject_account_id, alert_ids, assignee_id, str_ref, closed_at]}
+  Alert: {states: [armed, triggered, disarmed], fields: [account_id, instrument_id, condition, threshold, last_side, triggered_at]}
+  Statement: {states: [generating, issued], fields: [account_id, kind, period_start, period_end, file_ref, checksum]}
+  Watchlist: {states: [active], fields: [account_id, name, instrument_ids, sort]}
+  Quote: {states: [live, stale], exposure: derived, fields: [instrument_id, bid, ask, last, bid_size, ask_size, ts]}
+  Candle: {states: [open, closed], exposure: derived, fields: [instrument_id, interval, open, high, low, close, volume, start]}
+  NewsItem: {states: [published, retracted], exposure: internal, fields: [source, headline, instrument_ids, url, published_at]}
+  PaperAccount: {states: [active, reset], fields: [owner_id, virtual_balance, currency, reset_count]}
+  Referral: {states: [invited, signed-up, qualified, rewarded, void], fields: [referrer_id, referee_id, code, reward, qualified_at]}
+  CopyLink: {states: [active, paused, stopped], fields: [follower_account_id, leader_account_id, ratio, max_allocation, stop_loss_pct]}
+  SupportTicket: {states: [open, pending-customer, escalated, resolved, closed], fields: [account_id, category, is_complaint, sla_due, assignee_id]}
+  AuditEvent: {states: [recorded], exposure: internal, fields: [actor_id, actor_role, action, entity, entity_id, before_hash, after_hash, ip, at, prev_hash]}
+  Staff: {states: [active, suspended], exposure: internal, fields: [name, email, role, mfa_enrolled, four_eyes_group]}
 invariants:
-  - "Cash balance == sum(settled deposits) - sum(settled withdrawals) - sum(filled buys) + sum(filled sells) - fees"
-  - "An Order never fills beyond its quantity"
-  - "No Order is accepted for an Account outside state active"
-  - "A leveraged Order requires an acknowledged risk warning within the session"
-integrations: {market-data: [psx-feed, dfm-feed, tadawul-feed, polygon], broker: [fix-gateway, broker-api], kyc: [nadra, uae-pass, jumio], payments: [bank-transfer, jazzcash, easypaisa, stripe]}
+  - "Every ledger transaction posts LedgerEntry rows whose debits minus credits sum to zero per currency"
+  - "Wallet.balance == sum(LedgerEntry credit - debit) for that Wallet; available == balance - reserved"
+  - "No Order moves to accepted without a passed buying-power or margin check against RiskLimit and Wallet.available"
+  - "Position.qty == sum of signed Fill.qty for its Account and Instrument; Position is never written directly"
+  - "Sum of Fill.qty for an Order never exceeds Order.qty; filled_qty == sum(Fill.qty)"
+  - "An Order in state cancelled or rejected receives no Fill with executed_at after the state change"
+  - "A Transfer of direction withdrawal requires KycCase approved at the tier covering the amount and now >= cooldown_until"
+  - "A withdrawal Transfer is paid only to a beneficiary in the name of the Account owner"
+  - "Order leverage <= min(Instrument.max_leverage, RiskLimit.max_leverage for the Account jurisdiction)"
+  - "A leveraged Order requires Account.risk_ack_at within the current risk-warning version"
+  - "A MarginCall opens when Account equity < maintenance margin and at most one MarginCall per Account is open"
+  - "When equity falls below the stop-out level of RiskLimit, positions close largest-loss first and an AuditEvent records each close"
+  - "An Alert fires once per crossing: it re-arms only after the Quote returns across the threshold"
+  - "AuditEvent is append-only; each row carries prev_hash of the previous row so tampering breaks the chain"
+  - "Client money sits in segregated Wallet rows; house Wallet rows never net against client rows"
+  - "An Order submitted twice with the same client_order_id yields one Order"
+  - "A PaperAccount never posts LedgerEntry rows to a real Wallet and its Order rows never route to a venue"
+  - "An Islamic Account never accrues overnight swap LedgerEntry rows"
+  - "A crypto withdrawal Transfer above the travel-rule threshold carries originator and beneficiary data before it is sent"
+  - "A CopyLink copies an Order only when the follower passes the same risk checks as a manual Order"
+  - "A Candle is derived from trades; a closed Candle never changes after its interval ends except on a busted Fill"
+  - "A Statement is immutable once issued; corrections issue a new Statement referencing the old one"
+  - "A KycCase decision and every ComplianceCase closure record a reviewer Staff id different from the case creator"
+  - "A SupportTicket flagged as complaint gets an acknowledgement and a due date on creation"
+  - "A Referral reward posts only after the referee KycCase is approved and first funding settles"
+  - "Only Instrument rows in state tradable accept new Order rows; close-only accepts reducing orders"
+integrations: {market-data: [exchange-direct, polygon, refinitiv, twelvedata, stub-market-data], brokers: [fix-4.4-gateway, broker-rest, stub-broker], crypto-exchanges: [ccxt-adapter, venue-rest-ws, stub-crypto-venue], kyc: [jumio, sumsub, onfido, nadra-verisys, uae-pass, stub-kyc], payments: [bank-transfer, cards-hosted, jazzcash, easypaisa, lean, tarabut, stub-payments], custody: [fireblocks, self-custody-mpc, stub-custody], notifications: [push-fcm-apns, email, sms, whatsapp], surveillance: [rules-engine, stub-surveillance]}
 regional:
-  PK: {regulator: SECP, exchange: PSX, kyc: [nadra, cnic], currency: PKR}
-  AE: {regulator: SCA, exchanges: [DFM, ADX], kyc: [uae-pass, emirates-id], currency: AED}
-  SA: {regulator: CMA, exchange: Tadawul, kyc: [absher, iqama], currency: SAR}
-compliance_must: [KYC/AML before funding, risk disclosure before leveraged trade, best-execution record, immutable order audit trail, statements retention 7y]
-nfr_defaults: {offline: forbidden, p95_quote_ms: 100, p95_order_submit_ms: 250, uptime: "99.9%"}
-stack_default: {web: nextjs, api: hono, db: postgres, realtime: websocket, mobile: expo}
-ui_profile: {style: dense-financial, density: high, touch: 44dp, dark: default, fonts: [Inter, tabular-numerals], charts: candlestick}
+  AE: {currency: AED, minor_units: 2, regulator: "CMA (formerly SCA) onshore securities; VARA for virtual assets in Dubai; DFSA in DIFC; FSRA in ADGM", exchanges: [DFM, ADX], settlement: "T+2 (UNVERIFIED)", kyc: [uae-pass, emirates-id], tax: "no personal tax on gains or dividends (UNVERIFIED)", islamic: swap-free-option, travel_rule: "VARA: > AED 3,500", lang: [en, ar], compliance_must: [C-AE-01, C-AE-02, C-AE-03, C-AE-04], compliance_should: [C-AE-05, C-AE-06]}
+  SA: {currency: SAR, minor_units: 2, regulator: CMA, exchanges: [Tadawul, Nomu], settlement: T+2, kyc: [absher, nafath, iqama], tax: "listed-share gains exempt on Tadawul; 5% WHT on dividends to non-residents; resident zakat rules separate", islamic: sharia-default, lang: [ar, en], compliance_must: [C-SA-01, C-SA-02, C-SA-03], compliance_should: [C-SA-04]}
+  PK: {currency: PKR, minor_units: 2, regulator: SECP, exchanges: [PSX], clearing: [NCCPL, CDC], settlement: T+1, kyc: [nadra-verisys, cnic], ids: [UIN, CDC sub-account], tax: "dividends 15% filer / 30% non-filer final; CGT by holding period and filer status, collected via NCCPL", islamic: shariah-screened-list, lang: [en, ur], compliance_must: [C-PK-01, C-PK-02, C-PK-03, C-PK-04], compliance_should: [C-PK-05]}
+  generic: {currency: USD, minor_units: 2, regulator: "local securities regulator", exchanges: [], kyc: [jumio, sumsub, onfido], tax: "report-only; no withholding", lang: [en], compliance_must: [C-GEN-01], compliance_should: []}
+compliance_must: [C-ALL-01, C-ALL-02, C-ALL-03, C-ALL-04, C-ALL-05, C-ALL-06, C-ALL-07, C-ALL-08, C-ALL-09]
+compliance_should: [C-ALL-10, C-ALL-11, C-ALL-12]
+nfr_defaults: {offline: forbidden, websocket: required, p95_quote_latency_ms: 150, p95_order_ack_ms: 250, p99_order_ack_ms: 800, idempotent_order_submission: required, audit_immutability: hash-chained-append-only, uptime: "99.95% market hours", rpo_s: 0, rto_min: 15, rtl: required, font_min_px: 14, touch_min_dp: 44, session_timeout_min: 15, mfa: required, stale_quote_ms: 3000}
+stack_default: {web: nextjs, mobile: expo, api: hono-node, db: postgres, realtime: websocket, cache: redis, ledger: postgres-double-entry, queue: postgres-outbox, charts: lightweight-charts}
+ui_profile: {palette: trading-dark-cb, typography: inter-system, style: fintech-dark, themes: {default: trading-dark-cb, light: indigo-calm}, dark: default, density: high, touch: 44dp, charts: candlestick, fonts: [Inter, tabular-numerals], updown: "blue up-arrow / orange down-arrow, never colour alone", rtl: mirrored-except-numbers-and-charts}
 questions:
-  - {id: market, rank: 1, ask: "Which market first?", answer_type: choice, choices: [PSX, DFM, Tadawul, forex, crypto, other], default: PSX, reversible: false, skip_if_brief_mentions: [psx, pakistan stock, dfm, adx, tadawul, forex, fx, crypto, bitcoin], brief_hints: {PSX: [psx, pakistan stock, karachi stock], DFM: [dfm, adx, dubai financial], Tadawul: [tadawul, saudi exchange], forex: [forex, fx], crypto: [crypto, bitcoin, ethereum]}, maps_to: market.primary}
-  - {id: broker-integration, rank: 2, ask: "Do you hold a broker licence, or route through a partner broker?", answer_type: choice, choices: [own-licence, partner-broker], default: partner-broker, reversible: false, followups: [{when: own-licence, ask: [market-data-vendor]}], skip_if_brief_mentions: [licensed broker, our licence, partner broker, white label], brief_hints: {own-licence: [licensed broker, our licence, we are a broker], partner-broker: [partner broker, white label, via a broker]}, maps_to: broker.model}
-  - {id: kyc-provider, rank: 3, ask: "KYC via which provider?", answer_type: choice, choices: [nadra, uae-pass, jumio, manual], default: nadra, reversible: true, skip_if_brief_mentions: [nadra, uae pass, jumio, manual kyc], brief_hints: {nadra: [nadra, cnic], uae-pass: [uae pass, emirates id], jumio: [jumio]}, maps_to: kyc.provider}
-  - {id: leverage, rank: 4, ask: "Offer leveraged or margin trading?", answer_type: bool, default: false, reversible: false, followups: [{when: true, ask: [leverage-max]}], skip_if_brief_mentions: [leverage, leveraged, margin], maps_to: features.leverage}
-  - {id: funding, rank: 5, ask: "Deposit methods?", answer_type: choice, choices: [bank-transfer, wallets, cards, all], default: bank-transfer, reversible: true, followups: [{when: wallets, ask: [wallet-providers]}, {when: all, ask: [wallet-providers]}], skip_if_brief_mentions: [bank transfer, jazzcash, easypaisa, card deposit], brief_hints: {wallets: [jazzcash, easypaisa, wallet], cards: [card deposit, debit card]}, maps_to: funding.methods}
-  - {id: platform, rank: 6, ask: "Mobile only, or mobile and web?", answer_type: choice, choices: [mobile, both], default: mobile, reversible: true, skip_if_brief_mentions: [mobile app, mobile only, web and mobile, web platform], brief_hints: {mobile: [mobile app, mobile only], both: [web and mobile, web platform]}, maps_to: platform.targets}
-  - {id: region, rank: 7, ask: "Primary country?", answer_type: choice, choices: [PK, AE, SA, other], default: PK, reversible: true, skip_if_brief_mentions: [pakistan, karachi, lahore, dubai, uae, riyadh, saudi], brief_hints: {PK: [pakistan, karachi, lahore, islamabad], AE: [dubai, abu dhabi, uae], SA: [riyadh, jeddah, saudi, ksa]}, maps_to: region.country}
-  - {id: market-data-vendor, rank: 8, ask: "Market data vendor?", answer_type: choice, choices: [exchange-direct, polygon, refinitiv, other], default: exchange-direct, reversible: true, maps_to: market.data_vendor}
-  - {id: leverage-max, rank: 9, ask: "Maximum leverage offered?", answer_type: number, default: 2, reversible: false, maps_to: features.leverage_max}
-  - {id: wallet-providers, rank: 10, ask: "Which wallets?", answer_type: choice, choices: [jazzcash, easypaisa, both], default: both, reversible: true, skip_if_brief_mentions: [jazzcash, easypaisa], brief_hints: {jazzcash: [jazzcash], easypaisa: [easypaisa]}, maps_to: funding.wallets}
-reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}
+  - {id: asset-class, rank: 1, ask: "Which asset classes: listed equities, forex/CFDs, crypto, or multi-asset?", answer_type: choice, choices: [equities, forex-cfd, crypto, multi], default: equities, reversible: false, skip_if_brief_mentions: [equities, stocks, shares, psx, tadawul, forex, fx, cfd, crypto, bitcoin, multi-asset, multi asset], brief_hints: {equities: [equities, stocks, shares, psx, tadawul, dfm, adx], forex-cfd: [forex, fx, cfd, cfds, pips], crypto: [crypto, bitcoin, ethereum, usdt, vara], multi: [multi-asset, multi asset, stocks and crypto, pro terminal]}, enables: {crypto: [crypto-trading, travel-rule], multi: [crypto-trading, travel-rule, pro-terminal], forex-cfd: [leverage]}, maps_to: market.asset_class}
+  - {id: region, rank: 2, ask: "Primary jurisdiction?", answer_type: choice, choices: [AE, SA, PK, generic], default: AE, reversible: false, skip_if_brief_mentions: [pakistan, karachi, lahore, islamabad, dubai, abu dhabi, uae, riyadh, jeddah, saudi, ksa, difc, adgm], brief_hints: {PK: [pakistan, karachi, lahore, islamabad, psx], AE: [dubai, abu dhabi, uae, difc, adgm, vara, dfm, adx], SA: [riyadh, jeddah, saudi, ksa, tadawul]}, enables: {AE: [swap-free-accounts, open-banking-funding], SA: [swap-free-accounts, open-banking-funding]}, maps_to: region.country}
+  - {id: custody-model, rank: 3, ask: "Do you hold your own licence, or route through a licensed partner broker?", answer_type: choice, choices: [own-licence, partner-broker], default: partner-broker, reversible: false, skip_if_brief_mentions: [licensed broker, our licence, partner broker, white label, introducing broker], brief_hints: {own-licence: [licensed broker, our licence, we are a broker, we are licensed], partner-broker: [partner broker, white label, introducing broker, via a broker]}, maps_to: broker.model}
+  - {id: leverage, rank: 4, ask: "Offer leveraged or margin trading?", answer_type: bool, default: false, reversible: false, followups: [{when: true, ask: [leverage-max]}], enables: {true: [leverage]}, skip_if_brief_mentions: [leverage, leveraged, margin trading, cfd], maps_to: features.leverage}
+  - {id: islamic-accounts, rank: 5, ask: "Offer Islamic swap-free accounts?", answer_type: bool, default: false, reversible: true, enables: {true: [swap-free-accounts]}, skip_if_brief_mentions: [islamic, swap-free, swap free, sharia, shariah], maps_to: features.islamic_accounts}
+  - {id: platform, rank: 6, ask: "Mobile only, or mobile and web?", answer_type: choice, choices: [mobile, both], default: mobile, reversible: true, enables: {both: [pro-terminal]}, skip_if_brief_mentions: [mobile app, mobile trading app, mobile only, web and mobile, desktop, terminal, web platform], brief_hints: {mobile: [mobile app, mobile trading app, mobile only], both: [web and mobile, desktop, terminal, web platform]}, maps_to: platform.targets}
+  - {id: kyc-vendor, rank: 7, ask: "KYC via which vendor?", answer_type: choice, choices: [nadra, uae-pass, sumsub, jumio, onfido], default: sumsub, reversible: true, skip_if_brief_mentions: [nadra, uae pass, sumsub, jumio, onfido], brief_hints: {nadra: [nadra, cnic], uae-pass: [uae pass, emirates id], sumsub: [sumsub], jumio: [jumio], onfido: [onfido]}, maps_to: kyc.provider}
+  - {id: crypto, rank: 8, ask: "Include crypto trading and custody?", answer_type: bool, default: false, reversible: false, derive_from: {question: asset-class, map: {crypto: true, multi: true, equities: false, forex-cfd: null}}, enables: {true: [crypto-trading, travel-rule]}, skip_if_brief_mentions: [crypto, bitcoin, vara], maps_to: features.crypto}
+  - {id: funding-rails, rank: 9, ask: "Deposit rails?", answer_type: choice, choices: [bank-transfer, cards, wallets, open-banking, all], default: bank-transfer, reversible: true, enables: {open-banking: [open-banking-funding], all: [open-banking-funding]}, skip_if_brief_mentions: [bank transfer, jazzcash, easypaisa, card deposit, lean, tarabut, open banking], brief_hints: {wallets: [jazzcash, easypaisa], cards: [card deposit, debit card], open-banking: [lean, tarabut, open banking]}, maps_to: funding.methods}
+  - {id: leverage-max, rank: 10, ask: "Maximum retail leverage (e.g. 30 for 30:1)?", answer_type: number, default: 2, reversible: false, maps_to: features.leverage_max}
+  - {id: copy-trading, rank: 11, ask: "Let followers copy lead traders?", answer_type: bool, default: false, reversible: true, enables: {true: [copy-trading]}, skip_if_brief_mentions: [copy trading, copy-trading, social trading], maps_to: features.copy_trading}
+  - {id: market, rank: 12, ask: "Which venue first?", answer_type: choice, choices: [PSX, Tadawul, DFM-ADX, forex, crypto, other], default: PSX, reversible: false, derive_from: {question: region, map: {PK: PSX, SA: Tadawul, AE: null, generic: null}}, skip_if_brief_mentions: [psx, pakistan stock, tadawul, saudi exchange, dfm, adx, forex, crypto], brief_hints: {PSX: [psx, pakistan stock, karachi stock, kse-100], Tadawul: [tadawul, saudi exchange, tasi], DFM-ADX: [dfm, adx, dubai financial market], forex: [forex, fx, cfd], crypto: [crypto, bitcoin, ethereum]}, maps_to: market.primary}
+reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md, sources: reference/sources.md}

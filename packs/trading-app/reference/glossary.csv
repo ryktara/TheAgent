@@ -1,1 +1,127 @@
 term,definition,aliases
+Account,A client trading account owned by one verified person with a KYC tier and jurisdiction,trading account;brokerage account
+Wallet,Per-currency balance of an Account derived from ledger entries,cash balance;sub-wallet
+Instrument,A tradable symbol on a venue with tick size lot size and leverage cap,symbol;security;ticker;contract
+Order,A client instruction to buy or sell an Instrument,trade order;ticket
+Fill,One execution against an Order at a price and quantity,execution;trade;exec report
+Position,Net holding of an Instrument derived from fills,holding
+LedgerEntry,One debit or credit line of a balanced double-entry transaction,journal line;posting
+Transfer,A deposit or withdrawal of money or crypto,funding;payout;movement
+RiskLimit,Configured cap on leverage order value or exposure by scope,limit;risk parameter
+MarginCall,Notice that equity fell below maintenance margin,margin notice
+KycCase,A verification case for one KYC tier,kyc application;verification case
+ComplianceCase,An investigation opened from surveillance or AML alerts,case;investigation
+AuditEvent,Append-only hash-chained record of an action,audit log entry
+Bid,Highest price a buyer is willing to pay,bid price
+Ask,Lowest price a seller is willing to accept,offer;ask price
+Spread,Difference between ask and bid,bid-ask spread
+Last,Price of the most recent trade,last price;ltp
+Slippage,Difference between expected and executed price,execution slippage
+Market order,Order that executes immediately at the best available price,mkt
+Limit order,Order that executes only at the limit price or better,lmt
+Stop order,Order that becomes a market order when the stop price is touched,stop-loss;stop market
+Stop-limit order,Order that becomes a limit order when the stop price is touched,stop limit
+OCO,One-cancels-other: two linked orders where a fill of one cancels the other,one cancels other
+Bracket order,Entry order with attached take-profit and stop-loss children,bracket;attached orders
+Take-profit,Limit order closing a position at a target profit,tp
+Time in force,How long an order stays working,tif;day;gtc;ioc;fok
+GTC,Good till cancelled,good till cancelled
+IOC,Immediate or cancel: fill what you can now and cancel the rest,immediate or cancel
+FOK,Fill or kill: fill fully now or cancel,fill or kill
+Partially filled,Order state where some but not all quantity has executed,partial fill
+Order book,List of resting buy and sell orders by price,book;market depth
+Depth ladder,Vertical price ladder showing sizes at each level with click-to-trade,dom;price ladder
+Level 2,Market data with multiple price levels of the book,l2;depth data
+Candlestick,Chart bar showing open high low close for an interval,candle;ohlc bar
+OHLC,Open high low close,ohlcv
+Tick size,Smallest allowed price increment,price step
+Lot size,Smallest allowed quantity increment,board lot;market lot
+Leverage,Ratio of exposure to margin posted,gearing
+Margin,Collateral required to hold a leveraged position,initial margin
+Initial margin,Margin required to open a position,im
+Maintenance margin,Minimum equity to keep positions open before a margin call,mm;maintenance requirement
+Margin level,Equity divided by used margin as a percent,margin ratio
+Stop-out,Level at which positions are closed automatically,liquidation level
+Liquidation,Forced closing of positions to restore margin,forced close
+Negative balance protection,Guarantee a retail client cannot lose more than deposited,nbp
+Equity,Balance plus unrealised P&L,account equity;net liquidation value
+Buying power,Amount available to open new positions after margin and reservations,purchasing power
+Unrealised P&L,Profit or loss on open positions at current prices,floating p&l;mtm
+Realised P&L,Profit or loss locked in by closing trades,booked p&l
+Mark-to-market,Revaluing positions at current prices,mtm
+Swap,Overnight financing charge or credit on leveraged positions,rollover;overnight fee
+Swap-free account,Islamic account with no overnight interest,islamic account;sharia account
+CFD,Contract for difference: derivative paying the price change of an underlying,contract for difference
+Pip,Smallest standard FX price move usually 0.0001,point
+Best execution,Duty to obtain the best possible result for client orders,best ex
+Execution venue,Exchange or market maker where an order executes,venue;market centre
+FIX,Financial Information eXchange protocol for orders and executions,fix protocol
+Settlement,Exchange of cash and securities after a trade,clearing and settlement
+T+2,Settlement two business days after trade date,t plus two
+T+1,Settlement one business day after trade date,t plus one
+Custody,Safekeeping of client assets,custodian
+Segregation,Keeping client money and assets separate from the firm's own,client money segregation
+Client money,Funds held on behalf of clients in designated accounts,client funds
+KYC,Know your customer identity verification,customer due diligence;cdd
+AML,Anti-money laundering controls,aml/cft
+EDD,Enhanced due diligence for higher-risk clients,enhanced due diligence
+PEP,Politically exposed person,politically exposed person
+Sanctions screening,Checking clients against sanctions lists,watchlist screening
+STR,Suspicious transaction report to the financial intelligence unit,sar;suspicious activity report
+FIU,Financial intelligence unit receiving STRs,goaml
+Travel rule,FATF rule requiring originator and beneficiary data on virtual asset transfers,fatf recommendation 16
+VASP,Virtual asset service provider,crypto service provider
+Appropriateness test,Check that a client understands a complex product,knowledge test
+Suitability,Assessment that a product fits a client's profile,suitability assessment
+Market abuse,Insider dealing and market manipulation,market manipulation
+Spoofing,Placing orders intended to be cancelled to mislead the market,layering
+Wash trade,Trade where buyer and seller are the same beneficial owner,self-trade
+Cool-down,Waiting period before a new beneficiary can receive withdrawals,cooling period
+Four-eyes,Rule that a second staff member approves sensitive actions,maker-checker
+Paper trading,Simulated trading with virtual money,demo account;virtual trading
+Copy trading,Automatically mirroring another trader's orders,social trading;mirror trading
+Referral,Invite of a new client with a reward on qualification,invite
+Watchlist,User list of instruments with live quotes,favourites
+Quote,Live bid ask last snapshot for an Instrument,price;tick
+NewsItem,A news headline linked to instruments,news;headline
+Statement,Immutable periodic account document,account statement;contract note
+Contract note,Trade confirmation issued after execution,trade confirmation
+Dividend,Cash distribution by an issuer to shareholders,payout
+Withholding tax,Tax deducted at source on dividends or gains,wht
+Capital gains tax,Tax on profits from selling securities,cgt
+Corporate action,Issuer event such as split dividend or rights issue,ca
+IPO,Initial public offering,book building
+PSX,Pakistan Stock Exchange,karachi stock exchange
+SECP,Securities and Exchange Commission of Pakistan,sec pakistan
+NCCPL,National Clearing Company of Pakistan Limited; clears PSX trades and issues UIN,national clearing
+UIN,Unique Identification Number issued via NCCPL to each investor,unique identification number
+CDC,Central Depository Company of Pakistan holding shares electronically,central depository
+CDC sub-account,Account under a broker's CDC participant holding a client's shares,sub account
+CDC investor account,Account held directly with CDC giving the client control of share movements,ias
+CNIC,Computerised National Identity Card of Pakistan,national id card
+NADRA,National Database and Registration Authority of Pakistan; Verisys verifies CNIC,verisys
+KSE-100,Benchmark index of PSX,kse 100
+Tadawul,Saudi Exchange main market,saudi exchange
+Nomu,Saudi parallel market for smaller listings,parallel market
+TASI,Tadawul All Share Index,tadawul all share
+CMA,Capital Market Authority of Saudi Arabia; also the new name of the UAE federal regulator,capital market authority
+Absher,Saudi government e-services identity platform,absher
+Nafath,Saudi national single sign-on identity app,nafath
+Iqama,Saudi residence permit ID,resident id
+DFM,Dubai Financial Market,dubai financial market
+ADX,Abu Dhabi Securities Exchange,abu dhabi securities exchange
+SCA,Securities and Commodities Authority; UAE federal regulator renamed CMA from 1 January 2026,securities and commodities authority
+VARA,Dubai Virtual Assets Regulatory Authority,virtual assets regulatory authority
+DFSA,Dubai Financial Services Authority regulating DIFC,dfsa
+DIFC,Dubai International Financial Centre free zone,difc
+FSRA,Financial Services Regulatory Authority of ADGM,fsra
+ADGM,Abu Dhabi Global Market free zone,adgm
+UAE Pass,UAE national digital identity app,uaepass
+Emirates ID,UAE national identity card,eid
+Open banking,Regulated API access to bank accounts for payments and data,account-to-account
+Lean,Open-banking provider in the GCC,lean technologies
+Tarabut,Open-banking provider in the GCC,tarabut gateway
+JazzCash,Pakistani mobile wallet,jazz cash
+Easypaisa,Pakistani mobile wallet,easy paisa
+Fireblocks,Institutional crypto custody and transfer platform using MPC,mpc custody
+Shariah screening,Filter of instruments compliant with Islamic finance rules,sharia compliant list

@@ -47,7 +47,7 @@ TRIGGER_WORDS = {
     "draft", "model", "design", "specify", "spec", "threat", "map", "split", "release",
     "hand", "handoff", "generate", "create", "validate", "audit", "plan", "run", "scaffold",
     "produce", "derive", "check", "convert", "extract", "compile", "verify", "record",
-    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask", "decide", "produce", "slice", "specify",
+    "select", "route", "load", "fix", "test", "ship", "deploy", "measure", "score", "continue", "ask", "decide", "produce", "slice", "specify", "finish",
     # trigger nouns
     "brief", "pack", "prd", "domain", "architecture", "adr", "schema", "api", "openapi",
     "tokens", "screen", "screens", "ticket", "tickets", "wizard", "metrics", "gate",
@@ -561,7 +561,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.8"
+PACK_TEMPLATE = """version: "1.9"
 complete: false
 threshold: 0.7
 slug: {slug}
@@ -1620,8 +1620,18 @@ def main(argv: list[str] | None = None) -> int:
     dc2.add_argument("--palettes-only", action="store_true")
     dc2.add_argument("--dir", type=Path, default=Path.cwd())
     dc2.add_argument("--root", type=Path, default=ROOT)
-    rp = sub.add_parser("review-pack", help="assemble the review payload: .foundry/reviews/T-xxx.pack.md (≤1.5k tokens) + T-xxx.diff")
+    rp = sub.add_parser("review-pack", help="assemble the review payload: .foundry/reviews/T-xxx.pack.md (≤600 tokens) + T-xxx.diff; --hunks-since <sha>|last for a re-review")
     rp.add_argument("--ticket", required=True)
+    rp.add_argument("--hunks-since", help="re-review: only hunks changed since this commit (or 'last' = the previous pack) plus each family's previous blocking list")
+    rn = sub.add_parser("run", help="run --tail N -- <cmd>: run a command, keep the full log in .foundry/logs/, print only the last N lines")
+    rn.add_argument("--tail", type=int, default=30)
+    rn.add_argument("--dir", type=Path, default=Path.cwd())
+    rn.add_argument("command", nargs=argparse.REMAINDER)
+    rc = sub.add_parser("release", help="release confirm --by <name>: human confirmation for regulated packs (unblocks gate release)")
+    rc.add_argument("action", choices=("confirm",))
+    rc.add_argument("--by")
+    rc.add_argument("--dir", type=Path, default=Path.cwd())
+    rc.add_argument("--root", type=Path, default=ROOT)
     rp.add_argument("--dir", type=Path, default=Path.cwd())
     rp.add_argument("--root", type=Path, default=ROOT)
     stt = sub.add_parser("status", help="one-screen dashboard: phase, tickets, dod pass rate, blockers, wizards, tokens, estimate")
@@ -1656,7 +1666,9 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 i += 1
         return P.run_query(a.root.resolve(), a.csv, filters, a.n, a.json)
-    if extra:
+    if extra and a.cmd == "run":
+        a.cmd_extra = extra
+    elif extra:
         ap.error(f"unrecognized arguments: {' '.join(extra)}")
     if a.cmd == "doctor":
         import foundry_phases as P
@@ -1716,7 +1728,11 @@ def main(argv: list[str] | None = None) -> int:
             return B.run_dod(a.dir.resolve(), a.root.resolve(), a.ticket, [x.strip() for x in a.only.split(",")] if a.only else None, a.tier)
         import foundry_ops as O
         if a.cmd == "review-pack":
-            return O.run_review_pack(a.dir.resolve(), a.root.resolve(), a.ticket)
+            return O.run_review_pack(a.dir.resolve(), a.root.resolve(), a.ticket, a.hunks_since)
+        if a.cmd == "run":
+            return O.run_tail([c for c in (list(a.command) + list(getattr(a, "cmd_extra", []))) if c != "--"], a.dir.resolve(), a.tail)
+        if a.cmd == "release":
+            return O.run_release_confirm(a.dir.resolve(), a.root.resolve(), a.by)
         if a.cmd == "status":
             return O.run_status(a.dir.resolve(), a.root.resolve())
         if a.cmd == "wizard":

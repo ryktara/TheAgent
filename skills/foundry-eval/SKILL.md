@@ -24,7 +24,7 @@ deterministic stages only, and the two stages below are run by a person typing `
    ```
 
    For each prompt decide, from the skill descriptions in `skills/*/SKILL.md` frontmatter alone,
-   which `invocation: user` skill you would invoke, or `none`. Write `evals/results/answers.json`
+   which skill (user- or model-invoked) you would invoke, or `none`. Write `evals/results/answers.json`
    as `{"<prompt>": "<skill|none>"}` with every prompt, then score:
 
    ```

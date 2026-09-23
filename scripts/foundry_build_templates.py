@@ -14,9 +14,9 @@ TEMPLATES["package.json"] = """{
     "lint": "eslint .",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "e2e:smoke": "playwright test --grep-invert \"axe:|shot |dod:\"",
-    "a11y": "playwright test tests/e2e/dod.spec.ts --grep \"dod: axe\"",
-    "screenshot": "playwright test tests/e2e/dod.spec.ts --grep \"dod: shot\"",
+    "e2e:smoke": "playwright test --grep-invert \\"axe:|shot |dod:|video:\\"",
+    "a11y": "playwright test tests/e2e/dod.spec.ts --grep \\"dod: axe\\"",
+    "screenshot": "playwright test tests/e2e/dod.spec.ts --grep \\"dod: shot\\"",
     "dod:e2e": "playwright test tests/e2e/dod.spec.ts",
     "prepare": "pnpm --filter @__APP_NAME__/db exec prisma generate",
     "db:migrate": "pnpm --filter @__APP_NAME__/db run migrate",
@@ -143,7 +143,7 @@ export default defineConfig({
   webServer: [
     // Local DoD runs reuse running dev servers (FOUNDRY_DOD); CI always starts fresh ones.
     { command: "pnpm --filter @__APP_NAME__/api run dev", env: { ...process.env, DEVICE_ENROL_CODE: process.env.DEVICE_ENROL_CODE ?? "e2e-enrol-code" }, url: `http://localhost:${apiPort}/health`, reuseExistingServer: !process.env.CI, timeout: 120_000 },
-    { command: "pnpm --filter @__APP_NAME__/web run dev", url: `http://localhost:${webPort}/`, reuseExistingServer: !process.env.CI, timeout: 180_000 },
+    { command: "pnpm --filter @__APP_NAME__/web run dev", env: { ...process.env, PORT: String(webPort) }, url: `http://localhost:${webPort}/`, reuseExistingServer: !process.env.CI, timeout: 180_000 },
   ],
 });
 """
@@ -262,9 +262,9 @@ TEMPLATES["apps/web/package.json"] = """{
   "name": "@__APP_NAME__/web",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

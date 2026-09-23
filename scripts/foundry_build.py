@@ -158,6 +158,29 @@ def run_cmd(cmd: str, cwd: Path, env: dict | None = None, timeout: int = 1800) -
         return 124, f"timeout after {timeout}s\n" + str(e.stdout or "")[-2000:], time.time() - start
 
 
+def free_port(port: int) -> int:
+    """Kill whatever listens on `port` (the reused api dev server) so the Playwright run starts from a fresh in-memory
+    state. P10 fix: with reuseExistingServer the api kept the previous run's data (a waiter with PIN 4321 already
+    existed, receipts already printed…) and specs that assume a fresh seed failed on every second run."""
+    killed = 0
+    try:
+        if os.name == "nt":
+            out = subprocess.run(["netstat", "-ano", "-p", "tcp"], capture_output=True, text=True, timeout=30).stdout
+            pids = {l.split()[-1] for l in out.splitlines() if f":{port} " in l and "LISTENING" in l}
+            for pid in pids:
+                if pid.isdigit() and pid != "0":
+                    subprocess.run(["taskkill", "/PID", pid, "/T", "/F"], capture_output=True, timeout=30); killed += 1
+        else:
+            out = subprocess.run(["lsof", "-t", f"-iTCP:{port}", "-sTCP:LISTEN"], capture_output=True, text=True, timeout=30).stdout
+            for pid in out.split():
+                subprocess.run(["kill", "-9", pid], capture_output=True, timeout=30); killed += 1
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if killed:
+        time.sleep(2)
+    return killed
+
+
 def _tail(text: str, n: int = 20) -> list[str]:
     return [l.rstrip() for l in text.splitlines()[-n:]]
 
@@ -183,7 +206,9 @@ def run_dod(project: Path, root: Path, tid: str, only: list[str] | None = None, 
     t_run = time.time()
     # Fast tier: typecheck, lint and unit are independent processes; run them concurrently (target ≤30 s).
     parallel: dict[str, tuple[int, str, float]] = {}
-    par_names = ("typecheck", "lint", "unit") if tier == "fast" else ("typecheck", "lint", "unit", "integration")
+    # Full tier: only typecheck and lint run concurrently; unit and integration run one after another (P10 fix: four
+    # concurrent runners plus embedded Postgres pushed vitest hooks past their timeouts on an 8-core box).
+    par_names = ("typecheck", "lint", "unit") if tier == "fast" else ("typecheck", "lint")
     par_steps = [s for s in steps if s in par_names and SCRIPT_FOR[s] in scripts and not (s == "integration" and not list(project.glob("apps/*/src/**/*.int.test.ts")))]
     if len(par_steps) > 1:
         from concurrent.futures import ThreadPoolExecutor
@@ -204,7 +229,13 @@ def run_dod(project: Path, root: Path, tid: str, only: list[str] | None = None, 
                 rec.update(skipped=True, tail=["no routes declared by the ticket's screens"])
             elif step in ("e2e-smoke", "a11y-axe", "screenshot") and one_pw:
                 if combined is None:
-                    cmd = "pnpm exec playwright test" if routes else "pnpm exec playwright test --grep-invert \"dod:\""
+                    # --workers 1: the axe/screenshot spec visits the same routes the functional specs mutate; in parallel
+                    # they raced on shared seeded state (P10). Serial adds ~1 min and is deterministic.
+                    cmd = "pnpm exec playwright test --workers 1" if routes else "pnpm exec playwright test --workers 1 --grep-invert \"dod:\""
+                    if not os.environ.get("CI"):
+                        api_port = int(os.environ.get("API_PORT") or 3001)
+                        if free_port(api_port):
+                            print(f"dod {tid} e2e: restarted the api dev server on :{api_port} (fresh in-memory state for this run)")
                     code, out, secs = run_cmd(cmd, project, env)
                     combined = {"cmd": cmd, "exit": code, "seconds": round(secs, 1), "tail": _tail(out)}
                     rec.update(**combined)

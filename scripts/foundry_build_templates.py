@@ -21,13 +21,19 @@ TEMPLATES["package.json"] = """{
     "prepare": "pnpm --filter @__APP_NAME__/db exec prisma generate",
     "db:migrate": "pnpm --filter @__APP_NAME__/db run migrate",
     "db:seed": "pnpm --filter @__APP_NAME__/db run seed",
+    "db:local": "node packages/db/scripts/pg-local.mjs start --dir .pg/dev --port 54330",
+    "db:local:stop": "node packages/db/scripts/pg-local.mjs stop --dir .pg/dev --port 54330",
     "tokens": "pnpm --filter @__APP_NAME__/ui run tokens"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.1",
     "@eslint/js": "^9.17.0",
     "@playwright/test": "^1.50.0",
+    "@__APP_NAME__/db": "workspace:^",
     "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.0",
+    "embedded-postgres": "17.10.0-beta.17",
+    "pg": "^8.13.0",
     "eslint": "^9.17.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
@@ -37,11 +43,15 @@ TEMPLATES["package.json"] = """{
 }
 """
 
+TEMPLATES["packages/db/scripts/pg-local.mjs"] = '// Local Postgres without Docker (ADR 0007-A).\n// Usage: node packages/db/scripts/pg-local.mjs start|stop|status [--port 54329] [--dir .pg/dev] [--db name] [--detach]\n// Windows note: initdb.exe fails (exit 0xC0000006) when run from the long pnpm path containing \'@\' and \'+\',\n// so the native bin/lib/share tree is copied once to a short cache dir (FOUNDRY_PG_HOME, default C:\\pg17 or ~/.foundry-pg/pg17).\nimport { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";\nimport { spawnSync } from "node:child_process";\nimport pg from "pg";\nimport { createRequire } from "node:module";\nimport { homedir } from "node:os";\nimport { join, resolve } from "node:path";\n\nconst require = createRequire(import.meta.url);\nconst args = process.argv.slice(2);\nconst cmd = args[0] ?? "status";\nconst opt = (name, dflt) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : dflt; };\nconst port = Number(opt("--port", 54329));\nconst dir = resolve(process.cwd(), opt("--dir", ".pg/dev"));\nconst db = opt("--db", "__APP_NAME__");\nconst win = process.platform === "win32";\nconst exe = (n) => (win ? `${n}.exe` : n);\n\nfunction nativeDir() {\n  const pkg = `@embedded-postgres/${process.platform === "win32" ? "windows" : process.platform}-${process.arch}`;\n  // embedded-postgres has an exports map, so resolve its entry point and walk up to the package root.\n  const epEntry = require.resolve("embedded-postgres");\n  const epRoot = epEntry.slice(0, epEntry.lastIndexOf("embedded-postgres") + "embedded-postgres".length);\n  const epRequire = createRequire(join(epRoot, "package.json"));\n  const platEntry = epRequire.resolve(pkg);\n  return join(platEntry.slice(0, platEntry.lastIndexOf("@embedded-postgres") + "@embedded-postgres".length), pkg.split("/")[1], "native");\n}\nfunction pgHome() {\n  const home = process.env.FOUNDRY_PG_HOME ?? (win ? String.raw`C:\\pg17` : join(homedir(), ".foundry-pg", "pg17"));\n  if (!existsSync(join(home, "bin", exe("initdb")))) {\n    mkdirSync(home, { recursive: true });\n    for (const d of ["bin", "lib", "share"]) cpSync(join(nativeDir(), d), join(home, d), { recursive: true });\n  }\n  return home;\n}\nfunction run(bin, argv, opts = {}) {\n  const r = spawnSync(join(pgHome(), "bin", exe(bin)), argv, { encoding: "utf8", ...opts });\n  if (r.status !== 0) throw new Error(`${bin} failed (${r.status}): ${r.stderr || r.stdout}`);\n  return r.stdout;\n}\nconst url = `postgresql://postgres:postgres@127.0.0.1:${port}/${db}`;\n\nif (cmd === "start") {\n  if (!existsSync(join(dir, "PG_VERSION"))) {\n    mkdirSync(dir, { recursive: true });\n    run("initdb", ["-D", dir, "-U", "postgres", "-A", "trust", "-E", "UTF8", "--no-locale"]);\n  }\n  const log = join(dir, "server.log");\n  if (!existsSync(join(dir, "postmaster.pid"))) {\n    // stdio must be detached or spawnSync waits on the daemon\'s inherited handles (Windows).\n    run("pg_ctl", ["-D", dir, "-o", `-p ${port} -c listen_addresses=127.0.0.1`, "-l", log, "-w", "start"], { stdio: "ignore" });\n  }\n  const admin = new pg.Client({ host: "127.0.0.1", port, user: "postgres", database: "postgres" });\n  await admin.connect();\n  const exists = await admin.query("select 1 from pg_database where datname = $1", [db]);\n  if (exists.rowCount === 0) await admin.query(`create database "${db}"`);\n  await admin.end();\n  writeFileSync(join(dir, "DATABASE_URL"), url);\n  console.log(`DATABASE_URL=${url}`);\n} else if (cmd === "stop") {\n  try { run("pg_ctl", ["-D", dir, "-m", "fast", "stop"]); console.log("stopped"); } catch (e) { console.error(String(e.message)); }\n} else {\n  const up = existsSync(join(dir, "postmaster.pid"));\n  console.log(`dir ${dir} port ${port} initialised=${existsSync(join(dir, "PG_VERSION"))} running=${up}`);\n}\n'
+TEMPLATES["tests/integration/global-setup.ts"] = '/**\n * Integration global setup: a real Postgres for the integration project.\n * Uses DATABASE_URL when set (CI: docker service). Otherwise starts embedded Postgres (no Docker) through\n * packages/db/scripts/pg-local.mjs, recreates the database, applies migrations, optional packages/db/sql/*.sql\n * and the seed, then exports DATABASE_URL to the workers.\n */\nimport { execSync } from "node:child_process";\nimport { existsSync, readFileSync } from "node:fs";\nimport { resolve } from "node:path";\n\nlet stop: (() => Promise<void>) | undefined;\n\nexport async function setup() {\n  const root = process.cwd();\n  if (!process.env.DATABASE_URL) {\n    const out = execSync("node packages/db/scripts/pg-local.mjs start --dir .pg/int --port 54329 --db __APP_NAME___int", { cwd: root, encoding: "utf8" });\n    const m = /DATABASE_URL=(\\S+)/.exec(out);\n    if (!m) throw new Error(`pg-local start did not print DATABASE_URL: ${out}`);\n    process.env.DATABASE_URL = m[1];\n    stop = async () => { execSync("node packages/db/scripts/pg-local.mjs stop --dir .pg/int --port 54329", { cwd: root, stdio: "ignore" }); };\n  }\n  if (!process.env.CI && !process.env.KEEP_INT_DB) {\n    const { Client: Admin } = await import("pg");\n    const target = new URL(process.env.DATABASE_URL!);\n    const dbName = target.pathname.slice(1);\n    const admin = new Admin({ connectionString: new URL("/postgres", target).toString() });\n    await admin.connect();\n    await admin.query(`DROP DATABASE IF EXISTS "${dbName}" WITH (FORCE)`);\n    await admin.query(`CREATE DATABASE "${dbName}"`);\n    await admin.end();\n  }\n  const env = { ...process.env, DATABASE_URL: process.env.DATABASE_URL };\n  execSync("pnpm --filter @__APP_NAME__/db exec prisma migrate deploy", { cwd: root, env, stdio: "inherit" });\n  const { Client } = await import("pg");\n  const c = new Client({ connectionString: process.env.DATABASE_URL });\n  await c.connect();\n  for (const f of ["rls.sql", "grants.sql"]) {\n    const p = resolve(root, "packages/db/sql", f);\n    if (existsSync(p)) await c.query(readFileSync(p, "utf8"));\n  }\n  await c.end();\n  try {\n    const seed = await import("@__APP_NAME__/db/seed");\n    if (typeof seed.runSeed === "function") await seed.runSeed(process.env.DATABASE_URL!);\n  } catch { /* no seed export yet: T-003 adds it */ }\n  return async () => {\n    if (stop) await stop();\n  };\n}\n'
+
 TEMPLATES["pnpm-workspace.yaml"] = "packages:\n  - apps/*\n  - packages/*\n"
 TEMPLATES[".npmrc"] = "auto-install-peers=true\nstrict-peer-dependencies=false\n"
 TEMPLATES[".gitignore"] = "node_modules/\n.next/\ndist/\ncoverage/\n.env\n.env.*\n!.env.example\ntest-results/\nplaywright-report/\n*.tsbuildinfo\n.foundry/screenshots/\n"
 TEMPLATES[".env.example"] = """# Copy to .env and fill. Never commit .env.
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/__APP_NAME__
+# `pnpm db:local` starts an embedded Postgres on 54330 without Docker (packages/db/scripts/pg-local.mjs); docker-compose.yml offers 5432.
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54330/__APP_NAME__
 API_PORT=3001
 WEB_PORT=3000
 NEXT_PUBLIC_API_URL=http://localhost:3001
@@ -109,7 +119,9 @@ export default defineConfig({
   test: {
     projects: [
       { test: { name: "unit", include: ["apps/**/src/**/*.test.ts", "packages/**/src/**/*.test.ts"], exclude: ["**/*.int.test.ts", "**/node_modules/**"] } },
-      { test: { name: "integration", include: ["apps/**/src/**/*.int.test.ts"], exclude: ["**/node_modules/**"] } },
+      // Integration files share one real Postgres (tests/integration/global-setup.ts: DATABASE_URL when set, else embedded
+      // Postgres via packages/db/scripts/pg-local.mjs, no Docker needed) and run one file at a time.
+      { test: { name: "integration", include: ["apps/**/src/**/*.int.test.ts"], exclude: ["**/node_modules/**"], globalSetup: ["tests/integration/global-setup.ts"], testTimeout: 60_000, hookTimeout: 240_000, fileParallelism: false } },
     ],
   },
 });
@@ -122,8 +134,8 @@ const apiPort = Number(process.env.API_PORT ?? 3001);
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 60_000,
-  fullyParallel: true,
-  workers: process.env.CI ? 1 : 3,
+  fullyParallel: false,
+  workers: process.env.CI ? 1 : 2,
   retries: 0,
   reporter: [["list"]],
   use: { baseURL: `http://localhost:${webPort}`, trace: "retain-on-failure" },

@@ -265,6 +265,8 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
     import foundry_phases as P
     sel = F.load_selection(project)
     pack = F.load_pack(root, sel["chosen"])
+    P.apply_pack_contexts(pack)
+    offline_ctx = P.OFFLINE_CONTEXTS  # generalisation fix (P10): no offline ticket or offline acceptance test for offline-forbidden packs
     ledger = F.load_ledger(project, sel["chosen"])
     domain = F.parse_yaml((project / ".foundry" / "domain.yaml").read_text(encoding="utf-8"))
     spec = F.parse_yaml((project / "openapi.yaml").read_text(encoding="utf-8"))
@@ -334,7 +336,8 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
              "Given the language switch, When ar is selected, Then dir=rtl is set, layout mirrors and the numpad stays LTR",
              "Given the axe scan, When the shell renders in both directions, Then zero serious violations"],
       slice_="Tokens applied; app shell with nav pattern from MASTER.md; RTL switch; base components (button, input, dialog, toast, numpad, banner-offline) from components.csv.")
-    T("T-005", "Offline store and sync outbox", "feature", ["T-003", "T-004"], adrs=["0005"], ops=["sync_push", "sync_pull"], controls=["SEC-API-11", "SEC-OFF-01", "SEC-OFF-03", "SEC-BL-08", "SEC-BL-11"], est="L",
+    if offline_ctx:
+      T("T-005", "Offline store and sync outbox", "feature", ["T-003", "T-004"], adrs=["0005"], ops=["sync_push", "sync_pull"], controls=["SEC-API-11", "SEC-OFF-01", "SEC-OFF-03", "SEC-BL-08", "SEC-BL-11"], est="L",
       files=["apps/web/src/offline/store.ts", "apps/web/src/offline/outbox.ts", "apps/api/src/sync/push.ts", "apps/api/src/sync/pull.ts"],
       tests=["Given the device offline, When an order is created, Then it is stored locally with a client UUID and a monotonic seq",
              "Given 500 queued events, When the connection returns, Then the queue drains within 60 s and every event is acked once",
@@ -370,11 +373,11 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
         money = jid in MONEY_JOBS
         ctrls = (["SEC-BL-01", "SEC-LOG-02", "SEC-ACC-01"] + (["SEC-SESS-07", "SEC-API-01", "SEC-BL-05"] if money else []))[:6]
         tests = [f"Given the {scr[0] if scr else jid} screen, When {jid.replace('-', ' ')} completes, Then the {ent or 'result'} state and totals match the domain invariants" if ent else f"Given the {scr[0] if scr else jid} screen, When {jid.replace('-', ' ')} runs, Then the result matches the PRD job",
-                 f"Given offline mode, When {jid.replace('-', ' ')} runs, Then the write lands in the outbox and syncs without duplicates" if ctx in ("ordering", "kitchen", "menu") else f"Given a cashier role, When {jid.replace('-', ' ')} is attempted without permission, Then the api returns 403 and logs authz.denied",
+                 f"Given offline mode, When {jid.replace('-', ' ')} runs, Then the write lands in the outbox and syncs without duplicates" if ctx in offline_ctx else f"Given a cashier role, When {jid.replace('-', ' ')} is attempted without permission, Then the api returns 403 and logs authz.denied",
                  f"Given the screen in ar, When it renders, Then layout mirrors and the axe scan reports zero serious violations"]
         for inv in invs:
             tests.append(f"Given any sequence of actions, When the invariant '{inv[:90]}' is checked, Then it holds")
-        blocked = ["T-005" if ctx in ("ordering", "kitchen", "menu", "payments") else "T-003", "T-004"]
+        blocked = ["T-005" if offline_ctx and ctx in (offline_ctx | {"payments"}) else "T-003", "T-004"]
         for dep_ent in (order[: order.index(ent)] if ent in order else []):
             for other, tid in job_ticket.items():
                 if job_by_id[other].get("entity") == dep_ent and tid not in blocked:
@@ -419,15 +422,17 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
         chosen = None
         for d in ledger.get("decisions", []):
             mt = d.get("maps_to") or ""
-            if (mt.startswith(f"integrations.{cat}") or (cat == "payments" and mt == "payments.provider")) and d["value"] not in (False, None, "", "cash-only", "none"):
+            if (mt.startswith(f"integrations.{cat}") or mt in (f"{cat}.provider", f"{cat}.vendor") or (cat == "payments" and mt in ("payments.provider", "funding.methods"))) and d["value"] not in (False, None, "", "cash-only", "none", "manual") and isinstance(d["value"], str):
                 chosen = d["value"]
         if not chosen and cat == "einvoicing":
             chosen = {"AE": "ae-fta", "SA": "sa-zatca", "PK": "pk-fbr", "EG": "eg-eta"}.get(_region(ledger, pack))
+        webhook = f"webhook_{cat}" if f"/webhooks/{cat}/{{provider}}" in (spec.get("paths") or {}) else None
+        if not chosen and webhook and isinstance(providers, list) and providers:
+            chosen = str(providers[0])  # generalisation fix (P10): the API emitted a webhook for this category, so a ticket must own it
         if not chosen:
             continue
-        webhook = f"webhook_{cat}" if f"/webhooks/{cat}/{{provider}}" in (spec.get("paths") or {}) else None
         tid = f"T-{n:03d}"
-        T(tid, f"Integration: {cat} adapter ({chosen})", "integration", ["T-005"] + ([job_ticket.get("take-payment")] if cat == "payments" and job_ticket.get("take-payment") else []),
+        T(tid, f"Integration: {cat} adapter ({chosen})", "integration", (["T-005"] if offline_ctx else ["T-004"]) + ([job_ticket.get("take-payment")] if cat == "payments" and job_ticket.get("take-payment") else []),
           ops=[webhook] if webhook else [], adrs=["0006"], controls=["SEC-API-04", "SEC-API-05", "SEC-CRY-06", "SEC-API-06"] + (["SEC-PAY-01", "SEC-PAY-02", "SEC-PAY-03"] if cat == "payments" else []), est="L",
           files=[f"apps/api/src/integrations/{cat}/{_slug(str(chosen))}.ts", f"apps/api/src/integrations/{cat}/adapter.ts", f"apps/api/src/webhooks/{cat}.ts"],
           tests=[f"Given a sandbox {chosen} account, When the adapter runs its contract test, Then every method returns the expected shape",
@@ -496,7 +501,7 @@ def _regulated_wizard(project: Path, root: Path) -> None:
     sel = F.load_selection(project)
     pack = F.load_pack(root, sel["chosen"])
     ledger = F.load_ledger(project, sel["chosen"])
-    region = str((ledger.get("decisions") or {}).get("region", {}).get("value") if isinstance((ledger.get("decisions") or {}).get("region"), dict) else "") or "generic"
+    region = _region(ledger, pack)
     reg = (pack.get("regional") or {}).get(region) or {}
     regulator = str(reg.get("regulator") or "the regulator for your jurisdiction")
     from types import SimpleNamespace

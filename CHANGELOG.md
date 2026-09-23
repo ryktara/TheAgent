@@ -20,6 +20,16 @@ One entry per build step. Newest first.
   until `foundry.py release confirm --by <name>`. Packs retail-pos and trading-app complete (reference ≥120 lines each,
   glossaries 96/126 rows, sources with VERIFIED/UNVERIFIED); 6 eval variants per pack; evals loop over every fixture.
 - Playwright in generated projects: `fullyParallel: false`, `workers: 2` (per-file groups that share PGlite state).
+- generalisation fix: `tickets-skeleton` read the decision ledger as a dict and crashed before scaffolding the
+  regulator-licence wizard (reason: trading-app run, phase 10).
+- generalisation fix: an integration ticket is emitted when the API carries a webhook for a category even when no
+  decision maps to `integrations.<cat>` (reason: trading-app `webhook_payments` had no owning ticket; gate 10 failed).
+- generalisation fix: `stack_id` resolves pack `stack_default` values against stacks.csv by prefix and prefers the
+  mobile stack for platform=mobile (reason: trading-app `nextjs` was not a stacks.csv id; gate 5 failed once).
+- generalisation fix: packs declare `contexts: {name: [Entity…]}` and `offline_contexts`; domain, API, schema and
+  tickets use them instead of the restaurant contexts (reason: both new packs landed Sale/Order in kitchen/menu/inventory).
+- generalisation fix: `offline: forbidden` packs get no `offline_capable` operations, no `/sync/*` endpoints, no T-005
+  offline ticket, no offline acceptance tests and no offline screen copy (reason: trading-app run, phases 6, 8, 10).
 
 ## P9 — Isolation, routing, evals, dogfood (2026-09-18)
 

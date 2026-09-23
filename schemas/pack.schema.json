@@ -408,6 +408,23 @@
     "regulated": {
       "type": "boolean",
       "description": "1.9: the domain needs a licence or regulator registration before go-live. Forces the regulator-licence wizard at phase 10 and blocks `gate release` until a human runs `foundry.py release confirm --by <name>`."
+    },
+    "contexts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "description": "1.9: bounded contexts → entity names. Replaces the restaurant defaults (ordering, kitchen, payments, menu, inventory, people, reporting, sync) for domain.yaml, api paths and ticket files."
+    },
+    "offline_contexts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "1.9: contexts whose entities and jobs are offline-capable (outbox + sync); empty or absent with offline: forbidden means none."
     }
   }
 }

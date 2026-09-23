@@ -574,7 +574,7 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
     a11y_note = _section_field(section, "A11y")
     rtl_note = _section_field(section, "RTL")
     comps_note = _section_field(section, "Components")
-    offline = "offline" in (section + " ".join(pack.get("must_have") or [])).lower() and ptype["density"] == "high"
+    offline = "offline" in (section + " ".join(pack.get("must_have") or [])).lower() and ptype["density"] == "high" and str((pack.get("nfr_defaults") or {}).get("offline", "")) != "forbidden"
     print_scope = screen_id in ("receipt-preview", "shift-close", "end-of-day", "reports", "refund") or "print" in section.lower()
     layout = f"{ptype['nav_pattern']} / {ptype['density']} density"
     fm = ["---", f"id: {F._yq(screen_id)}", f"jobs: {F._yq([j['id'] for j in jobs])}", f"personas: {F._yq(personas)}", f"route: {F._yq(route_prefix + screen_id)}",

@@ -55,11 +55,28 @@ def _camel_state(state: str) -> str:
     return "".join(w.capitalize() for w in re.split(r"[-_ ]", state))
 
 
+OFFLINE_CONTEXTS = {"ordering", "kitchen", "menu"}
+
+
+def apply_pack_contexts(pack: dict) -> None:
+    """Generalisation fix (P10): a pack may declare `contexts: {name: [Entity, …]}` and `offline_contexts: [name, …]`;
+    they replace the restaurant defaults for every skeleton that runs after this call."""
+    global CONTEXTS, CONTEXT_HINTS, OFFLINE_CONTEXTS
+    ctx = pack.get("contexts")
+    if isinstance(ctx, dict) and ctx:
+        CONTEXT_HINTS = {k: [str(x) for x in (v or [])] for k, v in ctx.items()}
+        CONTEXTS = list(CONTEXT_HINTS) + [c for c in ("people", "reporting", "sync") if c not in CONTEXT_HINTS]
+        oc = pack.get("offline_contexts")
+        OFFLINE_CONTEXTS = {str(x) for x in oc} if isinstance(oc, list) else set()
+    if str((pack.get("nfr_defaults") or {}).get("offline", "")) == "forbidden":
+        OFFLINE_CONTEXTS = set()
+
+
 def _context_for(entity: str) -> str:
     for ctx, names in CONTEXT_HINTS.items():
         if entity in names:
             return ctx
-    return "ordering"
+    return next(iter(CONTEXT_HINTS), "ordering")
 
 
 def _read_prd_sections(project: Path) -> dict[str, str]:
@@ -90,9 +107,19 @@ def _minor_units(ledger: dict, pack: dict) -> int:
     return int(reg.get("minor_units", 2))
 
 
-def _stack_id(pack: dict) -> str:
+def _stack_id(pack: dict, ledger: dict | None = None) -> str:
+    """Pack stack_default → a stacks.csv id. Generalisation fix (P10): "nextjs" resolves to "nextjs-pwa" by prefix, and a
+    platform=mobile decision prefers the pack's mobile stack."""
     sd = pack.get("stack_default") or {}
-    return str(sd.get("web-pos") or sd.get("web") or "nextjs-pwa")
+    with (Path(__file__).resolve().parents[1] / "data" / "stacks.csv").open(encoding="utf-8", newline="") as fh:
+        ids = [r["stack_id"] for r in csv.DictReader(fh)]
+    want = str(sd.get("web-pos") or sd.get("web") or "nextjs-pwa")
+    pf = _decision(ledger, "platform") if ledger is not None else None
+    if pf and str(pf.get("value")) == "mobile" and sd.get("mobile"):
+        want = str(sd["mobile"])
+    if want in ids:
+        return want
+    return next((i for i in ids if i.startswith(want) or want.startswith(i)), "nextjs-pwa")
 
 
 # ----------------------------------------------------------------------------- doctor
@@ -212,6 +239,7 @@ def run_query(root: Path, name: str, filters: dict[str, str], n: int, as_json: b
 
 # ----------------------------------------------------------------------------- phase 4: domain
 def domain_skeleton(pack: dict, ledger: dict, project: Path) -> tuple[dict, str]:
+    apply_pack_contexts(pack)
     jobs, feats = _in_scope_ids(project, pack)
     personas = pack.get("personas") or ["staff"]
     job_by_id = {j["id"]: j for j in pack.get("jobs") or []}
@@ -254,7 +282,8 @@ def domain_skeleton(pack: dict, ledger: dict, project: Path) -> tuple[dict, str]
             consumers = ["reporting"]
             if ctx == "ordering" and t["to"] in ("sent", "fired", "in-progress"):
                 consumers.append("kitchen")
-            if ctx in ("ordering", "payments"):
+            sync_ctx = (OFFLINE_CONTEXTS | {"payments"}) if pack.get("contexts") else {"ordering", "payments"}
+            if OFFLINE_CONTEXTS and ctx in sync_ctx:
                 consumers.append("sync")
             events.append({"name": ev, "entity": name, "transition": f"{t['from']}->{t['to']}", "producer": ctx, "consumers": [c for c in consumers if c != ctx] or ["reporting"]})
     domain = {"pack": pack["slug"], "decisions_hash": F.decisions_hash(ledger), "contexts": CONTEXTS, "entities": entities, "events": events}
@@ -398,6 +427,7 @@ def _adr(idn: str, title: str, refs: list[str], context: str, decision: str, alt
 
 
 def arch_skeleton(pack: dict, ledger: dict, domain: dict | None) -> tuple[dict[str, str], str]:
+    apply_pack_contexts(pack)
     sd = pack.get("stack_default") or {}
     nfr = pack.get("nfr_defaults") or {}
     region = _region(ledger, pack)
@@ -408,7 +438,7 @@ def arch_skeleton(pack: dict, ledger: dict, domain: dict | None) -> tuple[dict[s
     multi = bool(br and str(br["value"]) == "multi")
     pay = _decision(ledger, "payments")
     pay_name = str(pay["value"]) if pay else "provider"
-    stack_id = _stack_id(pack)
+    stack_id = _stack_id(pack, ledger)
     langs = reg.get("receipt_lang") or reg.get("languages") or ["en"]
     adrs: dict[str, str] = {}
     r, c = _ref(ledger, "offline", "platform")
@@ -607,6 +637,7 @@ def _prisma_type(field: str, entity_names: set[str], minor: int) -> tuple[str, s
 
 
 def schema_skeleton(domain: dict, pack: dict, ledger: dict, orm: str = "prisma") -> str:
+    apply_pack_contexts(pack)
     minor = _minor_units(ledger, pack)
     names = {e["name"] for e in domain["entities"]}
     if orm == "drizzle":
@@ -779,6 +810,8 @@ def _entity_for_job(job: dict, entity_names: list[str]) -> str | None:
 
 
 def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
+    apply_pack_contexts(pack)
+    offline_ok = str((pack.get("nfr_defaults") or {}).get("offline", "optional")) != "forbidden"  # generalisation fix (P10): trading-app forbids offline
     names = [e["name"] for e in domain["entities"]]
     personas = pack.get("personas") or ["staff"]
     admin = "owner" if "owner" in personas else personas[-1]
@@ -809,7 +842,7 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
         schemas[f"{e['name']}Page"] = {"type": "object", "properties": {"items": {"type": "array", "items": {"$ref": f"#/components/schemas/{e['name']}"}}, "next_cursor": {"type": ["string", "null"]}}}
         base = f"/{_plural(_kebab(e['name']))}"
         sn = _snake(e["name"])
-        offline = e["owned_by"] in ("ordering", "kitchen", "menu")
+        offline = e["owned_by"] in OFFLINE_CONTEXTS and offline_ok
         actor = next((t["by"] for t in e["transitions"]), personas[0])
         xf = lambda job, authz, idem, audit: {"job": job, "personas": [actor, admin] if actor != admin else [admin], "authz": authz, "idempotent": idem, "offline_capable": offline, "audit": audit}
         if exposure == "derived":
@@ -865,7 +898,7 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
                                               "requestBody": {"required": False, "content": {"application/json": {"schema": {"type": "object"}}}},
                                               "responses": responses("200", ent) if ent else responses("200"),
                                               "x-foundry": {"job": j["id"], "personas": [j.get("persona") or personas[0]], "authz": f"role == {j.get('persona') or personas[0]} or role == {admin}; branch scope; manager PIN when the job guards it",
-                                                            "idempotent": True, "offline_capable": bool(ent and _context_for(ent) in ("ordering", "kitchen", "menu")), "audit": True}}
+                                                            "idempotent": True, "offline_capable": bool(ent and _context_for(ent) in OFFLINE_CONTEXTS and offline_ok), "audit": True}}
         job_ops += 1
     sync_ok = {"200": {"description": "OK", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": resp_err, "401": resp_err, "409": resp_err}
     paths["/sync/push"] = {"post": {"operationId": "sync_push", "summary": "Push device outbox events in sequence order", "parameters": [{"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}}],
@@ -873,6 +906,8 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
                                     "responses": sync_ok, "x-foundry": {"job": "offline-sync", "personas": ["cashier"], "authz": "device token; branch of the device", "idempotent": True, "offline_capable": False, "audit": True}}}
     paths["/sync/pull"] = {"get": {"operationId": "sync_pull", "summary": "Pull server changes since a device sequence", "parameters": [{"name": "since_seq", "in": "query", "schema": {"type": "integer"}}, {"name": "device_id", "in": "query", "required": True, "schema": {"type": "string"}}],
                                    "responses": sync_ok, "x-foundry": {"job": "offline-sync", "personas": ["cashier"], "authz": "device token; branch of the device", "idempotent": True, "offline_capable": False, "audit": False}}}
+    if not offline_ok:
+        paths.pop("/sync/push", None); paths.pop("/sync/pull", None)  # generalisation fix (P10): no device sync API for offline-forbidden packs
     for cat, providers in (pack.get("integrations") or {}).items():
         if cat in ("payments", "delivery", "einvoicing"):
             paths[f"/webhooks/{cat}/{{provider}}"] = {"post": {"operationId": f"webhook_{cat}", "summary": f"Inbound {cat} webhook", "parameters": [{"name": "provider", "in": "path", "required": True, "schema": {"type": "string", "enum": [p for p in providers if p not in ("cash", "tablet-fallback")]}}],

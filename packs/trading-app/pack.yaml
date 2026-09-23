@@ -60,6 +60,8 @@ entities:
   SupportTicket: {states: [open, pending-customer, escalated, resolved, closed], fields: [account_id, category, is_complaint, sla_due, assignee_id]}
   AuditEvent: {states: [recorded], exposure: internal, fields: [actor_id, actor_role, action, entity, entity_id, before_hash, after_hash, ip, at, prev_hash]}
   Staff: {states: [active, suspended], exposure: internal, fields: [name, email, role, mfa_enrolled, four_eyes_group]}
+contexts: {accounts: [Account, Wallet, KycCase, LedgerEntry, Transfer], markets: [Instrument, Quote, Candle, NewsItem, Watchlist], trading: [Order, Fill, Position, RiskLimit, MarginCall, PaperAccount, Alert], compliance: [ComplianceCase, AuditEvent, Statement], growth: [Referral, CopyLink, SupportTicket], people: [Staff]}
+offline_contexts: []
 invariants:
   - "Every ledger transaction posts LedgerEntry rows whose debits minus credits sum to zero per currency"
   - "Wallet.balance == sum(LedgerEntry credit - debit) for that Wallet; available == balance - reserved"
@@ -91,7 +93,7 @@ integrations: {market-data: [exchange-direct, polygon, refinitiv, twelvedata, st
 regional:
   AE: {currency: AED, minor_units: 2, regulator: "CMA (formerly SCA) onshore securities; VARA for virtual assets in Dubai; DFSA in DIFC; FSRA in ADGM", exchanges: [DFM, ADX], settlement: "T+2 (UNVERIFIED)", kyc: [uae-pass, emirates-id], tax: "no personal tax on gains or dividends (UNVERIFIED)", islamic: swap-free-option, travel_rule: "VARA: > AED 3,500", lang: [en, ar], compliance_must: [C-AE-01, C-AE-02, C-AE-03, C-AE-04], compliance_should: [C-AE-05, C-AE-06]}
   SA: {currency: SAR, minor_units: 2, regulator: CMA, exchanges: [Tadawul, Nomu], settlement: T+2, kyc: [absher, nafath, iqama], tax: "listed-share gains exempt on Tadawul; 5% WHT on dividends to non-residents; resident zakat rules separate", islamic: sharia-default, lang: [ar, en], compliance_must: [C-SA-01, C-SA-02, C-SA-03], compliance_should: [C-SA-04]}
-  PK: {currency: PKR, minor_units: 2, regulator: SECP, exchanges: [PSX], clearing: [NCCPL, CDC], settlement: T+1, kyc: [nadra-verisys, cnic], ids: [UIN, CDC sub-account], tax: "dividends 15% filer / 30% non-filer final; CGT by holding period and filer status, collected via NCCPL", islamic: shariah-screened-list, lang: [en, ur], compliance_must: [C-PK-01, C-PK-02, C-PK-03, C-PK-04], compliance_should: [C-PK-05]}
+  PK: {currency: PKR, minor_units: 2, languages: [en, ur], regulator: SECP, exchanges: [PSX], clearing: [NCCPL, CDC], settlement: T+1, kyc: [nadra-verisys, cnic], ids: [UIN, CDC sub-account], tax: "dividends 15% filer / 30% non-filer final; CGT by holding period and filer status, collected via NCCPL", islamic: shariah-screened-list, lang: [en, ur], compliance_must: [C-PK-01, C-PK-02, C-PK-03, C-PK-04], compliance_should: [C-PK-05]}
   generic: {currency: USD, minor_units: 2, regulator: "local securities regulator", exchanges: [], kyc: [jumio, sumsub, onfido], tax: "report-only; no withholding", lang: [en], compliance_must: [C-GEN-01], compliance_should: []}
 compliance_must: [C-ALL-01, C-ALL-02, C-ALL-03, C-ALL-04, C-ALL-05, C-ALL-06, C-ALL-07, C-ALL-08, C-ALL-09]
 compliance_should: [C-ALL-10, C-ALL-11, C-ALL-12]

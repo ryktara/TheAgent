@@ -59,6 +59,8 @@ entities:
   TaxRule: {states: [active, retired], exposure: internal, fields: [region, name, rate, inclusive, applies_to]}
   Staff: {states: [active, suspended], exposure: internal, fields: [name, pin_hash, role, store_ids, override_limit_pct]}
   Store: {states: [active, suspended], exposure: internal, fields: [name, region, currency, timezone, receipt_prefix, fiscal_regime, allow_negative_stock]}
+contexts: {sales: [Sale, SaleLine, Tender, Receipt, Return, Promotion, TaxRule, CashDrawerSession], catalog: [Product, Variant, Barcode], inventory: [PurchaseOrder, GoodsReceipt, StockCount, StockMovement, Transfer, Supplier], customers: [Customer, LoyaltyAccount, GiftCard, Layaway], people: [Staff, Store], sync: [SyncEvent]}
+offline_contexts: [sales, catalog, customers]
 invariants:
   - "Sale.total == sum(SaleLine.line_total) - Sale.discount_total + Sale.tax_total, computed once in minor units at tender"
   - "A Sale in state paid has captured Tender amounts summing exactly to Sale.total; change is given only from cash"

@@ -17,5 +17,10 @@ activate|complete`). Hooks only act inside a project that has a `.foundry/` fold
 
 Test: `python -m unittest hooks/test_hooks.py` feeds sample payloads and asserts the contract.
 
+P10 notes: hooks run identically inside the ticket-builder, ticket-finisher and reviewer subagents (each is its own
+Claude Code agent). stop_check's fast tier is what a builder sees on every stop; the finisher and reviewers have no
+active edits of their own beyond fixes, so the tail is short. No hook reads an API key or spawns the CLI: the plugin is
+subscription-only and every hook is a stdin/stdout Python script.
+
 Not yet wired: a PreToolUse wrapper for WebFetch that marks fetched content as data
 (SEC-AGT-01); the skills carry the rule until then.

@@ -18,6 +18,8 @@ specs, then reviewed once by you, then proven by a smoke test on a production bu
 1. **Preconditions.** `python scripts/foundry.py status`: every feature ticket done or
    consciously deferred (list the deferred ones in the report); `wizard status` shows which
    provider wizards are still pending (they ship stubbed, flagged off).
+   Regulated pack (`regulated: true`, e.g. trading-app): the regulator-licence wizard must be done and a
+   human must have typed `python scripts/foundry.py release confirm --by <name>`; never run it yourself.
    Done when: the ticket list and pending wizards are known.
 
 2. **Generate.**

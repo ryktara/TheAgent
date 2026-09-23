@@ -2,6 +2,25 @@
 
 One entry per build step. Newest first.
 
+## P10 — Subscription-only, context split, retail/trading packs (2026-09-23)
+
+- Subscription-only hard rule (CLAUDE.md, README): no API key anywhere, no non-interactive CLI, no headless mode.
+  `evals/run.py` keeps deterministic stages only and prints "model stages: run /foundry-eval in Claude Code";
+  new `/foundry-eval` skill runs `--stage triggers` (session answers 40 prompts, `--score-triggers` records
+  `evals/results/triggers-<date>.json`) and `--stage e2e` (unattended run in a temp dir, `--assert-e2e` records
+  `evals/results/e2e-<date>.json`); `--stage results` reads the newest pair in CI.
+- Context split: implement-ticket is now ticket-builder (card → RED → GREEN → fast tier → progress file, ≤150-token
+  contract) then ticket-finisher (full tier → review pack → three parallel reviewers → fixes → hunk-only re-review →
+  commit, ≤300-token contract); the parent dispatches them in sequence, a second builder is the escalation slot and
+  opus only after it. `foundry.py run --tail 30 -- <cmd>` caps runner output; `review-pack --hunks-since <sha>|last`
+  with a ≤600-token header and each family's previous blocking list; reviewer prompts are JSON-only.
+- Metrics: subagent transcripts are attributed to a ticket only when their first message names the project or the
+  ticket id (concurrent unrelated subagents no longer land on an open window).
+- Pack schema 1.9: `regulated: true` scaffolds the regulator-licence wizard at phase 10 and `gate release` blocks
+  until `foundry.py release confirm --by <name>`. Packs retail-pos and trading-app complete (reference ≥120 lines each,
+  glossaries 96/126 rows, sources with VERIFIED/UNVERIFIED); 6 eval variants per pack; evals loop over every fixture.
+- Playwright in generated projects: `fullyParallel: false`, `workers: 2` (per-file groups that share PGlite state).
+
 ## P9 — Isolation, routing, evals, dogfood (2026-09-18)
 
 - Context isolation: /foundry-build is a thin parent (card → one implementer subagent → ≤300-token return →
@@ -16,16 +35,17 @@ One entry per build step. Newest first.
 - security-review cites SYNC-RULES.md ids for offline/REST parity.
 - fix: reviewers are dispatched by SKILL.md path (reason: an implementer invoked Claude Code's built-in
   `/security-review`, a name collision, and got an error instead of a verdict).
-- fix: evals probe `claude -p` with a real call before triggers/e2e (reason: `claude auth status` reported ok while
-  non-interactive runs answered "not logged in"); both stages report the exact skip reason.
+- fix: evals probed the CLI's non-interactive mode with a real call before triggers/e2e (reason: its auth status
+  reported ok while non-interactive runs answered "not logged in"); both stages reported the exact skip reason.
+  (That path was removed in P10: subscription-only.)
 - fix: release smoke/gate must not run while a dev server writes `.next` (reason: `next build` failed on a
   half-written nft.json); the release skill says so.
 - dogfood: 12 more tickets (T-011…T-021, T-024) built by sonnet implementer subagents through the thin parent;
   0 escalations; deploy wizard `deploy-vps` scaffolded; cashier-flow video under docs/examples/restaurant-pos.
 - Evals: `evals/thresholds.yaml` with regression ceilings; stages `golden` (artefact diffs against
-  evals/expected/restaurant-pos with an allowlist), `triggers` (40 prompts → skill via `claude -p`), `e2e`
-  (unattended phases 0–10 + `/foundry-build --n 2` + release smoke via `claude -p`); `--update-thresholds`,
-  `--update-golden`.
+  evals/expected/restaurant-pos with an allowlist), `triggers` (40 prompts → skill) and `e2e` (unattended phases
+  0–10 + `/foundry-build --n 2` + release smoke), both through the CLI's non-interactive mode (replaced by
+  `/foundry-eval` in P10); `--update-thresholds`, `--update-golden`.
 
 ## P8 — Efficiency, metrics, wizard, release, handoff (2026-09-18)
 

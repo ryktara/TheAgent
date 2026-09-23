@@ -94,6 +94,12 @@ Schema: `schemas/pack.schema.json`.
   folds its screens, operations and one acceptance test into the target ticket and emits no ticket of its own.
   restaurant-pos: `merge-transfer-tables` and `manage-floor` merge into `take-order-table` (51 → 49 tickets).
 
+## Top-level field added in 1.9
+
+- `regulated: true`: the domain needs a licence or regulator registration before go-live (trading-app). `tickets-skeleton`
+  scaffolds the `regulator-licence` wizard (REGULATOR_NAME, LICENCE_REF, LICENCE_EXPIRY, COMPLIANCE_OFFICER_EMAIL) and
+  `gate release` fails until a human runs `python scripts/foundry.py release confirm --by <name>` after that wizard is done.
+
 ## Pack lint (`complete: true`)
 
 `validate` additionally requires: every job screen has a `## <screen-id>` heading in

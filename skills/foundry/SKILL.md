@@ -66,7 +66,8 @@ plugin. Implementation (phases 11–15) runs under /foundry-build.
    Done when: gate 9 prints `pass`.
 
 10. **Tickets.** `metrics --phase 10 --start`; invoke to-tickets; `gate 10`;
-    `metrics --phase 10 --note "<n> tickets"`.
+    `metrics --phase 10 --note "<n> tickets"`. A `regulated: true` pack also gets the
+    regulator-licence wizard here (`wizard status` lists it; release stays blocked until a human confirms).
     Done when: gate 10 prints `pass`.
 
 11. **Retry rule.** A failing gate re-runs that phase's skill once with the gate output as the

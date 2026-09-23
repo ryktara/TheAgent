@@ -18,8 +18,12 @@ value is one of haiku, sonnet, opus.
 | compliance | haiku | maps controls to owners and evidence from CSV rows |
 | to-tickets | haiku | tickets-skeleton produces the DAG; the skill validates and labels |
 | foundry-build (parent) | sonnet | thin loop: activate, dispatch, complete, handoff; never reads source |
-| implement-ticket (implementer subagent) | sonnet | red/green on one slice with the card as spec |
-| implement-ticket escalation | opus | once, after three failed DoD loops on sonnet, with the progress file |
+| ticket-builder (first half subagent) | sonnet | card → RED → GREEN → fast tier; holds the code, never the reviews |
+| ticket-builder, second dispatch | sonnet | the escalation slot: a fresh context from the progress file after `blocked` |
+| ticket-builder, third dispatch | opus | only when the second builder also returns `blocked`; `escalated: true` |
+| ticket-finisher (second half subagent) | sonnet | full tier, review pack, fixes at file+line, hunk-only re-review, commit |
+| implement-ticket (human in-session) | sonnet | the two halves performed in order by a person |
+| foundry-eval | sonnet | answers the 40 trigger prompts and drives the unattended e2e run in a session |
 | code-review | sonnet | spec conformance needs the acceptance tests in mind |
 | ui-review | haiku | checklist against screenshots and states; cheap and frequent |
 | security-review | sonnet | SYNC-RULES parity and authz reasoning |

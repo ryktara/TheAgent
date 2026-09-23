@@ -39,6 +39,10 @@ app with at most 7 questions asked. Every file in this repo obeys the rules belo
 - **Artifacts** the pipeline produces live under `.foundry/` in the target app repo, never here.
 - **Commits** are per deliverable group with imperative subject lines.
 - **Code intelligence** comes from codebase-memory-mcp once code exists (graph before grep).
+- **Subscription-only (hard rule, P10).** Foundry runs inside a logged-in Claude Code session and nowhere
+  else: no API key is read, stored, checked by `doctor` or mentioned anywhere in this repo; no script
+  invokes the CLI non-interactively; there is no headless mode. Model-needing evals are run by a human
+  typing `/foundry-eval`; CI runs the deterministic stages only. A change that needs a key is rejected.
 
 ## Running validate
 

@@ -1,6 +1,6 @@
 {
   "name": "foundry",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Autonomous app-engineering pipeline: brief in, designed + architected + implemented + tested app out, with at most 7 questions asked.",
   "author": {
     "name": "Foundry contributors"

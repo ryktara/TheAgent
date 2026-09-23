@@ -18,6 +18,12 @@ Requirements: Claude Code, Python 3.11+ (stdlib only). Windows, macOS and Linux 
 use `scripts/foundry.ps1` or `scripts/foundry.sh`. Implementation phases depend on the
 codebase-memory-mcp server for code intelligence.
 
+**Subscription-only, by design.** Foundry runs inside your logged-in Claude Code session and nowhere
+else. It never reads or asks for an API key, never drives the CLI non-interactively, and has no
+headless mode. The two evals that need a model (trigger accuracy and the unattended end-to-end
+run) are run by a human typing `/foundry-eval` in a session; CI runs `python evals/run.py`, which is
+deterministic (skeletons, gates, golden artefact diffs, and the latest `/foundry-eval` results).
+
 ## Pipeline overview
 
 `/foundry` takes the brief, matches it against a domain pack (industry knowledge shipped as YAML
@@ -44,19 +50,18 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | P7b | T-001…T-008 built through the loop on the Sharjah brief; 7 plugin fixes; examples in docs/examples | done |
 | P8 | Loop efficiency (tiers, one Playwright run, ticket card, review pack), transcript metrics + cost, wizard, release, handoff/resume, status dashboard | done |
 | P9 | Context isolation (thin parent + implementer subagent), model routing (docs/models.md), evals with thresholds (golden diffs, e2e, trigger test), 12 more dogfood tickets | done |
-| P10–P11 | Second pack end to end, packaging | planned |
-| P8 | Wizard, release, handoff, /foundry-resume | planned |
-| P9 | Evals runner, metrics report, dogfood run | planned |
-| P10 | retail-pos + trading-app packs | planned |
-| P11 | Portfolio packs, model routing, sandbox builds | planned |
+| P10 | Subscription-only rule, ticket-builder/ticket-finisher context split with hunk-only re-review, `/foundry-eval`, pack schema 1.9 (`regulated`), retail-pos + trading-app packs, generalisation proof | done |
+| P11 | Packaging | planned |
 
-## Build loop commands (P8)
+## Build loop commands (P8–P10)
 
 | Command | What it does |
 |---------|--------------|
 | `build activate --ticket T-xxx` | stamps the ticket window and prints the ticket card (the spec, ≤80 lines) |
 | `dod --ticket T-xxx --tier fast\|full` | fast = typecheck+lint+unit in parallel (≤30 s); full = every step, one Playwright run for smoke+axe+shots |
-| `review-pack --ticket T-xxx` | `.foundry/reviews/T-xxx.pack.md` (≤1.5k tokens) + `.diff`: the only inputs reviewers get |
+| `review-pack --ticket T-xxx [--hunks-since <sha>\|last]` | `.foundry/reviews/T-xxx.pack.md` (≤600-token header) + `.diff`: the only inputs reviewers get; on re-review only the hunks changed since the last pack plus each family's previous blocking list |
+| `run --tail 30 -- <cmd>` | run a test runner or pnpm command, keep the full log in `.foundry/logs/`, print the last 30 lines only (builder and finisher use it for every noisy command) |
+| `release confirm --by <name>` | human confirmation for `regulated: true` packs; `gate release` stays red until it exists |
 | `metrics ingest [--since ts] [--transcripts dir]` | real tokens per ticket from Claude Code transcripts (`~/.claude/projects/<cwd-encoded>/*.jsonl`, incl. `<session>/subagents/`), priced by `data/model-prices.csv` |
 | `metrics report [--phases] [--compare a.jsonl b.jsonl] [--by-model]` | self-reported and transcript columns, cache read, context peak, cost (per model with --by-model), escalations; before/after diff |
 | `status` | one-screen dashboard: phase, tickets, dod pass rate, blockers, wizards, tokens, estimate |

@@ -65,9 +65,9 @@ def apply_pack_contexts(pack: dict) -> None:
     ctx = pack.get("contexts")
     if isinstance(ctx, dict) and ctx:
         CONTEXT_HINTS = {k: [str(x) for x in (v or [])] for k, v in ctx.items()}
-        CONTEXTS = list(CONTEXT_HINTS) + [c for c in ("people", "reporting", "sync") if c not in CONTEXT_HINTS]
         oc = pack.get("offline_contexts")
         OFFLINE_CONTEXTS = {str(x) for x in oc} if isinstance(oc, list) else set()
+        CONTEXTS = list(CONTEXT_HINTS) + [c for c in ("people", "reporting") + (("sync",) if OFFLINE_CONTEXTS else ()) if c not in CONTEXT_HINTS]
     if str((pack.get("nfr_defaults") or {}).get("offline", "")) == "forbidden":
         OFFLINE_CONTEXTS = set()
 

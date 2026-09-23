@@ -410,7 +410,7 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
             parent["tests"].append(f"Given the should-have job {jid}, When enabled, Then its operations respond and its screen states render")
             continue
         tid = f"T-{n:03d}"
-        T(tid, f"{jid.replace('-', ' ').capitalize()} (should-have)", "feature", [job_ticket.get(next((m for m in must_jobs if job_by_id[m].get('entity') == j.get('entity')), ""), "T-005"), "T-004"],
+        T(tid, f"{jid.replace('-', ' ').capitalize()} (should-have)", "feature", [job_ticket.get(next((m for m in must_jobs if job_by_id[m].get('entity') == j.get('entity')), ""), "T-005" if offline_ctx else "T-003"), "T-004"],
           jobs=[jid], screens=scr, ops=ops, controls=["SEC-ACC-01", "SEC-LOG-02"], est="M",
           files=[f"apps/api/src/{entity_ctx.get(j.get('entity'), 'ordering')}/{_slug(jid)}.ts"] + [f"apps/web/app/{s}/page.tsx" for s in scr],
           tests=[f"Given the job is enabled, When {jid.replace('-', ' ')} runs, Then its operations respond per openapi.yaml", "Given the job is disabled by decision, When the screen is requested, Then it is hidden from navigation", "Given the screen, When it renders in ar, Then axe reports zero serious violations"],

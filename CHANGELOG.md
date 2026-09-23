@@ -30,6 +30,9 @@ One entry per build step. Newest first.
   tickets use them instead of the restaurant contexts (reason: both new packs landed Sale/Order in kitchen/menu/inventory).
 - generalisation fix: `offline: forbidden` packs get no `offline_capable` operations, no `/sync/*` endpoints, no T-005
   offline ticket, no offline acceptance tests and no offline screen copy (reason: trading-app run, phases 6, 8, 10).
+- generalisation fix: should-have tickets no longer depend on T-005 when it does not exist, the `sync` context is
+  omitted without offline, and the Arabic copy column appears only for Arabic regions (reason: trading-app rerun,
+  gate 10 `T-026 blocked by unknown T-005`; Urdu app carried an Arabic column).
 
 ## P9 — Isolation, routing, evals, dogfood (2026-09-18)
 

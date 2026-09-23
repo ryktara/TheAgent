@@ -587,7 +587,8 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
     for i, a in enumerate([x.strip() for x in re.split(r";", actions) if x.strip()][:8]):
         out.append(f"| {a} | {'primary' if i == 0 else 'secondary'} | `{'button' if 'button' in comps else comps[0]}` |")
     ur_col = "ur" in langs
-    out += ["", "## States", "", "| State | Copy (en) | Copy (ar) |" + (" Copy (ur) |" if ur_col else "") + " Notes |", "|-------|-----------|-----------|" + ("-----------|" if ur_col else "") + "-------|"]
+    ar_col = "ar" in langs or not ur_col  # generalisation fix (P10): Arabic column only for Arabic regions (kept when no other second language)
+    out += ["", "## States", "", "| State | Copy (en) |" + (" Copy (ar) |" if ar_col else "") + (" Copy (ur) |" if ur_col else "") + " Notes |", "|-------|-----------|" + ("-----------|" if ar_col else "") + ("-----------|" if ur_col else "") + "-------|"]
     default_copy = {"empty": f"Nothing here yet. Start with {actions.split(';')[0].strip().lower()}.", "loading": "Loading…", "error": "Something went wrong. Retry, or contact the manager.",
                     "offline": "Offline. Changes are saved on this device and sync when the connection returns." if offline else "Read-only while offline.",
                     "locked": "A manager PIN is needed for this action.", "success": "Done."}
@@ -602,7 +603,7 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
         copy = hinted or en or default_copy[st]
         ar_cell = ar if ar else "<!-- ar: translate -->"
         note = "from screens.md" if hinted else ("copy.csv" if en else "default")
-        out.append(f"| {st} | {copy} | {ar_cell} |" + (f" {ur or '<!-- ur: translate -->'} |" if ur_col else "") + f" {note} |")
+        out.append(f"| {st} | {copy} |" + (f" {ar_cell} |" if ar_col else "") + (f" {ur or '<!-- ur: translate -->'} |" if ur_col else "") + f" {note} |")
     out += ["", "## Validation and error copy", "", "- `FRM-02` Error copy says what happened and how to fix it in one sentence.", "- `FRM-01` Validate on blur; re-validate on change after the first error; summarise on submit.",
             "- `FRM-03` Submit stays enabled; errors listed on attempt.", "", "## Keyboard and shortcuts", "", "| Key | Action |", "|-----|--------|"]
     kb = {"kds": [("1–9", "bump ticket in slot"), ("R", "recall last bump"), ("S", "cycle station")], "order-entry": [("digits", "PLU search"), ("Enter", "add highlighted item"), ("Escape", "close sheet")],

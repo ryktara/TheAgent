@@ -1,0 +1,62 @@
+:root {
+  --color-primary: #30a66b;
+  --color-primary-fg: #0b0b0b;
+  --color-secondary: #4b9b9b;
+  --color-accent: #b1256b;
+  --color-bg: #ffffff;
+  --color-surface: #f9fbfa;
+  --color-surface-alt: #f0f4f2;
+  --color-text: #17261f;
+  --color-text-muted: #5a7266;
+  --color-border: #789b8a;
+  --color-success: #279b57;
+  --color-warning: #b36f0f;
+  --color-danger: #aa1818;
+  --color-info: #1d78a5;
+  --text-base: 16px;
+  --text-md: 19px;
+  --text-lg: 23px;
+  --text-xl: 28px;
+  --text-2xl: 33px;
+  --text-3xl: 40px;
+  --text-4xl: 48px;
+  --font-heading: "Inter";
+  --font-body: "Inter";
+  --font-mono: "JetBrains Mono";
+  --font-arabic: "IBM Plex Sans Arabic";
+  --font-urdu: "Noto Nastaliq Urdu";
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-r0: 0px;
+  --radius-r1: 6px;
+  --radius-r2: 12px;
+  --duration-fast: 100ms;
+  --duration-base: 200ms;
+  --duration-slow: 240ms;
+  --touch-min: 48px;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --color-bg: #141a17;
+  --color-surface: #1d2521;
+  --color-surface-alt: #1d2521;
+  --color-text: #e9eceb;
+  --color-text-muted: #acb9b2;
+  --color-primary: #61d199;
+  --color-primary-fg: #141a17;
+  --color-secondary: #75bdbd;
+  --color-accent: #dd5f9e;
+  --color-border: #5c7066;
+  --color-success: #64d894;
+  --color-warning: #f0ac4c;
+  --color-danger: #e75555;
+  --color-info: #5ab5e2;
+} }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; animation: none !important; } }

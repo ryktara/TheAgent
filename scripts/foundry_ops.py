@@ -310,7 +310,9 @@ def _phase_windows(project: Path) -> list[dict]:
 def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts: Path | None, cwds: list[str] | None = None) -> int:
     """Turns are attributed to a ticket window only when their session cwd is one of: the project, the plugin root,
     CLAUDE_PROJECT_DIR, the current directory, or --cwd values; a concurrent unrelated session is never counted."""
-    allowed = {str(Path(x).resolve()).lower() for x in [project, root, os.environ.get("CLAUDE_PROJECT_DIR") or ".", os.getcwd(), *(cwds or [])] if x}
+    # P10: the folder that holds the plugin (the session's workspace) is allowed by default; turns record the session cwd,
+    # not the project, so without it the parent's and most subagents' turns were silently dropped.
+    allowed = {str(Path(x).resolve()).lower() for x in [project, root, root.parent, os.environ.get("CLAUDE_PROJECT_DIR") or ".", os.getcwd(), *(cwds or [])] if x}
     dirs = transcript_dirs(project, transcripts)
     wins = _windows(project)
     pwins = _phase_windows(project)
@@ -390,8 +392,9 @@ def run_metrics_ingest(project: Path, root: Path, since: str | None, transcripts
                     pr = _price_for(model, prices)
                     cost = (i_ * float(pr["input_per_m"]) + o_ * float(pr["output_per_m"]) + cr * float(pr["cache_read_per_m"]) + cw * float(pr["cache_write_per_m"])) / 1_000_000 if pr else 0.0
                     acc["cost_usd"] += cost
-                    bm = acc["by_model"].setdefault(model, {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "turns": 0, "cost_usd": 0.0})
+                    bm = acc["by_model"].setdefault(model, {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "turns": 0, "cost_usd": 0.0, "context_peak": 0})
                     bm["input"] += i_; bm["output"] += o_; bm["cache_read"] += cr; bm["cache_write"] += cw; bm["turns"] += 1; bm["cost_usd"] += cost
+                    bm["context_peak"] = max(bm["context_peak"], i_ + cr + cw)
     mp = project / ".foundry" / "metrics.jsonl"
     now = F._now()
     # replace earlier transcript rows for the same keys (idempotent ingest)
@@ -424,8 +427,9 @@ def _aggregate(path: Path) -> dict[str, dict]:
             d["t_cache_read"] += int(r.get("cache_read") or 0); d["t_cache_write"] += int(r.get("cache_write") or 0); d["cost_usd"] += float(r.get("cost_usd") or 0)
             d["context_peak"] = max(d["context_peak"], int(r.get("context_peak") or 0))
             for m, v in (r.get("by_model") or {}).items():
-                bm = d["by_model"].setdefault(m, {"output": 0, "cache_read": 0, "cost_usd": 0.0})
+                bm = d["by_model"].setdefault(m, {"output": 0, "cache_read": 0, "cost_usd": 0.0, "context_peak": 0})
                 bm["output"] += int(v.get("output") or 0); bm["cache_read"] += int(v.get("cache_read") or 0); bm["cost_usd"] += float(v.get("cost_usd") or 0)
+                bm["context_peak"] = max(bm["context_peak"], int(v.get("context_peak") or 0))
             continue
         if r.get("event") == "ticket-end" and r.get("escalated"):
             d["escalated"] = 1
@@ -472,10 +476,10 @@ def _print_table(per: dict[str, dict]) -> None:
 
 
 def _print_by_model(per: dict[str, dict]) -> None:
-    print(f"\n{'ticket':<8} {'model':<26} {'output':>8} {'cache_read':>12} {'cost_usd':>9}")
+    print(f"\n{'ticket':<8} {'model':<26} {'output':>8} {'cache_read':>12} {'ctx_peak':>9} {'cost_usd':>9}")
     for t in sorted(per):
         for m, v in sorted(per[t]["by_model"].items()):
-            print(f"{t:<8} {m:<26} {v['output']:>8} {v['cache_read']:>12} {v['cost_usd']:>9.2f}")
+            print(f"{t:<8} {m:<26} {v['output']:>8} {v['cache_read']:>12} {v.get('context_peak', 0):>9} {v['cost_usd']:>9.2f}")
 
 
 def run_metrics_report(project: Path, compare: list[Path] | None = None, phases: bool = False, by_model: bool = False) -> int:

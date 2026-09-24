@@ -2,6 +2,32 @@
 
 One entry per build step. Newest first.
 
+## 1.0.0 (2026-09-24) — summary of P0–P11
+
+Foundry 1.0 is a Claude Code plugin that takes a one-line brief to a designed, architected, implemented,
+reviewed and released web app while asking at most 7 questions (plus 3 follow-ups). Subscription-only: it runs
+inside a logged-in Claude Code session, reads no API key and has no headless mode.
+
+- Pipeline (P0–P6): pack match with a deterministic confidence formula, bounded grilling with a decision ledger,
+  PRD, domain model with invariants and state machines, architecture with nine ADRs, Prisma schema, OpenAPI 3.1
+  with authz per operation, design system from CSV data (palettes with WCAG contrast, typography, components,
+  UX rules), screen specs with six states and bilingual copy, STRIDE threat model, compliance map, ticket DAG.
+  Every phase has a skeleton generator and a machine-checked gate.
+- Build loop (P7–P10): codebase-memory graph first, red/green per ticket, definition of done in two tiers (fast:
+  typecheck/lint/unit; full: integration, one Playwright run for smoke + axe + light/dark × ltr/rtl screenshots),
+  thin parent → ticket-builder → ticket-finisher → three reviewers on a ≤600-token pack with hunk-only re-review,
+  a 120-tool-call builder budget, wizards for human-only steps, release artefacts (Dockerfiles, compose + Caddy or
+  fly.toml, runbook, smoke, user docs), handoff and resume, real per-ticket cost from transcripts by model.
+- Packs (P3, P10, P11): restaurant-pos, retail-pos and trading-app complete (schema 2.0 with `vocabulary`,
+  `contexts`, `regulated`), generic fallback, pack-level CSV overrides; the core carries no restaurant wording.
+- Evals (P9–P11): deterministic stages for every pack (match, grill, skeleton gates, golden artefact diffs) in CI;
+  `/foundry-eval` for the trigger test and the unattended end-to-end run, scored into `evals/results/`.
+- Reference app: restaurant-pos for a Sharjah café, 49 tickets built through the loop, release gate passing;
+  cost and medians in docs/examples/restaurant-pos/COST.md.
+- Install: `claude plugin marketplace add` + `claude plugin install foundry@foundry-local` + `/foundry-setup`;
+  docs/INSTALL-WINDOWS.md, docs/INSTALL-MAC-LINUX.md, docs/QUICKSTART.md (en, ar), docs/PACK-AUTHORING.md,
+  docs/ORCHESTRATOR.md.
+
 ## P11 — v1.0
 
 - Pack schema 2.0: `vocabulary:` block (scaffold ticket titles, ADR hints/refs, design defaults, glossary hint terms,
@@ -12,6 +38,16 @@ One entry per build step. Newest first.
 - restaurant-pos vocabulary reproduces its golden artefacts byte for byte; retail-pos and trading-app got real vocabularies and
   regenerated goldens; generic got a minimal vocabulary.
 - Tests read domain strings from `evals/fixtures/reference-pack.yaml`; new VocabularyTests cover merge, money tokens and fallbacks.
+- Builder turn budget (120 tool calls, `status: budget` → fresh builder from the progress file); the finisher skips
+  review families that passed and whose files did not change.
+- `/foundry-setup` + `foundry.py setup [--apply]`: doctor, pnpm, Playwright browsers, codebase-memory MCP registration,
+  validate, 30-second self-test; fresh-clone install tested with a minimal PATH.
+- fix: the plugin manifest listed hooks/hooks.json, which Claude Code 2.1 loads automatically and rejected as a
+  duplicate; the installed plugin had failed to load (reason: found by the fresh-install test).
+- fix: eval fixture and golden `.foundry` folders were gitignored (never reached CI); now tracked.
+- fix: ticket globs ignore progress and status files (status counted a progress file as a ticket).
+- Founder docs (QUICKSTART en/ar, INSTALL-WINDOWS, INSTALL-MAC-LINUX, PACK-AUTHORING, ORCHESTRATOR), README for 1.0,
+  LICENSE (Al Sadq IT Solutions LLC), plugin 1.0.0.
 
 ## P10 — Subscription-only, context split, retail/trading packs (2026-09-23)
 

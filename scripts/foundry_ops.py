@@ -664,7 +664,9 @@ def _adr_deploy(project: Path) -> str:
 
 
 def run_release_skeleton(project: Path, root: Path) -> int:
-    from foundry_release_templates import RELEASE_TEMPLATES, user_docs
+    from foundry_release_templates import RELEASE_TEMPLATES, _screens, smoke_fill, user_docs
+    sel = F.load_selection(project) if (project / ".foundry" / "pack.yaml").exists() else None
+    pack = F.load_pack(root, sel["chosen"]) if sel else {}
     app = _app_name(project)
     mode = _adr_deploy(project)
     written = []
@@ -680,8 +682,8 @@ def run_release_skeleton(project: Path, root: Path) -> int:
             continue
         if rel in ("compose.prod.yml", "Caddyfile") and mode == "fly":
             continue
-        B._write(project, rel, text.replace("__APP_NAME__", app).replace("__DEPLOY_MODE__", mode)); written.append(rel)
-    for rel, text in user_docs(project, root).items():
+        B._write(project, rel, smoke_fill(text.replace("__APP_NAME__", app).replace("__DEPLOY_MODE__", mode), pack, _screens(project))); written.append(rel)
+    for rel, text in user_docs(project, root, pack).items():
         B._write(project, rel, text); written.append(rel)
     print(f"release-skeleton ({mode}): wrote {len(written)} files: " + ", ".join(written))
     return 0
@@ -717,7 +719,10 @@ def gate_release(project: Path, root: Path, build: bool = True) -> list[str]:
         if not ok:
             errs.append("regulated pack: a human must run `python scripts/foundry.py release confirm --by <name>` after the regulator-licence wizard before release")
     mode = _adr_deploy(project)
-    need = ["CHANGELOG.md", "apps/web/Dockerfile", "apps/api/Dockerfile", "runbook.md", "scripts/smoke.mjs", "user-docs/cashier-quick-start.en.md", "user-docs/cashier-quick-start.ar.md", "user-docs/manager-guide.en.md"]
+    from foundry_release_templates import user_doc_paths
+    sel = F.load_selection(project) if (project / ".foundry" / "pack.yaml").exists() else None
+    pack = F.load_pack(root, sel["chosen"]) if sel else {}
+    need = ["CHANGELOG.md", "apps/web/Dockerfile", "apps/api/Dockerfile", "runbook.md", "scripts/smoke.mjs"] + user_doc_paths(pack)
     need += ["fly.toml"] if mode == "fly" else ["compose.prod.yml", "Caddyfile"]
     for rel in need:
         if not (project / rel).exists():

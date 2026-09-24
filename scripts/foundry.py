@@ -484,6 +484,8 @@ def lint_complete_pack(path: Path, data: dict) -> list[FoundryError]:
         errs.append(FoundryError(path, 1, f"complete pack: glossary has {rows} rows; complete packs need 80"))
     if not (base / "reference" / "sources.md").exists():
         errs.append(FoundryError(path, 1, "complete pack: reference/sources.md missing"))
+    if not isinstance(data.get("vocabulary"), dict) or not data["vocabulary"]:
+        errs.append(FoundryError(path, 1, "complete pack: vocabulary block missing (schema 2.0; see packs/README.md)"))
     return errs
 
 
@@ -561,7 +563,7 @@ def run_validate(root: Path = ROOT, quiet: bool = False) -> int:
 
 
 # --------------------------------------------------------------------------- scaffold-pack
-PACK_TEMPLATE = """version: "1.9"
+PACK_TEMPLATE = """version: "2.0"
 complete: false
 threshold: 0.7
 slug: {slug}
@@ -583,6 +585,7 @@ ui_profile: {{style: clean-operational, density: medium, touch: 44dp}}
 questions:
   - {{id: region, rank: 1, ask: "Primary country?", answer_type: choice, choices: [AE, SA, PK, other], default: AE, reversible: true, skip_if_brief_mentions: [dubai, uae, riyadh, saudi, karachi, pakistan], brief_hints: {{AE: [dubai, abu dhabi, sharjah, uae], SA: [riyadh, jeddah, saudi, ksa], PK: [karachi, lahore, islamabad, pakistan]}}, maps_to: region.country}}
   - {{id: offline, rank: 2, ask: "Must it keep working without internet?", answer_type: bool, default: false, reversible: false, skip_if_brief_mentions: [offline, without internet], maps_to: nfr.offline}}
+vocabulary: {{money_tokens: [payment, refund]}}
 reference: {{screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}}
 """
 
@@ -943,8 +946,62 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+ACTIVE_PACK: dict = {"root": None, "slug": None, "pack": {}}
+
+
 def load_pack(root: Path, slug: str) -> dict:
-    return parse_yaml((root / "packs" / slug / "pack.yaml").read_text(encoding="utf-8"))
+    """Load packs/<slug>/pack.yaml and make it the active pack for `data_rows` (pack reference CSVs merge over data/)."""
+    pack = parse_yaml((root / "packs" / slug / "pack.yaml").read_text(encoding="utf-8"))
+    ACTIVE_PACK.update(root=root, slug=slug, pack=pack)
+    return pack
+
+
+def vocab(pack: dict | None, key: str, default: Any = None) -> Any:
+    """Pack 2.0 `vocabulary.<key>` (dotted keys reach one level down) with a generic fallback."""
+    cur: Any = (pack or {}).get("vocabulary") or {}
+    for part in key.split("."):
+        cur = cur.get(part) if isinstance(cur, dict) else None
+        if cur is None:
+            return default
+    return cur
+
+
+def term(pack: dict | None, key: str, default: str) -> str:
+    """Pack 2.0 `vocabulary.terms.<key>`: one domain noun phrase the core prose uses (generic fallback)."""
+    return str(vocab(pack, f"terms.{key}", default))
+
+
+def data_rows(name: str, root: Path | None = None, pack_slug: str | None = None) -> list[dict]:
+    """data/<name>.csv merged with packs/<slug>/reference/<name>.csv of the active (or named) pack.
+    A pack row whose key (first column) exists in data/ replaces it in place; a new row goes after the row named in
+    its optional `after` column (else at the end). The `after` column never reaches callers."""
+    root = root or ACTIVE_PACK.get("root") or ROOT
+    slug = pack_slug if pack_slug is not None else ACTIVE_PACK.get("slug")
+    base_p = Path(root) / "data" / f"{name}.csv"
+    rows: list[dict] = []
+    key = "id"
+    if base_p.exists():
+        with base_p.open(encoding="utf-8", newline="") as fh:
+            rd = csv.DictReader(fh)
+            key = (rd.fieldnames or ["id"])[0]
+            rows = list(rd)
+    if slug:
+        pp = Path(root) / "packs" / slug / "reference" / f"{name}.csv"
+        if pp.exists():
+            with pp.open(encoding="utf-8", newline="") as fh:
+                extra = list(csv.DictReader(fh))
+            cols = list(rows[0].keys()) if rows else None
+            for r in extra:
+                after = (r.pop("after", "") or "").strip()
+                if cols:
+                    r = {c: r.get(c, "") for c in cols}
+                pos = next((i for i, x in enumerate(rows) if x.get(key) == r.get(key)), None)
+                if pos is not None:
+                    rows[pos] = r
+                    continue
+                at = next((i for i, x in enumerate(rows) if x.get(key) == after), None) if after else None
+                rows.insert(at + 1, r) if at is not None else rows.append(r)
+    return rows
 
 
 def load_selection(project: Path) -> dict:
@@ -1403,6 +1460,14 @@ def should_have_enabled(fid: str, decisions: list[dict], pack: dict | None = Non
     return None
 
 
+_DEVICE_KEYS = ("tablets", "terminals", "printers", "scanners", "screens", "devices")
+
+
+def _device_key(k: Any) -> bool:
+    """nfr_defaults keys that describe hardware: the generic list plus any `<surface>_screen` key a pack declares."""
+    return str(k) in _DEVICE_KEYS or str(k).endswith("_screen")
+
+
 def prd_skeleton(pack: dict, ledger: dict, brief: str) -> str:
     decisions = ledger.get("decisions", [])
     idx = {d["id"]: d for d in decisions}
@@ -1441,13 +1506,13 @@ def prd_skeleton(pack: dict, ledger: dict, brief: str) -> str:
     out.append(f"- Offline: {off_txt}{_cite(offline_d)}")
     lat = [f"{k.replace('p95_', '').replace('_ms', '').replace('_', ' ')} p95 {v} ms" for k, v in nfr.items() if str(k).endswith("_ms")]
     out.append("- Latency: " + ("; ".join(lat) if lat else "p95 targets per pack nfr_defaults"))
-    dev = [f"{k}: {v}" for k, v in nfr.items() if k in ("tablets", "terminals", "printers", "scanners", "screens", "devices", "kitchen_screen")]
+    dev = [f"{k}: {v}" for k, v in nfr.items() if _device_key(k)]
     plat = by_map.get("platform.targets")
     out.append("- Devices: " + ("; ".join(map(str, dev)) if dev else "per platform decision") + _cite(plat))
     langs = reg.get("receipt_lang") or reg.get("languages") or ["en"]
     rtl = " (RTL for ar/ur)" if any(l in ("ar", "ur") for l in langs) else ""
     out.append(f"- Languages: {', '.join(map(str, langs))}{rtl}{_cite(region_d)}")
-    rest = {k: v for k, v in nfr.items() if not str(k).endswith("_ms") and k not in ("offline", "tablets", "terminals", "printers", "scanners", "screens", "devices", "kitchen_screen")}
+    rest = {k: v for k, v in nfr.items() if not str(k).endswith("_ms") and k != "offline" and not _device_key(k)}
     if rest:
         out.append("- Other: " + "; ".join(f"{k} {v}" for k, v in rest.items()))
     out += ["", "## 7. Integrations", "", "| Category | Chosen | Source |", "|----------|--------|--------|"]
@@ -1581,6 +1646,7 @@ def main(argv: list[str] | None = None) -> int:
     qy.add_argument("--n", type=int, default=20)
     qy.add_argument("--json", action="store_true")
     qy.add_argument("--root", type=Path, default=ROOT)
+    qy.add_argument("--pack", default=None, help="merge packs/<slug>/reference/<csv>.csv over data/ (schema 2.0)")
     for name, helptext in (("domain-skeleton", "emit .foundry/domain.yaml and CONTEXT.md"), ("arch-skeleton", "emit 9 ADRs and architecture.md"),
                            ("api-skeleton", "emit openapi.yaml and .foundry/events.yaml")):
         sk = sub.add_parser(name, help=helptext)
@@ -1668,7 +1734,7 @@ def main(argv: list[str] | None = None) -> int:
                 i += 2
             else:
                 i += 1
-        return P.run_query(a.root.resolve(), a.csv, filters, a.n, a.json)
+        return P.run_query(a.root.resolve(), a.csv, filters, a.n, a.json, a.pack)
     if extra and a.cmd == "run":
         a.cmd_extra = extra
     elif extra:

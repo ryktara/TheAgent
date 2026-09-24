@@ -10,7 +10,7 @@ TP-EA-02,edge-api,T,"Client sets server-owned fields (total, state, branch_id) i
 TP-EA-03,edge-api,R,Money-moving action without actor identity,SEC-LOG-02;SEC-AUTH-11,high
 TP-EA-04,edge-api,I,List endpoints leak other branches' orders (BOLA),SEC-ACC-02;SEC-API-03,high
 TP-EA-05,edge-api,D,Unbounded pagination or bulk operations exhaust the api,SEC-IN-10;SEC-API-02,medium
-TP-EA-06,edge-api,E,Cashier calls admin routes or refund operation directly,SEC-ACC-01;SEC-ACC-03;SEC-SESS-07,high
+TP-EA-06,edge-api,E,Operator calls admin routes or refund operation directly,SEC-ACC-01;SEC-ACC-03;SEC-SESS-07,high
 TP-EA-07,edge-api,T,Replay of a payment POST creates a duplicate charge,SEC-API-01,high
 TP-AD-01,api-db,S,App role used to bypass RLS with BYPASSRLS,SEC-ACC-05,medium
 TP-AD-02,api-db,T,SQL injection through string-built queries,SEC-IN-04,high
@@ -46,7 +46,7 @@ TP-WH-03,webhook-inbound,R,Webhook processed with no receipt record,SEC-API-04;S
 TP-WH-04,webhook-inbound,I,Webhook endpoint returns internal state on error,SEC-LOG-04,low
 TP-WH-05,webhook-inbound,D,Webhook flood exhausts workers,SEC-API-02,medium
 TP-AM-01,admin,S,Owner account taken over via password reuse,SEC-AUTH-02;SEC-AUTH-08,high
-TP-AM-02,admin,T,Role matrix edited to grant refund rights to cashiers,SEC-ACC-07;SEC-LOG-02,high
+TP-AM-02,admin,T,Role matrix edited to grant refund rights to operators,SEC-ACC-07;SEC-LOG-02,high
 TP-AM-03,admin,R,Settings changed without audit,SEC-LOG-02,medium
 TP-AM-04,admin,I,Export of all customers by a non-owner,SEC-ACC-03;SEC-ACC-09,medium
 TP-AM-05,admin,E,"Last owner demoted, locking out the organisation",SEC-ACC-06,medium

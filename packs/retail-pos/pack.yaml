@@ -1,4 +1,4 @@
-version: "1.9"
+version: "2.0"
 complete: true
 threshold: 0.7
 slug: retail-pos
@@ -111,4 +111,22 @@ questions:
   - {id: customer-credit, rank: 10, ask: "Do regular customers buy on credit (khaata / udhaar)?", answer_type: bool, default: false, reversible: true, enables: {true: [khaata-credit]}, skip_if_brief_mentions: [khaata, udhaar, credit customers, on credit], maps_to: features.customer_credit}
   - {id: stock-transfer, rank: 11, ask: "Transfer stock between stores inside the app?", answer_type: bool, default: true, reversible: true, enables: {true: [stock-transfers]}, maps_to: inventory.transfers}
   - {id: payment-provider-name, rank: 12, ask: "Name the payment provider so integration research can start.", answer_type: text, default: "unknown", reversible: true, derive_from: {question: payments, map: {network-intl: "Network International", tap: "Tap Payments", stripe: "Stripe", checkout: "Checkout.com", magnati: "Magnati", telr: "Telr", paytabs: "PayTabs", cash-only: "none", other: null}}, maps_to: payments.provider_name}
+vocabulary:
+  scaffold_ticket_titles: {auth: "Auth: till enrolment, cashier PIN, supervisor override", tenancy: "Tenancy and store scoping with RLS", schema: "Schema, migrations, seed catalog", tokens: "Design tokens, till shell, RTL switch, component base", offline: "Offline till store and sync outbox"}
+  adr_hints: {"0001": "Hardware breadth (tills, barcode scanners, scales, label printers)", "0002": "Two actor classes: devices (tills, handheld stock scanners, print and label bridge) and staff (PIN, roles). Price overrides and returns need a supervisor override.", "0003": "Every sale, drawer session and stock movement is scoped to a store; receipts, floats and tax rules are per store.", "0004": "Receipts, returns and stock movements are append-only.", "0005": "Tills keep scanning and selling when the internet drops;", "0006": "Card data never enters the till.", "0007": "Local development must run on Windows without WSL", "0008": "Busy tills with offline devices: shrinkage and sync gaps surface late unless every request, scan and sync event is traceable", "0009": "Arabic and Urdu need right-to-left layouts, bilingual receipts and bilingual shelf labels."}
+  design_defaults:
+    key_screens: [checkout, product-search, inventory, returns, z-report]
+    component_set: [numpad, tender-keypad, pin-pad, quantity-stepper, order-card, receipt-preview, banner-offline, split-bill, customer-display, virtual-list]
+    theme_names: {default: retail-counter, colourblind: retail-counter-cb}
+    keyboard: {checkout: {digits: scan or type barcode, F2: product search, Enter: add line, F12: pay}, product-search: {"/": focus search, Enter: add to basket, Escape: back to checkout}}
+    list_routes: [inventory, stock, report, list, audit]
+  glossary_hint_terms: [Sale, SKU, PLU, Barcode]
+  money_tokens: [payment, refund, void, discount, tender, sell, return, price-override, cash, gift-card, layaway, settle]
+  operator_role: cashier
+  authz_guard: supervisor PIN when the job guards it
+  containers: [{name: till-web, tech: stack, does: "Cashier and store manager screens; offline store; receipt and label jobs", talks_to: "api, print-bridge, offline-store"}, {name: mobile-stock, tech: mobile-stock, does: Handheld stock counts and goods receiving, talks_to: api}]
+  terms: {catalog: product catalog, catalog_items: products, canvas: shelf, live_state: Price and stock}
+  user_docs: {roles: [cashier], buttons: [pay, cash, card, open-shift, close-shift], quick_start_title_en: Cashier quick start, approval_note: "the approvals cashiers will ask you for (supervisor PIN)", routine: [Open the till with the float count., "Approve price overrides, voids and returns with your PIN (every approval is audited with your id).", "Close the till: count cash, review variance, print the Z report.", "End of day: check sync status shows zero pending events before closing the tills."]}
+  smoke: {route: /checkout, pattern: "checkout|Checkout", label: checkout}
+  seed_note: T-003 fills catalog, tax rules and sample sales
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md, sources: reference/sources.md}

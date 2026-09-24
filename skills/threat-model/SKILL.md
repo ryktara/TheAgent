@@ -39,7 +39,7 @@ the model writes the abuse cases and judges the residual risk.
    money row with "any authenticated".
 
 4. **Top-10 review.** Reorder the top-10 risks when this project's exposure differs from the
-   default (for example a cloud kitchen has no terminal-print-bridge risk), and add one line
+   default (for example a delivery-only operation has no terminal-print-bridge risk), and add one line
    of rationale under the table.
    Done when: the top-10 table reflects this project's boundaries and has a rationale line.
 

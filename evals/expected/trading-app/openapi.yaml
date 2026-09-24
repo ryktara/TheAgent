@@ -4904,7 +4904,7 @@ paths:
         job: "open-account"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -4971,7 +4971,7 @@ paths:
         job: "kyc-tier-upgrade"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5038,7 +5038,7 @@ paths:
         job: "review-kyc-case"
         personas:
           - "compliance-officer"
-        authz: "role == compliance-officer or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == compliance-officer or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5105,7 +5105,7 @@ paths:
         job: "deposit-funds"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5172,7 +5172,7 @@ paths:
         job: "withdraw-funds"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5239,7 +5239,7 @@ paths:
         job: "manage-watchlist"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5306,7 +5306,7 @@ paths:
         job: "view-market-data"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5373,7 +5373,7 @@ paths:
         job: "place-order"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5440,7 +5440,7 @@ paths:
         job: "amend-cancel-order"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5507,7 +5507,7 @@ paths:
         job: "view-positions"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5574,7 +5574,7 @@ paths:
         job: "view-portfolio"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5641,7 +5641,7 @@ paths:
         job: "manage-risk-limits"
         personas:
           - "compliance-officer"
-        authz: "role == compliance-officer or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == compliance-officer or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5708,7 +5708,7 @@ paths:
         job: "handle-margin-call"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5775,7 +5775,7 @@ paths:
         job: "set-leverage"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5842,7 +5842,7 @@ paths:
         job: "price-alerts"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5909,7 +5909,7 @@ paths:
         job: "statements-tax"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -5976,7 +5976,7 @@ paths:
         job: "read-news"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6043,7 +6043,7 @@ paths:
         job: "paper-trade"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6110,7 +6110,7 @@ paths:
         job: "refer-friend"
         personas:
           - "retail-trader"
-        authz: "role == retail-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == retail-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6177,7 +6177,7 @@ paths:
         job: "copy-trade"
         personas:
           - "pro-trader"
-        authz: "role == pro-trader or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == pro-trader or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6244,7 +6244,7 @@ paths:
         job: "compliance-case-review"
         personas:
           - "compliance-officer"
-        authz: "role == compliance-officer or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == compliance-officer or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6311,7 +6311,7 @@ paths:
         job: "support-tickets"
         personas:
           - "support"
-        authz: "role == support or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == support or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6378,7 +6378,7 @@ paths:
         job: "manage-instruments"
         personas:
           - "admin"
-        authz: "role == admin or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == admin or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6445,7 +6445,7 @@ paths:
         job: "staff-roles"
         personas:
           - "admin"
-        authz: "role == admin or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == admin or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6512,7 +6512,7 @@ paths:
         job: "audit-trail"
         personas:
           - "compliance-officer"
-        authz: "role == compliance-officer or role == admin; branch scope; manager PIN when the job guards it"
+        authz: "role == compliance-officer or role == admin; branch scope; step-up re-authentication when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true

@@ -55,8 +55,8 @@ sections whose headings match in-scope jobs are opened.
 
 | Skeleton rule | Detail |
 |---------------|--------|
-| Contexts | ordering, kitchen, payments, menu, inventory, people, reporting, sync |
+| Contexts | pack `contexts`, else ordering, fulfilment, payments, catalog, inventory, people, reporting, sync |
 | Default transitions | consecutive states form a chain; branch states (void, refunded, cancelled…) hang off the second state with guard "reason recorded" |
 | Actor | persona of the first in-scope job whose id or screens share a word with the entity |
-| Events | one per transition, named `<Entity><State>`; reporting consumes all; kitchen consumes sent/fired; sync consumes ordering and payments |
+| Events | one per transition, named `<Entity><State>`; reporting consumes all; pack `vocabulary.event_consumers` adds downstream consumers (default: fulfilment consumes sent/fired); sync consumes offline contexts and payments |
 | Glossary filter | pack glossary rows whose term or alias shares a stem with in-scope jobs, features or entities |

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from pathlib import Path
 
 import foundry as F
@@ -144,10 +145,10 @@ Required env (`.env` next to compose, never committed): `POSTGRES_PASSWORD`, `DE
 
 ## Smoke after every deploy
 
-`WEB_URL=https://$DOMAIN API_URL=https://$DOMAIN node scripts/smoke.mjs` → checks /health, device enrol + whoami (login), and the table map.
+`WEB_URL=https://$DOMAIN API_URL=https://$DOMAIN node scripts/smoke.mjs` → checks /health, device enrol + whoami (login), and __SMOKE_LABEL__.
 """
 
-RELEASE_TEMPLATES["scripts/smoke.mjs"] = """// Release smoke (gate release): /health, login (enrol + whoami), table map. With --start it builds nothing but boots
+RELEASE_TEMPLATES["scripts/smoke.mjs"] = """// Release smoke (gate release): /health, login (enrol + whoami), __SMOKE_LABEL__. With --start it builds nothing but boots
 // the production servers from the local build (api via tsx, web via next start) on WEB_PORT/API_PORT, runs, then stops them.
 import { spawn, spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -192,9 +193,9 @@ try {
   const token = enrol.ok ? (await enrol.json()).token : "";
   const who = await fetch(`${apiUrl}/api/v1/whoami`, { headers: { authorization: `Bearer ${token}` } });
   check("login: whoami", who.ok && (await who.json()).branch_id === branch);
-  const tm = await fetch(`${webUrl}/table-map`);
+  const tm = await fetch(`${webUrl}__SMOKE_ROUTE__`);
   const html = await tm.text();
-  check("table map renders", tm.ok && /table-map|Tables|الطاولات/.test(html));
+  check("__SMOKE_LABEL__ renders", tm.ok && /__SMOKE_PATTERN__/.test(html));
   const home = await fetch(`${webUrl}/`);
   check("home renders", home.ok);
 } catch (e) {
@@ -235,38 +236,61 @@ def _screens(project: Path) -> list[dict]:
 
 
 def _copy(root: Path) -> dict[str, dict]:
-    p = root / "data" / "copy.csv"
-    out = {}
-    if p.exists():
-        with p.open(encoding="utf-8", newline="") as fh:
-            for r in csv.DictReader(fh):
-                out[r["id"]] = r
-    return out
+    """data/copy.csv merged with the active pack's reference/copy.csv and vocabulary.copy_overrides."""
+    import foundry_design as D
+    return D._copy_rows()
 
 
-def user_docs(project: Path, root: Path) -> dict[str, str]:
+def smoke_fill(text: str, pack: dict, screens: list[dict] | None = None) -> str:
+    """Pack 2.0 `vocabulary.smoke`: the web route the release smoke opens (default: the first screen route, else /)."""
+    first = next((s["route"] for s in screens or [] if s.get("route")), "/")
+    sm = F.vocab(pack, "smoke") or {}
+    route = str(sm.get("route") or first)
+    label = str(sm.get("label") or "primary screen")
+    pattern = str(sm.get("pattern") or re.escape(route.strip("/") or "html"))
+    return text.replace("__SMOKE_ROUTE__", route).replace("__SMOKE_LABEL__", label).replace("__SMOKE_PATTERN__", pattern)
+
+
+def operator_role(pack: dict | None) -> str:
+    return str(F.vocab(pack, "operator_role", "operator"))
+
+
+def user_doc_paths(pack: dict | None) -> list[str]:
+    role = operator_role(pack)
+    return [f"user-docs/{role}-quick-start.en.md", f"user-docs/{role}-quick-start.ar.md", "user-docs/manager-guide.en.md"]
+
+
+def user_docs(project: Path, root: Path, pack: dict | None = None) -> dict[str, str]:
+    pack = pack if pack is not None else F.ACTIVE_PACK.get("pack") or {}
     screens = _screens(project)
     copy = _copy(root)
     act = lambda k, lang: copy.get(f"action.{k}", {}).get(lang, k)
-    cashier = [s for s in screens if "cashier" in s["personas"] or "waiter" in s["personas"]]
+    ud = F.vocab(pack, "user_docs") or {}
+    role = operator_role(pack)
+    front = [p for p in (pack.get("personas") or []) if p not in ("manager", "owner", "admin", "accountant", "customer")]
+    front_roles = set(ud.get("roles") or front[:2] or [role])
+    operator = [s for s in screens if front_roles & set(s["personas"])]
     manager = [s for s in screens if "manager" in s["personas"] or "owner" in s["personas"]]
-    en = ["# Cashier quick start", "", "One screen per task. The device keeps working offline; orders sync when the connection returns.", ""]
-    for s in cashier:
+    buttons = [str(b) for b in (ud.get("buttons") or ["pay", "cash", "card", "open-shift", "close-shift"])]
+    en = [f"# {ud.get('quick_start_title_en') or role.capitalize() + ' quick start'}", "", "One screen per task. The device keeps working offline; orders sync when the connection returns.", ""]
+    for s in operator:
         en += [f"## {s['id'].replace('-', ' ').title()} (`{s['route']}`)", "", s["purpose"] or "", ""]
         if s["states"]:
             en += ["| When you see | It means |", "|---|---|"] + [f"| {v[0]} | {k} |" for k, v in s["states"].items() if v[0]] + [""]
-    en += ["## Buttons you will use", "", ", ".join(act(k, "en") for k in ("add-item", "send-to-kitchen", "pay", "cash", "card", "print-bill", "split-bill", "open-shift", "close-shift")), ""]
-    ar = ["# دليل الكاشير السريع", "", "شاشة واحدة لكل مهمة. يستمر الجهاز بالعمل دون اتصال، وتتم مزامنة الطلبات عند عودة الاتصال.", ""]
-    for s in cashier:
+    en += ["## Buttons you will use", "", ", ".join(act(k, "en") for k in buttons), ""]
+    ar = [f"# {ud.get('quick_start_title_ar') or 'دليل المستخدم السريع'}", "", "شاشة واحدة لكل مهمة. يستمر الجهاز بالعمل دون اتصال، وتتم مزامنة الطلبات عند عودة الاتصال.", ""]
+    for s in operator:
         ar += [f"## {s['id']} (`{s['route']}`)", ""]
         if s["states"]:
             ar += ["| عندما ترى | المعنى |", "|---|---|"] + [f"| {v[1]} | {k} |" for k, v in s["states"].items() if v[1]] + [""]
-    ar += ["## الأزرار", "", "، ".join(act(k, "ar") for k in ("add-item", "send-to-kitchen", "pay", "cash", "card", "print-bill", "split-bill", "open-shift", "close-shift")), ""]
-    mg = ["# Manager guide", "", "Manager and owner screens, plus the approvals cashiers will ask you for (manager PIN).", ""]
+    ar += ["## الأزرار", "", "، ".join(act(k, "ar") for k in buttons), ""]
+    mg = ["# Manager guide", "", f"Manager and owner screens, plus {ud.get('approval_note') or 'the approvals staff will ask you for (manager PIN)'}.", ""]
     for s in manager:
         mg += [f"## {s['id'].replace('-', ' ').title()} (`{s['route']}`)", "", s["purpose"] or "", ""]
         locked = s["states"].get("locked")
         if locked and locked[0]:
             mg += [f"Approval prompt: *{locked[0]}*", ""]
-    mg += ["## Daily routine", "", "1. Open shift with the float count.", "2. Approve voids, comps, discounts and refunds with your PIN (every approval is audited with your id).", "3. Close shift: count cash, review variance, print the Z report.", "4. End of day: check sync status shows zero pending events before closing the terminals.", ""]
-    return {"user-docs/cashier-quick-start.en.md": "\n".join(en) + "\n", "user-docs/cashier-quick-start.ar.md": "\n".join(ar) + "\n", "user-docs/manager-guide.en.md": "\n".join(mg) + "\n"}
+    routine = [str(x) for x in (ud.get("routine") or ["Open shift with the float count.", "Approve voids, discounts and refunds with your PIN (every approval is audited with your id).", "Close shift: count cash, review variance, print the Z report.", "End of day: check sync status shows zero pending events before closing the terminals."])]
+    mg += ["## Daily routine", ""] + [f"{i}. {x}" for i, x in enumerate(routine, 1)] + [""]
+    p_en, p_ar, p_mg = user_doc_paths(pack)
+    return {p_en: "\n".join(en) + "\n", p_ar: "\n".join(ar) + "\n", p_mg: "\n".join(mg) + "\n"}

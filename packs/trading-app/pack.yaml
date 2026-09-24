@@ -1,4 +1,4 @@
-version: "1.9"
+version: "2.0"
 complete: true
 regulated: true
 threshold: 0.7
@@ -113,4 +113,22 @@ questions:
   - {id: leverage-max, rank: 10, ask: "Maximum retail leverage (e.g. 30 for 30:1)?", answer_type: number, default: 2, reversible: false, maps_to: features.leverage_max}
   - {id: copy-trading, rank: 11, ask: "Let followers copy lead traders?", answer_type: bool, default: false, reversible: true, enables: {true: [copy-trading]}, skip_if_brief_mentions: [copy trading, copy-trading, social trading], maps_to: features.copy_trading}
   - {id: market, rank: 12, ask: "Which venue first?", answer_type: choice, choices: [PSX, Tadawul, DFM-ADX, forex, crypto, other], default: PSX, reversible: false, derive_from: {question: region, map: {PK: PSX, SA: Tadawul, AE: null, generic: null}}, skip_if_brief_mentions: [psx, pakistan stock, tadawul, saudi exchange, dfm, adx, forex, crypto], brief_hints: {PSX: [psx, pakistan stock, karachi stock, kse-100], Tadawul: [tadawul, saudi exchange, tasi], DFM-ADX: [dfm, adx, dubai financial market], forex: [forex, fx, cfd], crypto: [crypto, bitcoin, ethereum]}, maps_to: market.primary}
+vocabulary:
+  scaffold_ticket_titles: {auth: "Auth: sign-up, MFA, step-up re-authentication", tenancy: "Tenancy and account scoping with RLS", schema: "Schema, migrations, ledger seed", tokens: "Design tokens, trading shell, RTL switch, component base"}
+  adr_hints: {"0001": "Device breadth (desktop web, phones, tablets) and live market data", "0002": "Two actor classes: customers (email, MFA, device binding) and back-office staff (SSO, roles). Money-moving actions need step-up re-authentication.", "0003": "Every account, ledger entry and order is scoped to one customer; back-office staff act across customers under audit.", "0004": "Ledger entries, fills and statements are append-only and double-entry.", "0005": "Order entry is online-only; quotes go stale after a few seconds and must never be traded on;", "0006": "Card and bank data never enter the app; custody stays with the broker or bank.", "0007": "Local development must run on Windows without WSL", "0008": "A trading app must prove best execution and explain every rejected order: every request, quote and fill is traceable", "0009": "Arabic needs right-to-left layouts; numbers, prices and charts stay left-to-right."}
+  design_defaults:
+    key_screens: [watchlist, instrument, order-ticket, portfolio, positions]
+    component_set: [numpad, pin-pad, quantity-stepper, banner-offline, virtual-list, chart-card, kpi-tile]
+    theme_names: {default: trading-dark-cb, light: indigo-calm}
+    keyboard: {order-ticket: {B: buy side, S: sell side, Enter: review order, Escape: cancel}, watchlist: {Arrows: move between instruments, Enter: open instrument}}
+    list_routes: [watchlist, report, list, statement, audit]
+  glossary_hint_terms: [Account, Order, Position, Fill]
+  money_tokens: [fund, deposit, withdraw, order, trade, settle, margin, leverage, transfer, payment, refund]
+  operator_role: trader
+  authz_guard: step-up re-authentication when the job guards it
+  containers: [{name: web, tech: stack, does: "Trader and back-office screens; live quotes and charts", talks_to: "api, realtime"}, {name: mobile, tech: mobile, does: Mobile trading app, talks_to: api}]
+  terms: {catalog: instrument list, catalog_items: instruments, canvas: chart, live_state: Quote and order}
+  user_docs: {roles: [retail-trader, pro-trader], buttons: [buy, sell, deposit, withdraw], quick_start_title_en: Trader quick start, approval_note: "the approvals traders will ask you for (compliance review)", routine: [Review overnight margin calls and risk alerts., Clear the KYC and compliance review queues (every decision is audited with your id)., Reconcile deposits and withdrawals against the bank statement., "End of day: confirm statements generated and no orders stuck in pending."]}
+  smoke: {route: /watchlist, pattern: "watchlist|Watchlist", label: watchlist}
+  seed_note: T-003 fills instruments, risk limits and a paper account
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md, sources: reference/sources.md}

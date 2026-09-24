@@ -1,0 +1,3 @@
+id,boundary_type,stride,threat,typical_mitigation_control_ids,severity_default,after
+TP-EA-06,edge-api,E,Cashier calls admin routes or refund operation directly,SEC-ACC-01;SEC-ACC-03;SEC-SESS-07,high,
+TP-AM-02,admin,T,Role matrix edited to grant refund rights to cashiers,SEC-ACC-07;SEC-LOG-02,high,

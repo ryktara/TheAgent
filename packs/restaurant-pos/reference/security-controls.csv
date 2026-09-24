@@ -1,0 +1,4 @@
+id,family,control,level,source,applies_when,verify,implementation_hint,after
+SEC-IN-07,input,Receipt and kitchen ticket text sanitised for ESC/POS control bytes,L1,foundry,printing,test,strip 0x00-0x1F except LF,
+SEC-DATA-05,data,"Retention job purges per data class (KDS tickets 90 d, PII 2 y inactive, financial 5-6 y)",L2,foundry,always,test,scheduled job with dry-run,
+SEC-SESS2-03,session,Kiosk and KDS devices auto-lock to their single screen; no navigation to admin,L1,foundry,device_auth,test,device role kds/kiosk,

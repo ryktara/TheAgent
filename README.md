@@ -2,7 +2,7 @@
 
 Foundry is a Claude Code plugin that turns a one-line brief into a designed, architected,
 implemented and tested application while asking the founder at most seven questions.
-It is built for non-technical founders: type `/foundry "I need a restaurant POS"` and let the
+It is built for non-technical founders: type `/foundry "I need a POS for my shop"` and let the
 pipeline run.
 
 ## Install
@@ -42,7 +42,7 @@ Full table: [docs/pipeline.md](docs/pipeline.md).
 | P0 | Scaffold + house style, validate, scaffold-pack, tests, CI | done |
 | P1 | Pack schema 1.1 + generic pack + pack-match skill + deterministic matcher | done |
 | P2 | Bounded grilling + decision ledger + PRD + /foundry phases 0–3 | done |
-| P3 | restaurant-pos pack (full reference), prd-skeleton, rematch, pack lint | done |
+| P3 | first full reference pack, prd-skeleton, rematch, pack lint | done |
 | P4 | Domain model, architecture + 9 ADRs, data model, API contract, doctor, query | done |
 | P5 | Design layer: 7 data CSVs, design-check, design-system, screen specs | done |
 | P6 | Security controls, threat model, compliance, tickets; /foundry ends at phase 10 | done |

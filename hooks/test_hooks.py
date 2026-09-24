@@ -44,7 +44,7 @@ class ProjectHookTests(unittest.TestCase):
         (self.tmp / ".foundry" / "tickets").mkdir(parents=True)
         (self.tmp / ".foundry" / "build.yaml").write_text('cbm_project: "demo"\nindexed_at: null\ngeneration: 1\nactive_ticket: "T-001"\ndone: ["T-000"]\nblockers: []\n', encoding="utf-8")
         (self.tmp / ".foundry" / "tickets" / "T-001-auth.md").write_text('---\nid: "T-001"\ntitle: "Auth"\nfiles_likely_touched: ["apps/api/src/people/auth.ts", "apps/web/app/(auth)/pin/page.tsx"]\n---\n\n# T-001 — Auth\n\n## Slice\n\nAuth slice.\n', encoding="utf-8")
-        (self.tmp / ".foundry" / "handoff.md").write_text("# Handoff\n\nDone: T-000. Next: T-001.\n", encoding="utf-8")
+        (self.tmp / ".foundry" / "handoff.md").write_text('---\nphase: 11\nactive_ticket: "T-001"\ndone: ["T-000"]\nnext_command: "/foundry-build"\n---\n\n# Handoff\n', encoding="utf-8")
         (self.tmp / ".foundry" / "metrics.jsonl").write_text("", encoding="utf-8")
 
     def tearDown(self):
@@ -75,8 +75,8 @@ class ProjectHookTests(unittest.TestCase):
         self.assertEqual(code, 0)
         ctx = out["hookSpecificOutput"]["additionalContext"]
         self.assertIn("Graph first", ctx)
-        self.assertIn("Next: T-001", ctx)
-        self.assertIn("active ticket T-001", ctx)
+        self.assertIn('active_ticket: "T-001"', ctx)
+        self.assertIn('next_command: "/foundry-build"', ctx)
 
     def test_stop_check_silent_without_package_json(self):
         code, out, _ = run_hook("stop_check.py", {"cwd": str(self.tmp), "stop_hook_active": False})

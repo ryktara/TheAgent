@@ -37,7 +37,7 @@ SEC-IN-03,input,Output encoding for HTML contexts; framework auto-escaping only,
 SEC-IN-04,input,SQL only through the ORM or parameterised queries,L1,ASVS-5.0 V1.2,always,scan,semgrep: no string-built SQL
 SEC-IN-05,input,"File uploads: type allow-list, size cap, image re-encode, virus scan when public",L2,ASVS-5.0 V5,uploads,test,menu images only; 5 MB; sharp re-encode
 SEC-IN-06,input,Path traversal prevented on any file path derived from input,L1,ASVS-5.0 V5,uploads,scan,path.resolve within base
-SEC-IN-07,input,Receipt and kitchen ticket text sanitised for ESC/POS control bytes,L1,foundry,printing,test,strip 0x00-0x1F except LF
+SEC-IN-07,input,Receipt and work ticket text sanitised for ESC/POS control bytes,L1,foundry,printing,test,strip 0x00-0x1F except LF
 SEC-IN-08,input,Barcode scanner input treated as untrusted text (no key injection),L1,foundry,scanner,test,wedge input goes to a controlled field only
 SEC-IN-09,input,Deserialisation only of JSON; no eval or dynamic code from data,L1,ASVS-5.0 V1.5,always,scan,semgrep eval/new Function
 SEC-IN-10,input,Query parameters for pagination bounded (limit ≤ 200),L1,ASVS-5.0 V2.1,always,test,schema max
@@ -52,7 +52,7 @@ SEC-DATA-01,data,"Card data never stored, logged or transmitted through the app 
 SEC-DATA-02,data,"Only provider token, last four and scheme stored for refunds",L1,PCI-DSS-4.0 req 3,payments=card,review,payments table columns
 SEC-DATA-03,data,Personal data minimised: customer phone and name optional; allergens per order not per person unless consented,L1,ASVS-5.0 V14,always,review,schema review
 SEC-DATA-04,data,Data export and deletion on request with 30-day grace,L1,ASVS-5.0 V14,always,test,job plus audit event
-SEC-DATA-05,data,"Retention job purges per data class (KDS tickets 90 d, PII 2 y inactive, financial 5-6 y)",L2,foundry,always,test,scheduled job with dry-run
+SEC-DATA-05,data,"Retention job purges per data class (work-queue tickets 90 d, PII 2 y inactive, financial 5-6 y)",L2,foundry,always,test,scheduled job with dry-run
 SEC-DATA-06,data,"Backups encrypted, daily, restore drill quarterly",L2,ASVS-5.0 V14,always,review,runbook
 SEC-DATA-07,data,Audit tables append-only via database grants,L1,foundry,always,test,"REVOKE UPDATE, DELETE"
 SEC-DATA-08,data,PII masked in logs and error reports,L1,ASVS-5.0 V16,always,scan,logger redaction list
@@ -148,7 +148,7 @@ SEC-IN2-07,input,Table and seat numbers bounded to branch floor plan,L1,ASVS-5.0
 SEC-IN2-08,input,Quantity bounded 1 to 999 per line; negative only via void,L1,ASVS-5.0 V2.3,always,test,schema
 SEC-SESS2-01,session,"Device token stored in platform secure storage, never localStorage on web",L1,ASVS-5.0 V7.4,device_auth,review,httpOnly cookie for PWA
 SEC-SESS2-02,session,Concurrent shift sessions per device limited to one,L1,foundry,shifts,test,unique open shift per device
-SEC-SESS2-03,session,Kiosk and KDS devices auto-lock to their single screen; no navigation to admin,L1,foundry,device_auth,test,device role kds/kiosk
+SEC-SESS2-03,session,Kiosk and work-queue devices auto-lock to their single screen; no navigation to admin,L1,foundry,device_auth,test,device role queue/kiosk
 SEC-SESS2-04,session,Session fixation prevented: new session id after PIN sign-in,L1,ASVS-5.0 V7.2,always,test,regenerate on auth
 SEC-ACC2-01,access,Reports filtered to the caller's branches; owner sees consolidated only via explicit scope,L1,OWASP-API-Top10-2023 API1,always,test,scope param validated
 SEC-ACC2-02,access,Menu price edits restricted to manager and owner,L1,ASVS-5.0 V8.1,always,test,role check

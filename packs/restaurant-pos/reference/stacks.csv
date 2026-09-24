@@ -1,0 +1,3 @@
+stack_id,layer,package,scaffold_cmd,test_cmd,typecheck_cmd,lint_cmd,a11y_cmd,notes,after
+expo,mobile,expo,npx create-expo-app@latest mobile --template blank-typescript,npm test -w mobile,npx tsc -p mobile --noEmit,npx eslint mobile --ext .ts;.tsx,,Waiter handheld and KDS tablet builds; EAS for store submission,
+socket.io,realtime,socket.io,npm i -w api socket.io && npm i -w web socket.io-client,npx vitest run --dir api/src/realtime,,,,KDS ticket push and table state fan-out; rooms per branch,

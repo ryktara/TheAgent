@@ -20,9 +20,9 @@ Replace `<!-- model: write -->` and its comment with 3–5 numbered lines:
 
 > 1. <metric> under/over <number> <unit> within <window>
 
-Each metric maps to a must-have job in section 3. Example set for a restaurant:
+Each metric maps to a must-have job in section 3. Example set for an operational POS pack:
 
-1. Median order entry under 45 seconds per table within 30 days of go-live
-2. 99% of fired tickets visible on the KDS within 1 second during service hours, first 90 days
+1. Median order entry under 45 seconds per order within 30 days of go-live
+2. 99% of submitted orders visible on the work queue within 1 second during opening hours, first 90 days
 3. Zero lost orders during measured connectivity drops in the first 90 days
 4. Shift close reconciled within 5 minutes on 95% of shifts from month two

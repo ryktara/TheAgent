@@ -55,9 +55,14 @@ def check_palette_row(row: dict) -> list[str]:
     return errs
 
 
-def check_palettes(path: Path) -> tuple[int, list[str]]:
-    with path.open(encoding="utf-8", newline="") as fh:
-        rows = list(csv.DictReader(fh))
+def check_palettes(path: Path, with_packs: bool = True) -> tuple[int, list[str]]:
+    """Contrast pairs for data/palettes.csv plus every pack's reference/palettes.csv (pack-owned palettes, schema 2.0)."""
+    paths = [path] + (sorted(path.parents[1].glob("packs/*/reference/palettes.csv")) if with_packs else [])
+    rows = []
+    for pth in paths:
+        if pth.exists():
+            with pth.open(encoding="utf-8", newline="") as fh:
+                rows += list(csv.DictReader(fh))
     errs = []
     for r in rows:
         errs += check_palette_row(r)
@@ -128,8 +133,13 @@ def run_design_check(root: Path, project: Path | None, palettes_only: bool = Fal
 
 # ----------------------------------------------------------------------------- data access
 def _rows(name: str) -> list[dict]:
-    with (DATA / f"{name}.csv").open(encoding="utf-8", newline="") as fh:
-        return list(csv.DictReader(fh))
+    """data/<name>.csv merged with the active pack's reference/<name>.csv (see foundry.data_rows)."""
+    return F.data_rows(name)
+
+
+def _dd(pack: dict | None, key: str, default=None):
+    """Pack 2.0 `vocabulary.design_defaults.<key>`."""
+    return F.vocab(pack if pack is not None else F.ACTIVE_PACK.get("pack"), f"design_defaults.{key}", default)
 
 
 def _tags(s: str) -> set[str]:
@@ -144,10 +154,13 @@ def product_type_for(pack: dict) -> dict:
     rows = _rows("product-types")
     by_id = {r["id"]: r for r in rows}
     if pack["slug"] in by_id:
-        return by_id[pack["slug"]]
-    wanted = _tags(",".join(pack.get("aliases") or [])) | {pack["slug"].split("-")[0]}
-    best = max(rows, key=lambda r: _score(_tags(r["tags"]), wanted))
-    return best if _score(_tags(best["tags"]), wanted) else by_id.get("admin-dashboard", rows[0])
+        best = by_id[pack["slug"]]
+    else:
+        wanted = _tags(",".join(pack.get("aliases") or [])) | {pack["slug"].split("-")[0]}
+        best = max(rows, key=lambda r: _score(_tags(r["tags"]), wanted))
+        best = best if _score(_tags(best["tags"]), wanted) else by_id.get("admin-dashboard", rows[0])
+    ks = _dd(pack, "key_screens")
+    return dict(best, key_screens=",".join(map(str, ks))) if ks else best
 
 
 def pick_palette(ptype: dict, ui: dict, prefer_dark: bool) -> dict:
@@ -225,7 +238,7 @@ def design_tokens(pal: dict, typo: dict, style: dict, ui: dict, ptype: dict, reg
         "$schema": "https://design-tokens.github.io/community-group/format/",
         "foundry": {"palette": pal["id"], "typography": typo["id"], "style": style["id"], "product_type": ptype["id"], "touch_min": touch,
                     "operational": operational, "tabular_numerals": True, "rtl": region_rtl, "text_roles": TEXT_ROLES, "non_text_only": non_text_only,
-                    "themes": ui.get("themes") or {}},
+                    "themes": ui.get("themes") or F.vocab(F.ACTIVE_PACK.get("pack"), "design_defaults.theme_names") or {}},
         "color": {"light": color, "dark": {k: {"$type": "color", "$value": v, "$extensions": src(f"palettes.csv:{pal['id']}")} for k, v in dark.items()}},
         "font": {"family": {"heading": {"$type": "fontFamily", "$value": typo["heading_font"], "$extensions": src(f"typography.csv:{typo['id']}")},
                             "body": {"$type": "fontFamily", "$value": typo["body_font"], "$extensions": src(f"typography.csv:{typo['id']}")},
@@ -286,13 +299,16 @@ def _rules_for(ptype: dict, categories: list[str] | None = None, max_priority: i
     return [r for _, _, r in picked[:limit]]
 
 
+OPERATIONAL_COMPONENTS = ["numpad", "tender-keypad", "pin-pad", "quantity-stepper", "order-card", "receipt-preview", "banner-offline", "split-bill", "customer-display", "virtual-list"]
+
+
 def components_for(ptype: dict, screens: list[str]) -> list[dict]:
     rows = _rows("components")
     keys = _tags(ptype["key_screens"]) | set(screens)
     base = {"button", "icon-button", "input", "select", "dialog", "toast", "empty-state", "skeleton", "data-table", "tabs", "badge", "search", "sidebar" if ptype["nav_pattern"] == "sidebar" else "bottom-tabs"}
-    ops = {"numpad", "tender-keypad", "pin-pad", "quantity-stepper", "modifier-sheet", "kds-ticket", "order-card", "table-map-tile", "receipt-preview", "banner-offline", "split-bill", "floor-canvas", "customer-display", "virtual-list"}
+    ops = set(map(str, _dd(None, "component_set") or OPERATIONAL_COMPONENTS))
     wanted = set(base)
-    if ptype["density"] == "high" and ("pos" in ptype["tags"] or "kds" in ptype["tags"]):
+    if ptype["density"] == "high" and ("pos" in ptype["tags"] or "queue" in ptype["tags"]):
         wanted |= ops
     if "trading" in ptype["tags"] or "analytics" in ptype["tags"] or "reports" in keys:
         wanted |= {"chart-card", "kpi-tile"}
@@ -474,15 +490,15 @@ def _comp_ids_for_screen(screen_id: str, section: str, ptype: dict) -> list[str]
     all_ids = {r["id"] for r in _rows("components")}
     text = (section + " " + screen_id).lower()
     picked = {"button", "empty-state", "skeleton", "toast"}
-    hints = {"numpad": "numpad", "keypad": "tender-keypad", "pin": "pin-pad", "qty": "quantity-stepper", "modifier": "modifier-sheet", "table": "data-table", "kds": "kds-ticket",
+    hints = {"numpad": "numpad", "keypad": "tender-keypad", "pin": "pin-pad", "qty": "quantity-stepper", "modifier": "modifier-sheet", "table": "data-table",
              "item grid": "order-card", "floor": "floor-canvas", "receipt": "receipt-preview", "offline": "banner-offline", "split": "split-bill", "chart": "chart-card", "kpi": "kpi-tile",
              "tabs": "tabs", "search": "search", "dialog": "dialog", "modal": "dialog", "sheet": "bottom-sheet", "select": "select", "date": "date-picker", "timeline": "data-table",
              "customer display": "customer-display", "chip": "chip", "badge": "badge", "drawer": "drawer", "list": "virtual-list", "input": "input", "form": "input", "switch": "switch"}
+    hints.update({str(k): str(v) for k, v in (_dd(None, "component_hints") or {}).items()})
     for k, v in hints.items():
         if k in text:
             picked.add(v)
-    if screen_id in ("table-map", "floor-editor"):
-        picked |= {"table-map-tile", "floor-canvas"}
+    picked |= set(map(str, (_dd(None, "screen_components") or {}).get(screen_id) or []))
     if screen_id in ("order-entry",):
         picked |= {"order-card", "quantity-stepper", "modifier-sheet", "numpad", "banner-offline"}
     if screen_id == "tender":
@@ -527,24 +543,24 @@ def _wireframe(screen_id: str, zones: str, phone: bool = False) -> list[str]:
     return lines[:20]
 
 
-SCREEN_TYPES = {"order-entry": "order-entry", "tender": "tender", "kds": "kds", "delivery-inbox": "kds", "table-map": "table-map", "floor-editor": "table-map",
+SCREEN_TYPES = {"order-entry": "order-entry", "tender": "tender", "work-queue": "queue", "board": "board",
                 "receipt-preview": "receipt", "reports": "reports", "split-bill": "tender", "refund": "tender", "manager-pin": "tender", "shift-open": "form", "shift-close": "form",
-                "end-of-day": "form", "menu-management": "list", "inventory": "list", "purchasing": "list", "staff-roles": "list", "reservations": "list", "customer-lookup": "list",
+                "end-of-day": "form", "catalog": "list", "inventory": "list", "purchasing": "list", "staff-roles": "list", "reservations": "list", "customer-lookup": "list",
                 "sync-status": "generic", "branch-switcher": "generic", "recipe-editor": "form", "modifier-sheet": "form", "qr-self-order": "order-entry"}
 
 
 def _copy_rows() -> dict[str, dict]:
-    p = DATA / "copy.csv"
-    if not p.exists():
-        return {}
-    with p.open(encoding="utf-8", newline="") as fh:
-        return {r["id"]: r for r in csv.DictReader(fh)}
+    """data/copy.csv, then the active pack's reference/copy.csv, then `vocabulary.copy_overrides` (last wins)."""
+    rows = {r["id"]: r for r in _rows("copy")}
+    for cid, langs in (F.vocab(F.ACTIVE_PACK.get("pack"), "copy_overrides") or {}).items():
+        rows[cid] = dict(rows.get(cid) or {"id": cid, "context": "override", "reviewed": "false"}, **{k: str(v) for k, v in (langs or {}).items()})
+    return rows
 
 
 def copy_for(state: str, screen_id: str, langs: list[str]) -> tuple[str, str, str]:
     """(en, ar, ur) for a screen state; falls back to generic type rows. Unreviewed rows carry a marker."""
     rows = _copy_rows()
-    stype = SCREEN_TYPES.get(screen_id, "generic")
+    stype = {**SCREEN_TYPES, **(_dd(None, "screen_types") or {})}.get(screen_id, "generic")
     for key in (f"state.{state}.{screen_id}", f"state.{state}.{stype}", f"state.{state}.generic"):
         r = rows.get(key)
         if r:
@@ -606,8 +622,9 @@ def screen_spec_md(screen_id: str, jobs: list[dict], pack: dict, section: str, s
         out.append(f"| {st} | {copy} |" + (f" {ar_cell} |" if ar_col else "") + (f" {ur or '<!-- ur: translate -->'} |" if ur_col else "") + f" {note} |")
     out += ["", "## Validation and error copy", "", "- `FRM-02` Error copy says what happened and how to fix it in one sentence.", "- `FRM-01` Validate on blur; re-validate on change after the first error; summarise on submit.",
             "- `FRM-03` Submit stays enabled; errors listed on attempt.", "", "## Keyboard and shortcuts", "", "| Key | Action |", "|-----|--------|"]
-    kb = {"kds": [("1–9", "bump ticket in slot"), ("R", "recall last bump"), ("S", "cycle station")], "order-entry": [("digits", "PLU search"), ("Enter", "add highlighted item"), ("Escape", "close sheet")],
-          "tender": [("digits", "amount"), ("Enter", "complete"), ("Escape", "cancel card wait")], "table-map": [("Arrows", "move between tables"), ("Enter", "open order")]}
+    kb = {"order-entry": [("digits", "PLU search"), ("Enter", "add highlighted item"), ("Escape", "close sheet")],
+          "tender": [("digits", "amount"), ("Enter", "complete"), ("Escape", "cancel card wait")], "board": [("Arrows", "move between tiles"), ("Enter", "open record")]}
+    kb.update({str(k): [(str(key), str(act)) for key, act in (v or {}).items()] for k, v in (_dd(pack, "keyboard") or {}).items()})
     for k, a in kb.get(screen_id, [("Tab / Shift+Tab", "move focus"), ("Enter", "activate"), ("Escape", "close dialog or sheet")]):
         out.append(f"| {k} | {a} |")
     out += ["", "## Accessibility checklist", ""] + [f"- `{r}`" for r in a11y]

@@ -16,13 +16,13 @@ from typing import Any
 
 import foundry as F
 
-CONTEXTS = ["ordering", "kitchen", "payments", "menu", "inventory", "people", "reporting", "sync"]
-CONTEXT_HINTS = {
-    "ordering": ["Order", "OrderLine", "Table", "Course", "Reservation", "Record", "Tenant"],
-    "kitchen": ["KitchenTicket"],
-    "payments": ["Payment", "Tender", "Refund", "Receipt", "Discount", "TaxRule", "Transaction"],
-    "menu": ["MenuItem", "Variant", "Modifier", "ModifierGroup", "Product", "Instrument"],
-    "inventory": ["InventoryItem", "Recipe", "StockMovement", "Sale", "Return", "Position"],
+CONTEXTS = ["ordering", "fulfilment", "payments", "catalog", "inventory", "people", "reporting", "sync"]
+CONTEXT_HINTS = {  # core defaults; a pack's `contexts` replaces them (pack-agnostic core, schema 2.0)
+    "ordering": ["Order", "OrderLine", "Booking", "Reservation", "Record", "Tenant"],
+    "fulfilment": ["Task", "Shipment", "WorkItem"],
+    "payments": ["Payment", "Tender", "Refund", "Receipt", "Discount", "TaxRule", "Transaction", "Invoice"],
+    "catalog": ["Product", "Variant", "Service", "Instrument", "PriceList"],
+    "inventory": ["InventoryItem", "StockMovement", "Sale", "Return", "Position"],
     "people": ["Branch", "Staff", "Role", "Customer", "User", "Account"],
     "reporting": ["AuditEvent", "Notification"],
     "sync": ["SyncEvent"],
@@ -55,13 +55,13 @@ def _camel_state(state: str) -> str:
     return "".join(w.capitalize() for w in re.split(r"[-_ ]", state))
 
 
-OFFLINE_CONTEXTS = {"ordering", "kitchen", "menu"}
+OFFLINE_CONTEXTS = {"ordering", "fulfilment", "catalog"}
 _DEFAULT_CONTEXTS, _DEFAULT_HINTS, _DEFAULT_OFFLINE = list(CONTEXTS), {k: list(v) for k, v in CONTEXT_HINTS.items()}, set(OFFLINE_CONTEXTS)
 
 
 def apply_pack_contexts(pack: dict) -> None:
     """Generalisation fix (P10): a pack may declare `contexts: {name: [Entity, …]}` and `offline_contexts: [name, …]`;
-    they replace the restaurant defaults for every skeleton that runs after this call."""
+    they replace the core defaults for every skeleton that runs after this call."""
     global CONTEXTS, CONTEXT_HINTS, OFFLINE_CONTEXTS
     CONTEXTS, CONTEXT_HINTS, OFFLINE_CONTEXTS = list(_DEFAULT_CONTEXTS), {k: list(v) for k, v in _DEFAULT_HINTS.items()}, set(_DEFAULT_OFFLINE)  # reset: packs without `contexts` keep the defaults
     ctx = pack.get("contexts")
@@ -208,13 +208,12 @@ def cbm_present() -> bool:
 
 
 # ----------------------------------------------------------------------------- query
-def run_query(root: Path, name: str, filters: dict[str, str], n: int, as_json: bool) -> int:
+def run_query(root: Path, name: str, filters: dict[str, str], n: int, as_json: bool, pack: str | None = None) -> int:
     p = root / "data" / (name if name.endswith(".csv") else f"{name}.csv")
     if not p.exists():
         print(f"query: {p} not found")
         return 1
-    with p.open(encoding="utf-8", newline="") as fh:
-        rows = list(csv.DictReader(fh))
+    rows = F.data_rows(p.stem, root, pack or "")
     for col, val in filters.items():
         if rows and col not in rows[0]:
             print(f"query: unknown column '{col}'; columns: {', '.join(rows[0].keys())}")
@@ -282,9 +281,12 @@ def domain_skeleton(pack: dict, ledger: dict, project: Path) -> tuple[dict, str]
         for t in transitions:
             ev = f"{name}{_camel_state(t['to'])}"
             consumers = ["reporting"]
-            if ctx == "ordering" and t["to"] in ("sent", "fired", "in-progress"):
-                consumers.append("kitchen")
-            sync_ctx = (OFFLINE_CONTEXTS | {"payments"}) if pack.get("contexts") else {"ordering", "payments"}
+            extra = F.vocab(pack, "event_consumers") or ({"fulfilment": {"from": ["ordering"], "states": ["sent", "fired", "in-progress"]}} if "fulfilment" in CONTEXTS else {})
+            for consumer, rule in extra.items():
+                if consumer != "sync" and ctx in (rule.get("from") or []) and (not rule.get("states") or t["to"] in rule["states"]):
+                    consumers.append(consumer)
+            sync_rule = extra.get("sync") or {}
+            sync_ctx = set(sync_rule["from"]) if sync_rule.get("from") else ((OFFLINE_CONTEXTS | {"payments"}) if pack.get("contexts") else {"ordering", "payments"})
             if OFFLINE_CONTEXTS and ctx in sync_ctx:
                 consumers.append("sync")
             events.append({"name": ev, "entity": name, "transition": f"{t['from']}->{t['to']}", "producer": ctx, "consumers": [c for c in consumers if c != ctx] or ["reporting"]})
@@ -309,11 +311,12 @@ def context_md(pack: dict, ledger: dict, project: Path, domain: dict, jobs: list
     entity_names = [e["name"] for e in domain["entities"]]
     scope_tokens = {w for i in jobs + feats for w in i.split("-")} | {F._stem(w) for e in entity_names for w in F._norm(_kebab(e)).split()}
     rows = _glossary_rows(pack, F.ROOT)
+    hint_terms = {str(t).lower() for t in F.vocab(pack, "glossary_hint_terms", [])}  # pack 2.0: always kept
     kept = []
     for r in rows:
         term_tokens = {F._stem(w) for w in F._norm(r["term"]).split()}
         alias_tokens = {F._stem(w) for w in F._norm(r.get("aliases", "")).split()}
-        if term_tokens & scope_tokens or alias_tokens & scope_tokens or r["term"] in entity_names:
+        if term_tokens & scope_tokens or alias_tokens & scope_tokens or r["term"] in entity_names or r["term"].lower() in hint_terms:
             kept.append(r)
     covered_terms = {r["term"].lower() for r in kept}
     out = [f"# {name} — CONTEXT", "", purpose, "", "Ubiquitous language for this project. Every noun in the PRD, the domain model and the code uses",
@@ -419,6 +422,15 @@ def _ref(ledger: dict, *ids: str) -> tuple[list[str], str]:
     return refs, (" ".join(f"[{r}]" for r in refs) if refs else "(pack-default)")
 
 
+def _hint(pack: dict, idn: str, default: str) -> str:
+    """Pack 2.0 `vocabulary.adr_hints[<id>]`: the domain sentence(s) an ADR context weaves in; generic fallback."""
+    return str(F.vocab(pack, f"adr_hints.{idn}", default)).strip()
+
+
+def _mobile_stack(sd: dict) -> str:
+    return next((str(v) for k, v in sd.items() if str(k).startswith("mobile")), "expo")
+
+
 def _adr(idn: str, title: str, refs: list[str], context: str, decision: str, alternatives: list[tuple[str, str]], consequences: list[str], revisit: str) -> str:
     out = ["---", f"id: {F._yq(idn)}", f"title: {F._yq(title)}", "status: accepted", f"decision_refs: {F._yq(refs)}", f"date: {F._yq(F._now()[:10])}", "---", "",
            f"# ADR {idn}: {title}", "", "## Context", "", context, "", "## Decision", "", decision, "", "## Alternatives", "",
@@ -443,66 +455,67 @@ def arch_skeleton(pack: dict, ledger: dict, domain: dict | None) -> tuple[dict[s
     stack_id = _stack_id(pack, ledger)
     langs = reg.get("receipt_lang") or reg.get("languages") or ["en"]
     adrs: dict[str, str] = {}
-    r, c = _ref(ledger, "offline", "platform")
+    xr = lambda idn: [str(x) for x in (F.vocab(pack, f"adr_refs.{idn}") or [])]
+    r, c = _ref(ledger, "offline", "platform", *xr("0001"))
     adrs["0001"] = _adr("0001", "Stack", r,
-        f"Pack default stack: {', '.join(f'{k} {v}' for k, v in sd.items())}. Hardware breadth (tablets, Windows terminals, kitchen screens) and offline needs {c} decide the web layer.",
-        f"Web/POS: {stack_id}. API: {sd.get('api', 'hono-node')}. Database: {sd.get('db', 'postgres')}. Offline store: {sd.get('offline', 'pglite-event-sourced-sync')}. Realtime: {sd.get('realtime', 'websocket')}. Mobile companion: {sd.get('mobile-waiter') or sd.get('mobile', 'expo')}. Printing: {sd.get('printing', 'escpos-local-bridge')}. Commands per layer come from data/stacks.csv.",
+        f"Pack default stack: {', '.join(f'{k} {v}' for k, v in sd.items())}. {_hint(pack, '0001', 'Device breadth (browsers, tablets, desktop terminals)')} and offline needs {c} decide the web layer.",
+        f"Web/POS: {stack_id}. API: {sd.get('api', 'hono-node')}. Database: {sd.get('db', 'postgres')}. Offline store: {sd.get('offline', 'pglite-event-sourced-sync')}. Realtime: {sd.get('realtime', 'websocket')}. Mobile companion: {_mobile_stack(sd)}. Printing: {sd.get('printing', 'escpos-local-bridge')}. Commands per layer come from data/stacks.csv.",
         [("Native apps only (Expo everywhere)", "no Windows POS terminal path; slower hardware iteration"), ("NestJS API", "heavier DI framework for a small team; hono covers the routing and middleware needed")],
         ["One TypeScript language across web, api, bridge and mobile", "PWA install on tablets; store submission only for the companion app", "stacks.csv is the source of truth for scaffold, test, typecheck, lint and a11y commands"],
         "A native-only device (kiosk hardware without a browser) enters scope, or team size passes 8 engineers.")
-    r, c = _ref(ledger, "service-model", "branches")
+    r, c = _ref(ledger, "service-model", "branches", *xr("0002"))
     adrs["0002"] = _adr("0002", "Auth and sessions", r,
-        f"Two actor classes: devices (POS terminals, KDS screens, print bridge) and staff (PIN, roles). Guarded actions need a manager override. Personas: {', '.join(pack.get('personas') or [])} {c}.",
+        f"{_hint(pack, '0002', 'Two actor classes: devices (terminals, shared screens, print bridge) and staff (PIN, roles). Guarded actions need a manager override.')} Personas: {', '.join(pack.get('personas') or [])} {c}.",
         "Device auth: each terminal enrolled once with a long-lived device token bound to a branch; rotated on re-enrol. Staff auth: 4–6 digit PIN hashed with Argon2id per branch, 3-strike 60 s lockout, verified offline against the local hash. Manager override: PIN of a staff whose role carries the permission, recorded as approver on the audit event. Owner and back-office web: email + password with optional TOTP. Sessions: device token (30 d absolute) plus staff session (shift-bound); server tokens are httpOnly cookies for web and bearer for devices.",
         [("Per-staff passwords on the POS", "too slow at the till; PINs are the industry norm"), ("Shared terminal login without staff identity", "no per-actor audit trail; fails the audit control")],
         ["Every mutating request carries device id and staff id", "Offline PIN verification works from the local hash cache", "Role matrix lives in the people context and syncs to devices"],
         "SSO for back-office users is requested, or a regulator requires biometric staff sign-in.")
-    r, c = _ref(ledger, "branches", "central-menu-sync")
+    r, c = _ref(ledger, "branches", *xr("0003"))
     adrs["0003"] = _adr("0003", "Tenancy and branches", r,
-        f"Branches decision: {'multi-branch' if multi else 'single branch'} {c}. Every financial record is scoped to a branch; receipts, floats and tax rules are per branch.",
+        f"Branches decision: {'multi-branch' if multi else 'single branch'} {c}. {_hint(pack, '0003', 'Every financial record is scoped to a branch; receipts and tax rules are per branch.')}",
         f"Single organisation (tenant) per deployment with branch_id on every operational table; Postgres row-level security keyed by branch for device roles, organisation-wide for owner roles. {'Central menu published to branches with per-branch price overrides.' if multi else 'Schema is multi-branch ready; a second branch is a data row, not a migration.'} No cross-organisation tenancy in this release.",
         [("Multi-tenant SaaS from day one", "adds RLS complexity and billing before the first customer runs"), ("Database per branch", "reporting across branches becomes ETL; sync harder")],
         ["Branch switcher only for owner roles", "Consolidated reports are simple SQL", "Adding organisations later means adding tenant_id above branch_id"],
         "A second organisation must share the deployment, or a branch must run on its own server.")
-    r, c = _ref(ledger, "region")
+    r, c = _ref(ledger, "region", *xr("0004"))
     adrs["0004"] = _adr("0004", "Data store and migrations", r,
-        f"Money in {reg.get('currency', 'AED')} with {reg.get('minor_units', 2)} minor units; {reg.get('rounding', 'rounding once per order')} {c}. Audit and fiscal records are append-only.",
+        f"Money in {reg.get('currency', 'AED')} with {reg.get('minor_units', 2)} minor units; {reg.get('rounding', 'rounding once per order')} {c}. {_hint(pack, '0004', 'Audit and fiscal records are append-only.')}",
         f"Postgres 16 as the system of record. ORM {sd.get('orm', 'prisma')} with migrations committed under prisma/ and applied by the command in stacks.csv. Money columns Decimal(12,{reg.get('minor_units', 2)}); ids uuid v7; created_at/updated_at on every table; soft delete only where an invariant demands history; audit_events and receipts append-only via grants. Backups daily, restore drill quarterly.",
         [("SQLite on the server", "single-writer; multi-terminal branches and reporting need concurrency"), ("MongoDB", "invariants are relational; RLS and constraints are the gate")],
         ["Schema skeleton generated from domain.yaml", "Every entity state is a Postgres enum", "Indexes on (branch_id, created_at) by default"],
         "Write volume exceeds one Postgres primary, or a regulator demands a certified fiscal store.")
-    r, c = _ref(ledger, "offline")
+    r, c = _ref(ledger, "offline", *xr("0005"))
     adrs["0005"] = _adr("0005", "Offline and sync", r,
-        f"Offline required: {offline} {c}. Terminals keep taking orders when the internet drops; recovery target {nfr.get('sync_recovery_s', 60)} s after reconnect.",
+        f"Offline required: {offline} {c}. {_hint(pack, '0005', 'Devices keep recording work when the internet drops;')} recovery target {nfr.get('sync_recovery_s', 60)} s after reconnect.",
         "Event-sourced outbox on the device: every write is a SyncEvent (device_id, monotonic seq, entity, payload). Orders carry a client UUID; receipt numbers come from a per-device block reserved per branch so numbering stays gapless. On reconnect events replay in seq order and are acked individually. Conflicts: last-writer-wins per field, Payments append-only, voids beat edits; unresolvable conflicts surface on the sync-status screen. Server pushes menu and table state over websocket; devices pull on reconnect.",
         [("CRDT document per order", "harder to audit and to reason about for money; the outbox rule set from workflows.md is enough"), ("Online-only with a queue", "fails the offline gate")],
         ["Device store is pglite (same SQL dialect as the server)", "Sync endpoints /sync/push and /sync/pull with per-device sequence", "Receipt block allocation is a server call made while online"],
         "Two devices must edit the same order offline for long periods, or fiscal rules forbid device-side numbering.")
-    r, c = _ref(ledger, "payments", "delivery", "kds")
+    r, c = _ref(ledger, "payments", "delivery", *xr("0006"))
     adrs["0006"] = _adr("0006", "Integrations boundary", r,
-        f"Payments via {pay_name}; delivery platforms {'on' if (_decision(ledger, 'delivery') or {}).get('value') else 'off'}; printing through a local bridge {c}. Card data never enters the POS.",
+        f"Payments via {pay_name}; delivery platforms {'on' if (_decision(ledger, 'delivery') or {}).get('value') else 'off'}; printing through a local bridge {c}. {_hint(pack, '0006', 'Card data never enters the app.')}",
         "One adapter interface per integration category (PaymentAdapter, DeliveryAdapter, PrinterAdapter, AccountingAdapter, FiscalAdapter) behind the api; providers are modules selected by branch settings. Inbound webhooks are idempotent on (provider, event_id) with a stored receipt; outbound calls carry an idempotency key derived from the order or payment id. Terminal payments are semi-integrated: the api pushes the amount, the terminal returns approval code and last four; the POS stores only those.",
         [("Direct provider SDK calls from the POS UI", "spreads secrets and PCI scope to devices"), ("Middleware aggregator for delivery", "adds a vendor and a failure point; direct partner APIs exist")],
         ["Provider secrets live only in the api environment", "Every adapter ships a sandbox test", "Tablet-fallback mode covers a platform outage"],
         "A provider only offers a device-side SDK, or a fourth delivery platform is added.")
-    r, c = _ref(ledger, "branches")
+    r, c = _ref(ledger, "branches", *xr("0007"))
     adrs["0007"] = _adr("0007", "Deployment and environments", r,
-        f"Small team, {'several' if multi else 'one'} branch(es), no SRE. Local development must run on Windows without WSL {c}.",
+        f"Small team, {'several' if multi else 'one'} branch(es), no SRE. {_hint(pack, '0007', 'Local development must run on Windows without WSL')} {c}.",
         "Local: docker compose with postgres and the api; web via the framework dev server; the print bridge runs natively. Production default: one VPS or Fly.io app per organisation with managed Postgres, TLS at the edge, nightly backups. Environments: local, staging, production; secrets injected by the platform; preview environment per PR is added in P7 when CI exists.",
         [("Kubernetes", "operational cost far above a single-organisation deployment"), ("Serverless functions", "websocket fan-out and long-lived sync connections fit poorly")],
         ["Same container image for staging and production", "Deploy is one command in the runbook", "Wizard covers DNS, secrets and provider onboarding"],
         "More than 100 branches, multi-region residency, or a second organisation.")
-    r, c = _ref(ledger, "offline")
+    r, c = _ref(ledger, "offline", *xr("0008"))
     adrs["0008"] = _adr("0008", "Observability", r,
-        f"Operational app with offline devices: failures surface late unless every request and sync event is traceable {c}.",
+        f"{_hint(pack, '0008', 'Operational app with offline devices: failures surface late unless every request and sync event is traceable')} {c}.",
         "Structured JSON logs with request id, device id, staff id and branch id on every line; error tracking with source maps for web, api and bridge; metrics for sync queue depth, ticket age and payment latency; health endpoint per container; alerts on fiscal reporting backlog (SA 20 h) and sync lag over 5 min.",
         [("Console logs only", "no correlation across device, api and provider"), ("Full tracing platform on day one", "cost and setup exceed the first release; add when p95 targets are missed")],
         ["Request id propagates from device to provider calls", "Sync-status screen reads the same metrics", "Log retention 30 days, audit table forever"],
         "p95 targets are missed and logs cannot explain why.")
-    r, c = _ref(ledger, "region")
+    r, c = _ref(ledger, "region", *xr("0009"))
     adrs["0009"] = _adr("0009", "Internationalisation and RTL", r,
-        f"Region {region}; receipt languages {', '.join(map(str, langs))} {c}. Arabic and Urdu need right-to-left layouts and bilingual receipts.",
-        "ICU message catalogs per language; logical CSS properties throughout; full mirroring for RTL except numerals, prices, numpads, QR codes and floor coordinates; menu items carry name per language; receipts render both blocks with identical totals; locale-aware number and date formatting with Western numerals by default and Arabic-Indic per branch setting.",
+        f"Region {region}; receipt languages {', '.join(map(str, langs))} {c}. {_hint(pack, '0009', 'Arabic and Urdu need right-to-left layouts and bilingual receipts.')}",
+        f"ICU message catalogs per language; logical CSS properties throughout; full mirroring for RTL except numerals, prices, numpads, QR codes and {F.term(pack, 'canvas', 'canvas')} coordinates; {F.term(pack, 'catalog_items', 'catalog items')} carry name per language; receipts render both blocks with identical totals; locale-aware number and date formatting with Western numerals by default and Arabic-Indic per branch setting.",
         [("English-only first release", "receipt language is a legal requirement in the region"), ("Machine-translated UI", "operational terms need reviewed translations")],
         ["Every screen spec carries an RTL note", "Pseudo-localisation test in CI", "Fonts with Naskh/Nastaliq fallback"],
         "A language outside en, ar, ur is required.")
@@ -512,18 +525,19 @@ def arch_skeleton(pack: dict, ledger: dict, domain: dict | None) -> tuple[dict[s
 
 def architecture_md(pack: dict, ledger: dict, domain: dict | None, stack_id: str, multi: bool, offline: bool, pay_name: str) -> str:
     sd = pack.get("stack_default") or {}
+    containers = F.vocab(pack, "containers") or [
+        {"name": "web", "tech": "stack", "does": "Operator and manager screens; offline store; print jobs", "talks_to": "api, print-bridge, offline-store"},
+        {"name": "mobile", "tech": "mobile", "does": "Handheld companion", "talks_to": "api"}]
     tb = TRUST_BOUNDARIES if (_decision(ledger, "delivery") or {}).get("value") else TRUST_BOUNDARIES[:6]
     out = ["---", f"pack: {F._yq(pack['slug'])}", f"stack_id: {F._yq(stack_id)}", f"adr_ids: {F._yq(ADR_IDS)}", f"trust_boundaries: {F._yq(tb)}", f"decisions_hash: {F._yq(F.decisions_hash(ledger))}", "---", "",
            f"# Architecture — {pack['name']}", "", "ADRs under .foundry/adr/. Containers follow C4 level 2.", "",
            "## Containers", "", "| Name | Tech | Responsibility | Talks to |", "|------|------|----------------|----------|",
-           f"| pos-web | {stack_id} | Cashier, waiter and manager screens; offline store; print jobs | api, print-bridge, offline-store |",
-           f"| kds-web | {stack_id} | Kitchen display per station | api (websocket) |",
-           f"| mobile-waiter | {sd.get('mobile-waiter') or sd.get('mobile', 'expo')} | Handheld order taking | api |",
+           *[f"| {k['name']} | {stack_id if k['tech'] == 'stack' else sd.get(k['tech']) or (_mobile_stack(sd) if k['tech'] == 'mobile' else k['tech'])} | {k['does']} | {k['talks_to']} |" for k in containers],
            f"| api | {sd.get('api', 'hono-node')} | Domain services, authz, sync, adapters, webhooks | db, payment-provider, delivery-platform, accounting, fiscal |",
            f"| db | {sd.get('db', 'postgres')} | System of record with RLS | - |",
-           f"| offline-store | {sd.get('offline', 'pglite')} | Device-local data and outbox | pos-web |",
+           f"| offline-store | {sd.get('offline', 'pglite')} | Device-local data and outbox | {containers[0]['name']} |",
            "| print-bridge | node escpos | LAN service driving printers and cash drawer | printers |",
-           "| realtime | websocket | Ticket and table state fan-out per branch | pos-web, kds-web |", "",
+           f"| realtime | websocket | {F.term(pack, 'live_state', 'Live state')} fan-out per branch | {', '.join(k['name'] for k in containers if not str(k['tech']).startswith('mobile'))} |", "",
            "## Trust boundaries", ""]
     desc = {"internet<->edge": "public clients to TLS edge; rate limits, WAF", "edge<->api": "authenticated device or staff session; request ids",
             "api<->db": "RLS by branch; app role has no DDL", "api<->payment-provider": "outbound only; secrets in api env; idempotency keys",
@@ -531,9 +545,9 @@ def architecture_md(pack: dict, ledger: dict, domain: dict | None, stack_id: str
             "api<->delivery-platform": "inbound webhooks verified by signature; idempotent on event id"}
     out += [f"- **{b}**: {desc[b]}" for b in tb]
     out += ["", "## Data flows (riskiest workflows)", "",
-            f"1. **Payment**: pos-web → api `POST /payments` (idempotency key) → {pay_name} terminal/gateway → approval code → api writes Payment captured, audit event → realtime → receipt job → print-bridge. Card data never crosses the pos-web or api boundary.",
-            "2. **Refund**: manager PIN on pos-web → api `POST /refunds` with approver → provider refund → Refund processed, audit event → receipt; cash refunds open the drawer via print-bridge.",
-            "3. **Offline sync**: pos-web writes to offline-store outbox → on reconnect `POST /sync/push` in seq order → api applies conflict rules (LWW per field, payments append-only) → `GET /sync/pull` returns server changes and receipt blocks → conflicts to sync-status.",
+            f"1. **Payment**: {containers[0]['name']} → api `POST /payments` (idempotency key) → {pay_name} terminal/gateway → approval code → api writes Payment captured, audit event → realtime → receipt job → print-bridge. Card data never crosses the {containers[0]['name']} or api boundary.",
+            f"2. **Refund**: manager PIN on {containers[0]['name']} → api `POST /refunds` with approver → provider refund → Refund processed, audit event → receipt; cash refunds open the drawer via print-bridge.",
+            f"3. **Offline sync**: {containers[0]['name']} writes to offline-store outbox → on reconnect `POST /sync/push` in seq order → api applies conflict rules (LWW per field, payments append-only) → `GET /sync/pull` returns server changes and receipt blocks → conflicts to sync-status.",
             "", "## Scaling and limits", "",
             f"- Concurrent terminals per branch: {(pack.get('nfr_defaults') or {}).get('concurrent_terminals_min', 3)} minimum; websocket rooms per branch.",
             "- One Postgres primary handles 100 branches at typical POS volume (hundreds of orders per branch per day).",
@@ -899,15 +913,16 @@ def api_skeleton(domain: dict, pack: dict, ledger: dict) -> tuple[dict, dict]:
         paths.setdefault(path, {})["post"] = {"operationId": opid, "summary": j["id"].replace("-", " "), "parameters": params,
                                               "requestBody": {"required": False, "content": {"application/json": {"schema": {"type": "object"}}}},
                                               "responses": responses("200", ent) if ent else responses("200"),
-                                              "x-foundry": {"job": j["id"], "personas": [j.get("persona") or personas[0]], "authz": f"role == {j.get('persona') or personas[0]} or role == {admin}; branch scope; manager PIN when the job guards it",
+                                              "x-foundry": {"job": j["id"], "personas": [j.get("persona") or personas[0]], "authz": f"role == {j.get('persona') or personas[0]} or role == {admin}; branch scope; {F.vocab(pack, 'authz_guard', 'step-up approval when the job guards it')}",
                                                             "idempotent": True, "offline_capable": bool(ent and _context_for(ent) in OFFLINE_CONTEXTS and offline_ok), "audit": True}}
         job_ops += 1
+    sync_persona = next((str(j.get("persona")) for j in pack.get("jobs") or [] if j.get("id") == "offline-sync" and j.get("persona")), personas[0])
     sync_ok = {"200": {"description": "OK", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": resp_err, "401": resp_err, "409": resp_err}
     paths["/sync/push"] = {"post": {"operationId": "sync_push", "summary": "Push device outbox events in sequence order", "parameters": [{"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}}],
                                     "requestBody": {"required": True, "content": {"application/json": {"schema": {"type": "object", "properties": {"device_id": {"type": "string"}, "events": {"type": "array", "items": {"type": "object", "properties": {"seq": {"type": "integer"}, "entity": {"type": "string"}, "payload": {"type": "object"}}}}}}}}},
-                                    "responses": sync_ok, "x-foundry": {"job": "offline-sync", "personas": ["cashier"], "authz": "device token; branch of the device", "idempotent": True, "offline_capable": False, "audit": True}}}
+                                    "responses": sync_ok, "x-foundry": {"job": "offline-sync", "personas": [sync_persona], "authz": "device token; branch of the device", "idempotent": True, "offline_capable": False, "audit": True}}}
     paths["/sync/pull"] = {"get": {"operationId": "sync_pull", "summary": "Pull server changes since a device sequence", "parameters": [{"name": "since_seq", "in": "query", "schema": {"type": "integer"}}, {"name": "device_id", "in": "query", "required": True, "schema": {"type": "string"}}],
-                                   "responses": sync_ok, "x-foundry": {"job": "offline-sync", "personas": ["cashier"], "authz": "device token; branch of the device", "idempotent": True, "offline_capable": False, "audit": False}}}
+                                   "responses": sync_ok, "x-foundry": {"job": "offline-sync", "personas": [sync_persona], "authz": "device token; branch of the device", "idempotent": True, "offline_capable": False, "audit": False}}}
     if not offline_ok:
         paths.pop("/sync/push", None); paths.pop("/sync/pull", None)  # generalisation fix (P10): no device sync API for offline-forbidden packs
     for cat, providers in (pack.get("integrations") or {}).items():

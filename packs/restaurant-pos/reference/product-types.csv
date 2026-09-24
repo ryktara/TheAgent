@@ -1,0 +1,6 @@
+id,name,tags,default_style,default_palette_tag,default_typography_tag,density,nav_pattern,key_screens,anti_patterns,after
+restaurant-pos,Restaurant POS,"pos,restaurant,operational,food",high-contrast-operational,pos,operational,high,action-bar,"table-map,order-entry,tender,kds,shift-close,reports","modal-per-action,small-targets,hover-only",
+kds,Kitchen Display,"kds,kitchen,operational,dark",high-contrast-operational,kds,operational,high,station-tabs,"kds,delivery-inbox","light-theme,small-text,colour-only",restaurant-pos
+restaurant-reservations,Restaurant Reservations,"restaurant,booking,hospitality",hospitality-warm,hospitality,hospitality,medium,top-nav,"availability,booking,waitlist,guests",dense,hotel-pms
+cloud-kitchen-ops,Cloud Kitchen Ops,"kds,restaurant,delivery,operational",high-contrast-operational,kds,operational,high,station-tabs,"delivery-inbox,kds,brands,reports",light-only,iot-monitoring
+inventory-restaurant,Restaurant Inventory,"inventory,restaurant,admin",table-first,pos,operational,high,sidebar,"inventory,recipe-editor,purchasing,wastage",playful,catering-manager

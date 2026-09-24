@@ -114,4 +114,4 @@ Text-safe roles for any component label: text, text_muted, primary_fg. Non-text-
 - `PRT-03` QR code at least 25 mm square with quiet zone; one per receipt
 - `PRT-04` Header: branch name, address, tax number; footer: receipt number, date, device
 - `PRT-05` Bilingual receipt: Arabic block first for SA, English first for AE unless toggled
-- `PRT-06` Kitchen tickets: item names 2x size, modifiers indented, seat and course tags
+- `PRT-07` Reprint stamped REPRINT; voided receipts print VOID

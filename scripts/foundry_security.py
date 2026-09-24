@@ -12,8 +12,8 @@ from typing import Any
 import foundry as F
 
 DATA = F.ROOT / "data"
-MONEY_JOBS = {"take-payment", "refund", "hold-void-comp", "apply-discount", "open-close-shift", "end-of-day", "tips-service-charge", "split-bill", "sell", "return-exchange", "close-day", "fund", "trade"}
-MONEY_TOKENS = ("payment", "refund", "void", "comp", "discount", "shift", "tender", "sell", "return", "fund", "trade", "settle")
+# Generic money tokens; a pack's `vocabulary.money_tokens` (schema 2.0) replaces them for its jobs.
+MONEY_TOKENS = ("payment", "refund", "void", "discount", "tender", "settle")
 SEVERITY = {"low": 1, "medium": 2, "high": 3}
 BOUNDARY_TYPE = {"internet<->edge": "internet-edge", "edge<->api": "edge-api", "api<->db": "api-db", "api<->payment-provider": "api-third-party",
                  "api<->delivery-platform": "webhook-inbound", "terminal<->local-print-bridge": "terminal-print-bridge", "device<->offline-store": "device-offline-store",
@@ -22,8 +22,16 @@ DOD = ["typecheck", "unit", "integration", "e2e-smoke", "a11y-axe", "lint", "sem
 
 
 def _rows(name: str) -> list[dict]:
-    with (DATA / f"{name}.csv").open(encoding="utf-8", newline="") as fh:
-        return list(csv.DictReader(fh))
+    return F.data_rows(name)
+
+
+def _money_tokens(pack: dict | None = None) -> tuple[str, ...]:
+    pack = pack if pack is not None else F.ACTIVE_PACK.get("pack") or {}
+    return tuple(str(t) for t in (F.vocab(pack, "money_tokens") or MONEY_TOKENS))
+
+
+def _money_job(job: str, pack: dict | None = None) -> bool:
+    return any(t in job for t in _money_tokens(pack))
 
 
 def _fm(path: Path) -> tuple[dict, str]:
@@ -86,7 +94,7 @@ def applicable_controls(pack: dict, ledger: dict, arch_fm: dict, spec: dict) -> 
 def _money_op(op: dict) -> bool:
     xf = op.get("x-foundry") or {}
     job = str(xf.get("job", ""))
-    return job in MONEY_JOBS or any(t in job for t in MONEY_TOKENS) or any(t in str(op.get("operationId", "")) for t in ("payment", "refund"))
+    return _money_job(job) or any(t in str(op.get("operationId", "")) for t in ("payment", "refund"))
 
 
 def threat_skeleton(pack: dict, ledger: dict, arch_fm: dict, spec: dict, prd_sections: dict) -> tuple[str, dict]:
@@ -129,7 +137,7 @@ def threat_skeleton(pack: dict, ledger: dict, arch_fm: dict, spec: dict, prd_sec
         out.append(f"| {i} | {score} | {b} | {threat} ({pid}) | {shown} |")
     out += ["", "## Abuse cases", "", "<!-- model: write one table per risky workflow (payment, refund, offline sync): actor, goal, path, control that stops it, residual risk -->", "",
             "| Workflow | Actor | Goal | Path | Stopped by | Residual |", "|----------|-------|------|------|------------|----------|",
-            "| payment | cashier | pocket cash by marking card paid | mark tender card without terminal approval | `SEC-PAY-02` approval code required; `SEC-PAY-05` nightly reconciliation | manual approval-code entry offline, audited |",
+            f"| payment | {(pack.get('personas') or ['operator'])[0]} | pocket cash by marking card paid | mark tender card without terminal approval | `SEC-PAY-02` approval code required; `SEC-PAY-05` nightly reconciliation | manual approval-code entry offline, audited |",
             "| refund | manager | refund to own card | refund to a tender not on the order | `SEC-PAY-04` refund via provider token of the original payment; `SEC-BL-04` cap | cash refund fallback needs owner PIN |",
             "| offline sync | device | replay events to duplicate orders | resend outbox with reused seq | `SEC-API-11` monotonic seq; `SEC-BL-11` client UUID dedupe | none beyond audit |", "",
             "## Blocking findings", "", "- none", ""]
@@ -261,6 +269,14 @@ def _entity_order(domain: dict) -> list[str]:
     return order
 
 
+SCAFFOLD_TITLES = {'auth': 'Auth: device enrolment, staff sign-in, step-up approval', 'tenancy': 'Tenancy and branch scoping with RLS', 'schema': 'Schema, migrations, seed data', 'tokens': 'Design tokens, shell layout, RTL switch, component base', 'offline': 'Offline store and sync outbox'}
+
+
+def _title(pack: dict, key: str) -> str:
+    """Pack 2.0 `vocabulary.scaffold_ticket_titles.<key>` for T-001..T-005; generic fallback."""
+    return str(F.vocab(pack, f"scaffold_ticket_titles.{key}", SCAFFOLD_TITLES[key]))
+
+
 def tickets_skeleton(project: Path, root: Path) -> list[dict]:
     import foundry_phases as P
     sel = F.load_selection(project)
@@ -310,7 +326,7 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
              "Given CI, When a PR opens, Then typecheck, lint, unit, a11y and semgrep jobs run and are required",
              "Given docker compose up, When the api starts, Then /health returns ok and the db accepts connections"],
       slice_=f"Monorepo from stacks.csv: web `{web_stack.get('scaffold_cmd', '')}`; api `{api_stack.get('scaffold_cmd', '')}`; prisma init; lint, typecheck, vitest, playwright+axe wired; docker compose with postgres; .env.example listing every variable; CI workflow. No CODEOWNERS.")
-    T("T-001", "Auth: device enrolment, staff PIN, manager override", "feature", ["T-000"], adrs=["0002"], ops=[o for o in ops_by_job.get("read", []) if o.startswith("staff") or o.startswith("role")],
+    T("T-001", _title(pack, "auth"), "feature", ["T-000"], adrs=["0002"], ops=[o for o in ops_by_job.get("read", []) if o.startswith("staff") or o.startswith("role")],
       controls=["SEC-AUTH-05", "SEC-AUTH-06", "SEC-AUTH-11", "SEC-SESS-01", "SEC-SESS-07", "SEC-ACC-01"], est="L",
       files=["apps/api/src/people/auth.ts", "apps/api/src/people/devices.ts", "apps/web/app/(auth)/pin/page.tsx", "packages/db/prisma/schema.prisma"],
       tests=["Given an enrolled device token, When a request carries it, Then branch scope is set and unknown tokens get 401",
@@ -318,26 +334,26 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
              "Given a void over threshold, When a manager enters a PIN, Then the approver id is stored on the audit event",
              "Given a PIN verified offline, When sync runs, Then the event is marked pending-audit"],
       slice_="Device enrolment endpoint and token middleware; Argon2id PIN hashing with local hash cache; manager override modal wired to audit; sessions table.")
-    T("T-002", "Tenancy and branch scoping with RLS", "feature", ["T-001"], adrs=["0003"], controls=["SEC-ACC-02", "SEC-ACC-05", "SEC-ACC-08"], est="M",
+    T("T-002", _title(pack, "tenancy"), "feature", ["T-001"], adrs=["0003"], controls=["SEC-ACC-02", "SEC-ACC-05", "SEC-ACC-08"], est="M",
       files=["packages/db/prisma/migrations/", "apps/api/src/people/branch.ts", "apps/api/src/middleware/scope.ts"],
       tests=["Given two branches, When a device of branch A lists orders, Then only branch A rows return",
              "Given an owner session, When the branch switcher selects B, Then reads and writes target B",
              "Given the app db role, When it attempts to bypass RLS, Then Postgres denies"],
       slice_="branch_id on every operational table; RLS policies; scope middleware; owner branch switcher.")
-    T("T-003", "Schema, migrations, seed data", "feature", ["T-002"], adrs=["0004"], controls=["SEC-DATA-07", "SEC-IN-04"], est="M",
+    T("T-003", _title(pack, "schema"), "feature", ["T-002"], adrs=["0004"], controls=["SEC-DATA-07", "SEC-IN-04"], est="M",
       files=["packages/db/prisma/schema.prisma", "packages/db/prisma/migrations/", "packages/db/seed.ts"],
       tests=["Given prisma/schema.prisma, When `npx prisma validate` and `migrate dev` run, Then both succeed on an empty database",
-             "Given the seed, When it runs twice, Then it is idempotent and creates one branch, roles, a menu and tax rules for the region",
+             f"Given the seed, When it runs twice, Then it is idempotent and creates one branch, roles, a {F.term(pack, 'catalog', 'catalog')} and tax rules for the region",
              "Given the audit table, When an UPDATE is attempted with the app role, Then it is denied"],
       slice_="Migrations from the generated schema with check constraints from invariants; seed for the decided region; append-only grants on audit and receipts.")
-    T("T-004", "Design tokens, shell layout, RTL switch, component base", "feature", ["T-000"], adrs=["0009"], controls=["SEC-API-08"], est="M",
+    T("T-004", _title(pack, "tokens"), "feature", ["T-000"], adrs=["0009"], controls=["SEC-API-08"], est="M",
       files=["apps/web/app/layout.tsx", "apps/web/styles/tokens.css", "packages/ui/", "design-system/"],
       tests=["Given tailwind.tokens.css, When the shell renders, Then computed styles use the token variables and tabular numerals",
              "Given the language switch, When ar is selected, Then dir=rtl is set, layout mirrors and the numpad stays LTR",
              "Given the axe scan, When the shell renders in both directions, Then zero serious violations"],
       slice_="Tokens applied; app shell with nav pattern from MASTER.md; RTL switch; base components (button, input, dialog, toast, numpad, banner-offline) from components.csv.")
     if offline_ctx:
-      T("T-005", "Offline store and sync outbox", "feature", ["T-003", "T-004"], adrs=["0005"], ops=["sync_push", "sync_pull"], controls=["SEC-API-11", "SEC-OFF-01", "SEC-OFF-03", "SEC-BL-08", "SEC-BL-11"], est="L",
+      T("T-005", _title(pack, "offline"), "feature", ["T-003", "T-004"], adrs=["0005"], ops=["sync_push", "sync_pull"], controls=["SEC-API-11", "SEC-OFF-01", "SEC-OFF-03", "SEC-BL-08", "SEC-BL-11"], est="L",
       files=["apps/web/src/offline/store.ts", "apps/web/src/offline/outbox.ts", "apps/api/src/sync/push.ts", "apps/api/src/sync/pull.ts"],
       tests=["Given the device offline, When an order is created, Then it is stored locally with a client UUID and a monotonic seq",
              "Given 500 queued events, When the connection returns, Then the queue drains within 60 s and every event is acked once",
@@ -370,10 +386,10 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
         scr = screens_by_job.get(jid, [])
         ctx = entity_ctx.get(ent, "ordering") if ent else "reporting"
         invs = inv_by_entity.get(ent, [])[:2] if ent else []
-        money = jid in MONEY_JOBS
+        money = _money_job(jid, pack)
         ctrls = (["SEC-BL-01", "SEC-LOG-02", "SEC-ACC-01"] + (["SEC-SESS-07", "SEC-API-01", "SEC-BL-05"] if money else []))[:6]
         tests = [f"Given the {scr[0] if scr else jid} screen, When {jid.replace('-', ' ')} completes, Then the {ent or 'result'} state and totals match the domain invariants" if ent else f"Given the {scr[0] if scr else jid} screen, When {jid.replace('-', ' ')} runs, Then the result matches the PRD job",
-                 f"Given offline mode, When {jid.replace('-', ' ')} runs, Then the write lands in the outbox and syncs without duplicates" if ctx in offline_ctx else f"Given a cashier role, When {jid.replace('-', ' ')} is attempted without permission, Then the api returns 403 and logs authz.denied",
+                 f"Given offline mode, When {jid.replace('-', ' ')} runs, Then the write lands in the outbox and syncs without duplicates" if ctx in offline_ctx else f"Given a {(pack.get('personas') or ['operator'])[0]} role, When {jid.replace('-', ' ')} is attempted without permission, Then the api returns 403 and logs authz.denied",
                  f"Given the screen in ar, When it renders, Then layout mirrors and the axe scan reports zero serious violations"]
         for inv in invs:
             tests.append(f"Given any sequence of actions, When the invariant '{inv[:90]}' is checked, Then it holds")

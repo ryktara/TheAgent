@@ -29,10 +29,11 @@ resources and `x-foundry` metadata on every operation. The model tightens authz 
    with the exact rule: role list, branch scope, and the manager-PIN condition when the job's
    workflow guards it (open only the matching section of
    `packs/<slug>/reference/workflows.md`).
-   Done when: no `x-foundry.authz` still reads "manager PIN when the job guards it".
+   Done when: no `x-foundry.authz` still ends with the pack `vocabulary.authz_guard` placeholder
+   ("step-up approval when the job guards it" by default).
 
 3. **Shape job payloads.** Each job operation's request body names the fields the workflow
-   step needs (for example `send-to-kitchen`: course; `split-bill`: mode, seats or amounts).
+   step needs (for example `<domain job>`: the record it acts on; `split-bill`: mode, seats or amounts).
    Done when: no job operation has an empty `type: object` request body.
 
 4. **Integrations.** Keep only webhook paths for providers chosen in the ledger; add outbound

@@ -36,10 +36,10 @@ Measured from Claude Code transcripts (`foundry.py metrics ingest`) and priced w
 | T-027 | feature | Delivery orders (should-have) | 24,546 | 27,333,291 | 12.43 | 0.00 | 3.41 | 15.85 | 36 | 4 |
 | T-028 | feature | Loyalty (should-have) | 29,010 | 54,850,702 | 20.27 | 0.27 | 41.84 | 62.38 | 798 | 1 |
 | T-029 | feature | Reservations waitlist (should-have) | 20,031 | 20,326,580 | 6.71 | 0.12 | 12.07 | 18.90 | 29 | 2 |
-| T-030 | feature | Purchasing (should-have) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 29 | 2 |
-| T-031 | integration | Integration: payments adapter (network-intl) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-032 | integration | Integration: delivery adapter (talabat) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-033 | integration | Integration: einvoicing adapter (ae-fta) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
+| T-030 | feature | Purchasing (should-have) | 24,032 | 27,491,140 | 7.87 | 0.23 | 18.25 | 26.36 | 29 | 2 |
+| T-031 | integration | Integration: payments adapter (network-intl) | 7,316 | 11,299,979 | 5.69 | 0.08 | 1.04 | 6.82 | 24 | 0 |
+| T-032 | integration | Integration: delivery adapter (talabat) | 10,033 | 7,271,108 | 4.25 | 0.00 | 0.00 | 4.25 | 18 | 0 |
+| T-033 | integration | Integration: einvoicing adapter (ae-fta) | 13,307 | 8,799,454 | 4.14 | 0.07 | 1.00 | 5.21 | 18 | 0 |
 | T-034 | compliance | Compliance: access controls (12) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
 | T-035 | compliance | Compliance: agentic controls (12) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
 | T-036 | compliance | Compliance: api controls (13) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
@@ -55,15 +55,15 @@ Measured from Claude Code transcripts (`foundry.py metrics ingest`) and priced w
 | T-046 | compliance | Compliance: session controls (10) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
 | T-047 | compliance | Compliance: supply-chain controls (4) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
 | T-900 | release | Release: deploy, observability, runbook | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| **total** | 49 tickets | | 1,190,476 | 1,113,158,448 | 361.83 | 5.97 | 483.43 | **851.23** | 2252 | 86 |
+| **total** | 49 tickets | | 1,245,164 | 1,168,020,129 | 383.78 | 6.35 | 503.73 | **893.86** | 2312 | 86 |
 
 ## Medians per ticket type
 
 | type | tickets | output tok | cache_read | total $ | wall min |
 |---|---|---|---|---|---|
 | scaffold | 1 | 0 | 0 | 0.00 | 0 |
-| feature | 30 | 27,124 | 36,794,326 | 21.12 | 48 |
-| integration | 3 | 0 | 0 | 0.00 | 0 |
+| feature | 30 | 25,835 | 36,696,899 | 21.20 | 48 |
+| integration | 3 | 10,033 | 8,799,454 | 5.21 | 18 |
 | compliance | 14 | 0 | 0 | 0.00 | 0 |
 | release | 1 | 0 | 0 | 0.00 | 0 |
 

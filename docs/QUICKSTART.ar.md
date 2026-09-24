@@ -57,10 +57,12 @@
 
 ## 6. قراءة لوحة الحالة
 
+شغّله من مجلد تطبيقك؛ <code dir="ltr">&lt;foundry&gt;</code> هو المجلد الذي مرّرته إلى <code dir="ltr">claude plugin marketplace add</code>:
+
 <div dir="ltr">
 
 ```
-python scripts/foundry.py status
+python <foundry>/scripts/foundry.py status
 ```
 
 ```
@@ -100,7 +102,7 @@ next: T-014   command: /foundry-build
 <div dir="ltr">
 
 ```
-python scripts/foundry.py release confirm --by "Your Name"
+python <foundry>/scripts/foundry.py release confirm --by "Your Name"
 ```
 
 </div>

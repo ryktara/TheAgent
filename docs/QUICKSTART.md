@@ -51,8 +51,10 @@ and the next command; a new session shows it on start, and `/foundry-resume` con
 
 ## 6. Read the dashboard
 
+Run it from your app folder; `<foundry>` is the folder you passed to `claude plugin marketplace add`:
+
 ```
-python scripts/foundry.py status
+python <foundry>/scripts/foundry.py status
 ```
 
 ```
@@ -91,7 +93,7 @@ For regulated domains (a trading app, for example), release stays blocked until 
 confirms the licence and compliance steps are done. After the `regulator-licence` wizard:
 
 ```
-python scripts/foundry.py release confirm --by "Your Name"
+python <foundry>/scripts/foundry.py release confirm --by "Your Name"
 ```
 
 This records who approved going live. Only a person runs it; no agent runs it for you.

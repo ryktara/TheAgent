@@ -7,7 +7,7 @@ Same sequence as [INSTALL-WINDOWS.md](INSTALL-WINDOWS.md); each step's "done whe
 macOS (Homebrew):
 
 ```sh
-brew install git node@22 python@3.12
+brew install git node python@3.12
 ```
 
 Debian or Ubuntu:
@@ -49,7 +49,7 @@ claude plugin marketplace add /path/to/foundry     # or <owner>/<repo>
 claude plugin install foundry@foundry-local
 ```
 
-Then in `claude`: `/foundry-setup`. Done when it prints `ready`.
+Then in `claude`: `/foundry-setup`. Done when the last line starts with `setup: ready`.
 
 ## Troubleshooting
 

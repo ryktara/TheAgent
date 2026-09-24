@@ -55,34 +55,50 @@ command that exits 0.
 
 ### vocabulary (new in 2.0)
 
-Everything a skeleton used to hard-code from the restaurant pack. Omit a key to take the generic
-default.
+Everything a skeleton used to hard-code from the restaurant pack. Required on `complete: true`
+packs; every key inside is optional and falls back to generic wording. Full table:
+[packs/README.md](../packs/README.md#vocabulary-20); a complete example:
+[packs/restaurant-pos/pack.yaml](../packs/restaurant-pos/pack.yaml).
 
 ```yaml
 vocabulary:
   scaffold_ticket_titles: {auth: "Staff sign-in and roles", tenancy: "Stores and branches", schema: "Catalogue and stock schema", tokens: "Design tokens", offline: "Offline till sync"}
   adr_hints: {"0003": "Ledger in Postgres, double entry", "0006": "Payments behind an adapter per provider"}
-  design_defaults: {key_screens: [checkout, product-search, shift-close], component_set: [Numpad, ProductTile, CartLine], theme_names: [till, back-office]}
+  design_defaults: {key_screens: [checkout, product-search, shift-close], component_set: [numpad, pin-pad], theme_names: {default: <palette id>}}
   glossary_hint_terms: [SKU, barcode, shrinkage, khaata, float]
   copy_overrides: {cart.empty: {en: "No items yet", ar: "لا توجد أصناف بعد"}}
-  money_tokens: [price, total, tax, discount, refund, float]
+  money_tokens: [sell, refund, void, discount, tender, settle]
+  terms: {catalog: catalogue, catalog_items: products}
+  smoke: {route: /checkout, pattern: "Checkout|الدفع", label: checkout}
 ```
 
 | Key | Consumer | Rule |
 |-----|----------|------|
-| scaffold_ticket_titles | tickets-skeleton, T-001 to T-005 | exactly the keys auth, tenancy, schema, tokens, offline; `offline` ignored when `nfr_defaults.offline: forbidden` |
-| adr_hints | arch-skeleton | key is an ADR id 0001 to 0009; one sentence each |
-| design_defaults | design-skeleton, screens-skeleton | key_screens are job screen ids; component_set names exist in `data/components.csv` or the pack's ux-patterns.md |
-| glossary_hint_terms | domain-skeleton (CONTEXT.md) | each term is a glossary.csv row |
-| copy_overrides | screens-skeleton | id → `{en, ar}`; the Arabic column renders only for Arabic regions |
-| money_tokens | threat-skeleton | field-name fragments that mark money operations (access, business-logic and error-log controls) |
+| scaffold_ticket_titles | tickets-skeleton, T-001 to T-005 | keys auth, tenancy, schema, tokens, offline only; `offline` used only when the pack has offline contexts |
+| adr_hints | arch-skeleton | key is an ADR id 0001 to 0009; 1 to 2 sentences each |
+| adr_refs | arch-skeleton | ADR id to extra decision (question) ids that ADR cites |
+| design_defaults | design-skeleton, screens-skeleton | key_screens are job screen ids; component_set are component ids; theme_names is `{default: <palette id>, ...}`; also screen_types, screen_components, component_hints, keyboard, list_routes |
+| glossary_hint_terms | domain-skeleton (CONTEXT.md) | glossary terms always kept |
+| copy_overrides | screens-skeleton, release | copy id to `{en, ar, ur}`; wins over `reference/copy.csv`, which wins over `data/copy.csv` |
+| money_tokens | threat-skeleton, tickets | substrings of job ids that mark money-moving operations (access, business-logic and error-log controls) |
+| terms | arch, tickets | noun phrases for catalog, catalog_items, canvas, live_state |
+| operator_role, user_docs, smoke, seed_note | release, scaffold | front-line role (names `user-docs/<role>-quick-start.*`), user-doc buttons and routine, the smoke route and pattern, the seed note |
+| authz_guard, containers, event_consumers | api, arch, domain | x-foundry.authz tail; architecture container rows; extra event consumers per context |
+
+### reference/*.csv overrides
+
+A pack may ship `reference/<name>.csv` for components, copy, palettes, product-types, ux-rules,
+security-controls, threat-patterns and stacks. For that pack only, the file merges over
+`data/<name>.csv`: a row whose id exists in `data/` replaces it in place; a new row goes after the
+row named in its optional `after` column. Put domain-only rows (a kitchen display component, a
+table-map rule) here, never in `data/`. Example: `packs/restaurant-pos/reference/`.
 
 ## Pack lint (`complete: true`)
 
 `validate` fails with `file:line` unless: every job screen has a `## <screen-id>` heading in
 screens.md; every invariant CamelCase name is an entity and every entity appears in an invariant
 or screens.md; every `compliance_must` and regional control id is in compliance.md; glossary.csv
-has at least 80 rows; sources.md exists and every VERIFIED row carries a URL; every `maps_to` is
+has at least 80 rows; `vocabulary` is present; sources.md exists and every VERIFIED row carries a URL; every `maps_to` is
 unique; every `enables` target is a should_have id. P10 packs landed at 96 and 126 glossary rows
 and 120+ reference lines each; treat those as the working floor.
 

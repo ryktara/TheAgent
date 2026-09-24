@@ -67,9 +67,11 @@ In a `claude` session:
 /foundry-setup
 ```
 
-It runs `doctor`, installs pnpm and Playwright browsers when missing, registers the
-codebase-memory MCP entry when missing, runs `validate`, runs a 30-second self-test, and prints
-`ready`. Done when: the last line is `ready`.
+It runs `python scripts/foundry.py setup`: the doctor table, pnpm, Playwright browsers,
+`validate` and a 30-second self-test. When items are missing and you agree, it runs
+`setup --apply`, which installs pnpm through corepack, installs Playwright chromium and writes the
+codebase-memory MCP entry into `~/.claude.json`. Restart Claude Code after an MCP registration.
+Done when: the last line starts with `setup: ready`.
 
 Next: [QUICKSTART.md](QUICKSTART.md).
 

@@ -46,8 +46,8 @@ with 0 escalations.
 
 **P10 Subscription-only and generalisation.** No API key, no headless mode, `/foundry-eval` for
 model stages; builder/finisher context split; schema 1.9 `regulated`; retail-pos and trading-app
-packs; pack `contexts`/`offline_contexts`; embedded Postgres with `FOUNDRY_PG_PORT`; eight
-generalisation fixes, each with its failing run as the reason.
+packs; pack `contexts`/`offline_contexts`; embedded Postgres with `FOUNDRY_PG_PORT`; six
+generalisation fixes and one context-reset fix, each with its failing run as the reason.
 
 **P11 Budgets and docs.** Builder turn budget (120 tool calls, then a fresh builder from the
 progress file), finisher skips unchanged passing review families, schema 2.0 `vocabulary`,

@@ -16,7 +16,7 @@ first phase whose gate fails. Every artifact lives under `.foundry/` in the targ
 | 8 | Screens | screen-spec (`screens-skeleton`) | PRD §3, pack screens.md sections, openapi.yaml, components.csv, ux-rules.csv | .foundry/screens/<id>.md | `gate 8`: every PRD job has a screen; six states with copy; components, operationIds and rule ids exist; ≥3 a11y rules and ≥1 RTL rule (RTL regions); unique routes |
 | 9 | Security | threat-model, compliance (`threat-skeleton`) | architecture.md boundaries, openapi.yaml, decisions, threat-patterns.csv, security-controls.csv | .foundry/threats.md, compliance.yaml, compliance-evidence-plan.md | `gate 9`: ≥4 STRIDE rows per boundary; authz row per operation; money operations carry access, business-logic and error-log controls and never 'any authenticated'; PRD §8 controls in compliance.yaml; pci_scope set; no high threat without a control |
 | 10 | Tickets | to-tickets (`tickets-skeleton`) | all phase 0–9 artifacts, stacks.csv | .foundry/tickets/T-*.md, compliance.yaml owners | `gate 10`: DAG acyclic; every must-have job, public job operation and screen covered; every planned control owned; ≥3 acceptance tests per ticket; T-000 unblocked; ≤60 tickets |
-| 11 | Implement | /foundry-build (thin parent: card → ticket-builder subagent, sonnet → ticket-finisher subagent, sonnet; second builder is the escalation slot, opus only after it) — builder: `build activate`, red/green, `run --tail 30`, `dod --tier fast`, progress file; finisher: `dod --tier full`, reviews, commit | ticket, code graph (codebase-memory-mcp, mandatory), screen specs, copy.csv | code, tests, .foundry/tickets/T-xxx.status.yaml, .foundry/screenshots/, metrics.jsonl | `dod`: typecheck, lint, unit, integration, e2e-smoke, a11y-axe (serious/critical fail), screenshot (light/dark × ltr/rtl), semgrep, detect_changes_risk ≤ medium, spec-review; max 3 fix loops |
+| 11 | Implement | /foundry-build (thin parent: card → ticket-builder subagent, sonnet → ticket-finisher subagent, sonnet; second builder is the escalation slot, opus only after it); builder: `build activate`, red/green, `run --tail 30`, `dod --tier fast`, progress file; finisher: `dod --tier full`, reviews, commit | ticket, code graph (codebase-memory-mcp, mandatory), screen specs, copy.csv | code, tests, .foundry/tickets/T-xxx.status.yaml, .foundry/screenshots/, metrics.jsonl | `dod`: typecheck, lint, unit, integration, e2e-smoke, a11y-axe (serious/critical fail), screenshot (light/dark × ltr/rtl), semgrep, detect_changes_risk ≤ medium, spec-review; max 3 fix loops |
 | 12 | Review | code-review, ui-review, security-review (parallel subagents dispatched by ticket-finisher; re-review with `review-pack --hunks-since last`: changed hunks + own previous blocking list) | `.foundry/reviews/T-xxx.pack.md` (≤600 tokens), `.diff`, screenshots, semgrep | .foundry/reviews/T-xxx.{code,ui,sec}.json (verdict, blocking[], nonblocking[]) | zero blocking findings across the three; `dod` spec-review reads code.json |
 | 13 | Human-only | wizard (`wizard scaffold`, triggered by implement-ticket) | ticket, ADR 0006, .env.example | .foundry/wizard/<slug>.md, .ps1, .sh; stub adapter behind FEATURE_<SLUG> | `wizard status`: every variable present in .env.local and the validation command exits 0; until then the ticket ships stubbed |
 | 14 | Release | /release (`release-skeleton`) | ticket commits, ADR 0007, screens, copy.csv, wizards | CHANGELOG.md, apps/*/Dockerfile, compose.prod.yml + Caddyfile or fly.toml, runbook.md, scripts/smoke.mjs, user-docs/ | `gate release`: for `regulated: true` packs a human `release confirm --by <name>` after the regulator-licence wizard; files present; `pnpm run build`; prod api+web started on 3101/3100; smoke.mjs passes /health, enrol + whoami, the pack `vocabulary.smoke` route, / |
@@ -42,3 +42,20 @@ Then `confidence = (raw / max raw) × min(1, distinct hits / 3) × (1 − overla
 best other domain pack's raw divided by this pack's raw (generic is exempt). The saturation term keeps a
 single stray word such as "shop" below threshold; the overlap term sends a brief that names every
 module at once ("POS, inventory, accounting, HR, CRM") to generic with the `scope-sprawl` flag.
+
+## Build loop commands
+
+All run as `python scripts/foundry.py <command>` from the app folder (`--dir` defaults to the cwd).
+
+| Command | What it does |
+|---------|--------------|
+| `build activate --ticket T-xxx` | stamps the ticket window and prints the ticket card (the spec, at most 80 lines) |
+| `dod --ticket T-xxx --tier fast\|full` | fast = typecheck, lint, unit in parallel; full = every step, one Playwright run for smoke, axe and screenshots |
+| `review-pack --ticket T-xxx [--hunks-since <sha>\|last]` | `.foundry/reviews/T-xxx.pack.md` (at most 600 tokens) + `.diff`, the only reviewer inputs; a re-review sees changed hunks plus each family's previous blocking list |
+| `run --tail 30 -- <cmd>` | full log to `.foundry/logs/`, only the last 30 lines printed |
+| `wizard status\|scaffold` | human-only prerequisites: md + ps1 + sh that prompt, validate, write `.env.local` |
+| `release-skeleton`, `gate release` | release files; smoke on a local production build |
+| `release confirm --by <name>` | human confirmation for `regulated: true` packs; `gate release` stays red until it exists |
+| `metrics ingest [--since ts]`, `metrics report [--phases] [--by-model]` | real tokens per ticket from Claude Code transcripts, priced by `data/model-prices.csv` |
+| `status` | one-screen dashboard |
+| `handoff write\|show` | `.foundry/handoff.md` frontmatter for `/foundry-resume` |

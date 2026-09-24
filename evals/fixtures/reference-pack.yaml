@@ -1,0 +1,21 @@
+# Domain strings scripts/test_foundry.py asserts against: the reference (fullest) pack and its fixture.
+# Keeping them here keeps scripts/ pack-agnostic (P11); swap the values to point the tests at another pack.
+slug: restaurant-pos
+variants: restaurant-variants
+brief_gate: "restaurant in Sharjah, dine-in only, we use Network International for cards"
+brief_short: "restaurant in Sharjah, dine-in only"
+brief_output: "restaurant with kitchen display and tables in Dubai"
+brief_prd: "restaurant in Sharjah"
+service: dine-in
+output_question: kds
+screen: kds
+feature: kds
+first_actor: waiter
+downstream: kitchen
+context_phrase: kitchen output
+job_path: "/orders/{id}/send-to-kitchen"
+job_op: order_send_to_kitchen
+derived_path: /kitchen-tickets
+component: kds-ticket
+component_after: date-picker
+money_job: end-of-day

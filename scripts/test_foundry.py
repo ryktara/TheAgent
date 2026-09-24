@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import foundry  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
+# Domain strings live in a fixture so this file stays pack-agnostic (P11): the reference pack, briefs, ids.
+REF = foundry.parse_yaml((REPO / "evals" / "fixtures" / "reference-pack.yaml").read_text(encoding="utf-8"))
 
 GOOD_SKILL = """---
 name: sample
@@ -28,25 +30,26 @@ gate: python scripts/foundry.py validate
 # Sample
 """
 
-PACK_EXAMPLE = """version: "1.9"
+PACK_EXAMPLE = """version: "2.0"
 threshold: 0.7
-slug: restaurant-pos
-name: Restaurant POS
-aliases: [restaurant point of sale, cafe pos, qsr pos]
-confidence_keywords: [restaurant, cafe, kitchen, table, menu, order, kds, bill]
-personas: [cashier, waiter, kitchen, manager, owner]
-jobs: [{id: take-order, must: true, screens: [order-entry, table-map]}]
-must_have: [order-entry, modifiers, split-bill, kds, payments, shift-close]
-should_have: [reservations, loyalty, multi-branch]
-entities: {Order: {states: [draft, sent, ready, served, paid, void]}}
-invariants: ["Order total == sum(lines) - discounts + tax"]
-integrations: {payments: [stripe, tap], delivery: [talabat]}
+slug: salon-booking
+name: Salon Booking
+aliases: [salon booking, beauty salon app, spa booking]
+confidence_keywords: [salon, spa, stylist, appointment, booking, haircut]
+personas: [receptionist, stylist, manager, owner]
+jobs: [{id: book-appointment, must: true, screens: [calendar, booking-form]}]
+must_have: [calendar, booking-form, deposits, reminders, stylist-rota, day-close]
+should_have: [loyalty, packages, multi-branch]
+entities: {Appointment: {states: [requested, confirmed, in-chair, done, paid, cancelled]}}
+invariants: ["Appointment total == sum(services) - discounts + tax"]
+integrations: {payments: [stripe, tap], messaging: [whatsapp]}
 regional: {AE: {tax: "VAT 5%", receipt_lang: [en, ar]}}
 compliance_must: [PCI-DSS SAQ-A via hosted fields]
-nfr_defaults: {offline: required, p95_order_entry_ms: 200}
+nfr_defaults: {offline: optional, p95_booking_ms: 200}
 stack_default: {web: nextjs, api: hono, db: postgres, mobile: expo}
-ui_profile: {style: high-contrast-operational, density: high, touch: 48dp}
-questions: [{id: service-model, rank: 1, ask: "Dine-in, quick-service, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, quick-service, qsr], maps_to: service.model}]
+ui_profile: {style: soft-saas, density: medium, touch: 44dp}
+questions: [{id: service-model, rank: 1, ask: "Walk-ins, appointments, or both?", answer_type: choice, choices: [walk-in, appointment, both], default: both, reversible: false, skip_if_brief_mentions: [walk-in, appointment only], maps_to: service.model}]
+vocabulary: {money_tokens: [payment, refund, deposit], scaffold_ticket_titles: {auth: "Auth: staff sign-in and roles"}, adr_hints: {"0001": "Device breadth (front-desk tablets, stylist phones)"}}
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}
 """
 
@@ -82,13 +85,14 @@ def load_brief(name: str) -> str:
 class YamlSubsetTests(unittest.TestCase):
     def test_pack_example_parses(self):
         d = foundry.parse_yaml(PACK_EXAMPLE)
-        self.assertEqual(d["slug"], "restaurant-pos")
-        self.assertEqual(d["jobs"][0]["screens"], ["order-entry", "table-map"])
-        self.assertEqual(d["entities"]["Order"]["states"][-1], "void")
+        self.assertEqual(d["slug"], "salon-booking")
+        self.assertEqual(d["jobs"][0]["screens"], ["calendar", "booking-form"])
+        self.assertEqual(d["entities"]["Appointment"]["states"][-1], "cancelled")
+        self.assertEqual(d["vocabulary"]["adr_hints"]["0001"], "Device breadth (front-desk tablets, stylist phones)")
         self.assertEqual(d["regional"]["AE"]["tax"], "VAT 5%")
         self.assertIs(d["questions"][0]["reversible"], False)
         self.assertEqual(d["questions"][0]["rank"], 1)
-        self.assertEqual(d["nfr_defaults"]["p95_order_entry_ms"], 200)
+        self.assertEqual(d["nfr_defaults"]["p95_booking_ms"], 200)
 
     def test_block_lists_and_comments(self):
         d = foundry.parse_yaml("a:\n  - x  # c\n  - \"y: z\"\nb: 1.5\n# full comment\nc: 'it''s'\n")
@@ -244,8 +248,8 @@ class MatchTests(unittest.TestCase):
             self.assertGreaterEqual(res["candidates"][0]["confidence"], float(exp["min_confidence"]), res)
         return res
 
-    def test_restaurant_brief(self):
-        res = self._check("restaurant-pos")
+    def test_reference_brief(self):
+        res = self._check(REF["slug"])
         ids = {p["question_id"]: p["value"] for p in res["prefilled"]}
         self.assertEqual(ids.get("region"), "AE")
         self.assertEqual(ids.get("branches"), "multi")
@@ -272,11 +276,11 @@ class MatchTests(unittest.TestCase):
         self.assertIn("no-questions-requested", res["flags"])
 
     def test_gate_brief_prefill(self):
-        res = foundry.match_brief("restaurant in Sharjah, dine-in only, we use Network International for cards", REPO)
-        self.assertEqual(res["chosen"], "restaurant-pos")
+        res = foundry.match_brief(REF["brief_gate"], REPO)
+        self.assertEqual(res["chosen"], REF["slug"])
         self.assertGreaterEqual(res["candidates"][0]["confidence"], 0.7)
         ids = {p["question_id"]: p["value"] for p in res["prefilled"]}
-        self.assertEqual(ids, {**ids, "region": "AE", "service-model": "dine-in", "payments": "network-intl"})
+        self.assertEqual(ids, {**ids, "region": "AE", "service-model": REF["service"], "payments": "network-intl"})
 
     def test_match_cli_stdin_json(self):
         import json
@@ -292,7 +296,7 @@ class MatchTests(unittest.TestCase):
         self.assertIn("no-questions-requested", data["flags"])
 
     def test_deterministic(self):
-        b = load_brief("restaurant-pos")
+        b = load_brief(REF["slug"])
         self.assertEqual(foundry.match_brief(b, REPO), foundry.match_brief(b, REPO))
 
 
@@ -321,14 +325,14 @@ class GrillTests(unittest.TestCase):
             self.assertEqual(ids[:len(confirms)], [q["id"] for q in confirms], "confirms come first")
 
     def test_gate_brief_confirm_and_followups(self):
-        sel, pack, ledger = self._setup("restaurant in Sharjah, dine-in only, we use Network International for cards")
+        sel, pack, ledger = self._setup(REF["brief_gate"])
         plan = foundry.grill_plan(pack, ledger, sel["prefilled"], 1)
         self.assertEqual(plan[0]["id"], "service-model")
         self.assertEqual(plan[0]["why"], "confirm-prefill")
-        self.assertEqual(plan[0]["default"], "dine-in")
+        self.assertEqual(plan[0]["default"], REF["service"])
         self.assertNotIn("region", [q["id"] for q in plan], "reversible prefill is not re-asked")
         self.assertNotIn("central-menu-sync", [q["id"] for q in plan], "followup-only question stays out of round 1")
-        self.assertEqual([q["id"] for q in foundry.grill_plan(pack, ledger, sel["prefilled"], 2)], ["reservations"], "prefilled dine-in unlocks only reservations before round 1")
+        self.assertEqual([q["id"] for q in foundry.grill_plan(pack, ledger, sel["prefilled"], 2)], ["reservations"], "prefilled service model unlocks only reservations before round 1")
         for q in plan:
             foundry.decide(ledger, pack, q["id"], "multi" if q["id"] == "branches" else (True if q["id"] == "delivery" else q["default"]), "human", None, 1)
         r2 = foundry.grill_plan(pack, ledger, sel["prefilled"], 2)
@@ -337,9 +341,9 @@ class GrillTests(unittest.TestCase):
         self.assertEqual(foundry.grill_plan(pack, ledger, sel["prefilled"], 1), [])
 
     def test_decide_rejects_bad_choice_and_coerces(self):
-        sel, pack, ledger = self._setup("restaurant with kitchen display and tables in Dubai")
+        sel, pack, ledger = self._setup(REF["brief_output"])
         with self.assertRaises(ValueError):
-            foundry.decide(ledger, pack, "kds", "hologram", "human")
+            foundry.decide(ledger, pack, REF["output_question"], "hologram", "human")
         e = foundry.decide(ledger, pack, "offline", "yes", "human")
         self.assertIs(e["value"], True)
         e2 = foundry.decide(ledger, pack, "offline", "false", "human")
@@ -347,7 +351,7 @@ class GrillTests(unittest.TestCase):
         self.assertEqual(sum(1 for d in ledger["decisions"] if d["id"] == "offline"), 1, "update, not append")
 
     def test_ledger_roundtrip_and_schema(self):
-        sel, pack, ledger = self._setup("restaurant in Sharjah, dine-in only")
+        sel, pack, ledger = self._setup(REF["brief_short"])
         tmp = Path(tempfile.mkdtemp())
         try:
             foundry.save_ledger(tmp, ledger)
@@ -360,12 +364,12 @@ class GrillTests(unittest.TestCase):
 
 class P3Tests(unittest.TestCase):
     def test_sharjah_confidence_and_derived_provider(self):
-        res = foundry.match_brief("restaurant in Sharjah, dine-in only, we use Network International for cards", REPO)
-        self.assertEqual(res["chosen"], "restaurant-pos")
+        res = foundry.match_brief(REF["brief_gate"], REPO)
+        self.assertEqual(res["chosen"], REF["slug"])
         self.assertGreaterEqual(res["confidence"], 0.85, res)
         sel = foundry.selection_from_match(res)
-        pack = foundry.load_pack(REPO, "restaurant-pos")
-        ledger = foundry.empty_ledger("restaurant-pos")
+        pack = foundry.load_pack(REPO, REF["slug"])
+        ledger = foundry.empty_ledger(REF["slug"])
         for pf in sel["prefilled"]:
             foundry.decide(ledger, pack, pf["question_id"], pf["value"], "brief", None, 0)
         foundry.apply_defaults(ledger, pack, sel["prefilled"])
@@ -375,8 +379,8 @@ class P3Tests(unittest.TestCase):
         self.assertIn("derived from payments=network-intl", e["rationale"])
 
     def test_derive_null_falls_to_default(self):
-        pack = foundry.load_pack(REPO, "restaurant-pos")
-        ledger = foundry.empty_ledger("restaurant-pos")
+        pack = foundry.load_pack(REPO, REF["slug"])
+        ledger = foundry.empty_ledger(REF["slug"])
         foundry.decide(ledger, pack, "payments", "other", "human", None, 1)
         plan = foundry.grill_plan(pack, ledger, [], 2)
         self.assertIn("payment-provider-name", [q["id"] for q in plan], "null map unlocks the follow-up")
@@ -385,8 +389,8 @@ class P3Tests(unittest.TestCase):
         self.assertEqual((e["value"], e["source"]), ("unknown", "pack-default"))
 
     def test_when_list(self):
-        pack = foundry.load_pack(REPO, "restaurant-pos")
-        ledger = foundry.empty_ledger("restaurant-pos")
+        pack = foundry.load_pack(REPO, REF["slug"])
+        ledger = foundry.empty_ledger(REF["slug"])
         foundry.decide(ledger, pack, "service-model", "both", "human", None, 1)
         self.assertIn("reservations", [q["id"] for q in foundry.grill_plan(pack, ledger, [], 2)])
 
@@ -419,19 +423,19 @@ class P3Tests(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
     def test_variant_briefs(self):
-        for exp_path in sorted((REPO / "evals" / "expected" / "restaurant-variants").glob("*.yaml")):
+        for exp_path in sorted((REPO / "evals" / "expected" / REF["variants"]).glob("*.yaml")):
             exp = foundry.parse_yaml(exp_path.read_text(encoding="utf-8"))
-            text = (REPO / "evals" / "briefs" / "restaurant-variants" / f"{exp_path.stem}.md").read_text(encoding="utf-8")
+            text = (REPO / "evals" / "briefs" / REF["variants"] / f"{exp_path.stem}.md").read_text(encoding="utf-8")
             body = "\n".join(l for l in text.splitlines() if not l.startswith("#"))
             res = foundry.match_brief(body, REPO)
-            self.assertEqual(res["chosen"], "restaurant-pos", exp_path.stem)
+            self.assertEqual(res["chosen"], REF["slug"], exp_path.stem)
             self.assertGreaterEqual(res["confidence"], float(exp["min_confidence"]), exp_path.stem)
 
     def test_prd_skeleton_then_gate(self):
-        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
-        pack = foundry.load_pack(REPO, "restaurant-pos")
+        fx = REPO / "evals" / "fixtures" / REF["slug"]
+        pack = foundry.load_pack(REPO, REF["slug"])
         ledger = foundry.load_ledger(fx)
-        text = foundry.prd_skeleton(pack, ledger, "restaurant in Sharjah")
+        text = foundry.prd_skeleton(pack, ledger, REF["brief_prd"])
         self.assertEqual(text.count(foundry.MODEL_BLOCK), 2)
         for fid in pack["must_have"]:
             self.assertIn(f"`{fid}`", text)
@@ -450,25 +454,25 @@ class P3Tests(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp())
         try:
             root = make_repo(tmp)
-            shutil.copytree(REPO / "packs" / "restaurant-pos", root / "packs" / "restaurant-pos")
-            sc = root / "packs" / "restaurant-pos" / "reference" / "screens.md"
-            sc.write_text(sc.read_text(encoding="utf-8").replace("## kds\n", "## kitchen-screen\n"), encoding="utf-8")
+            shutil.copytree(REPO / "packs" / REF["slug"], root / "packs" / REF["slug"])
+            sc = root / "packs" / REF["slug"] / "reference" / "screens.md"
+            sc.write_text(sc.read_text(encoding="utf-8").replace(f"## {REF['screen']}\n", f"## {REF['screen']}-renamed\n"), encoding="utf-8")
             run(foundry.run_sync_index, root)
             code, out = run(foundry.run_validate, root)
             self.assertEqual(code, 1)
-            self.assertIn("screen 'kds' has no", out)
+            self.assertIn(f"screen '{REF['screen']}' has no", out)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
 
 class P4Tests(unittest.TestCase):
-    """Phases 4-6 on the restaurant fixture."""
+    """Phases 4-6 on the reference pack fixture."""
 
     def setUp(self):
         import foundry_phases as P
         self.P = P
         self.tmp = Path(tempfile.mkdtemp())
-        shutil.copytree(REPO / "evals" / "fixtures" / "restaurant-pos" / ".foundry", self.tmp / ".foundry")
+        shutil.copytree(REPO / "evals" / "fixtures" / REF["slug"] / ".foundry", self.tmp / ".foundry")
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -478,14 +482,14 @@ class P4Tests(unittest.TestCase):
         self.assertEqual(d, {"items": [{"name": "a", "n": 1}, {"name": "b", "n": 2}], "x": 3})
 
     def test_enables_replaces_heuristic(self):
-        pack = foundry.load_pack(REPO, "restaurant-pos")
+        pack = foundry.load_pack(REPO, REF["slug"])
         self.assertIsNotNone(foundry.should_have_enabled("multi-branch", [{"id": "branches", "value": "multi", "source": "human"}], pack))
         self.assertIsNone(foundry.should_have_enabled("multi-branch", [{"id": "branches", "value": "single", "source": "human"}], pack))
         self.assertIsNotNone(foundry.should_have_enabled("delivery-integration", [{"id": "delivery", "value": True, "source": "pack-default"}], pack))
         self.assertIsNone(foundry.should_have_enabled("accounting-sync", [{"id": "central-menu-sync", "value": "central", "source": "human"}], pack))
 
     def test_prd_region_scoping_and_tax_table(self):
-        pack = foundry.load_pack(REPO, "restaurant-pos")
+        pack = foundry.load_pack(REPO, REF["slug"])
         ledger = foundry.load_ledger(self.tmp)
         text = foundry.prd_skeleton(pack, ledger, "x")
         sec8 = text.split("## 8.")[1].split("## 9.")[0]
@@ -511,16 +515,16 @@ class P4Tests(unittest.TestCase):
         d = foundry.parse_yaml((self.tmp / ".foundry" / "domain.yaml").read_text(encoding="utf-8"))
         self.assertEqual(len(d["entities"]), 25)
         order = next(e for e in d["entities"] if e["name"] == "Order")
-        self.assertIn({"from": "draft", "to": "sent", "by": "waiter", "guard": ""}, order["transitions"])
-        self.assertTrue(any(ev["name"] == "OrderSent" and "kitchen" in ev["consumers"] for ev in d["events"]))
+        self.assertIn({"from": "draft", "to": "sent", "by": REF["first_actor"], "guard": ""}, order["transitions"])
+        self.assertTrue(any(ev["name"] == "OrderSent" and REF["downstream"] in ev["consumers"] for ev in d["events"]))
         ctx = (self.tmp / "CONTEXT.md").read_text(encoding="utf-8")
         self.assertIn("| KOT |", ctx)
-        self.assertIn("kitchen output", ctx)
+        self.assertIn(REF["context_phrase"], ctx)
 
     def test_domain_gate_catches_missing_actor(self):
         self.P.run_domain_skeleton(self.tmp, REPO)
         p = self.tmp / ".foundry" / "domain.yaml"
-        p.write_text(p.read_text(encoding="utf-8").replace('by: "waiter"', 'by: "nobody"', 1), encoding="utf-8")
+        p.write_text(p.read_text(encoding="utf-8").replace(f'by: "{REF["first_actor"]}"', 'by: "nobody"', 1), encoding="utf-8")
         self.assertTrue(any("not a persona" in e for e in self.P.gate_domain(self.tmp, REPO)))
 
     def test_arch_skeleton_passes_gate(self):
@@ -544,7 +548,7 @@ class P4Tests(unittest.TestCase):
         self.P.run_api_skeleton(self.tmp, REPO)
         self.assertEqual(self.P.gate_api(self.tmp, REPO), [])
         spec = foundry.parse_yaml((self.tmp / "openapi.yaml").read_text(encoding="utf-8"))
-        self.assertIn("/orders/{id}/send-to-kitchen", spec["paths"])
+        self.assertIn(REF["job_path"], spec["paths"])
         self.assertIn("/sync/push", spec["paths"])
         self.assertIn("/webhooks/payments/{provider}", spec["paths"])
         self.P.run_schema_skeleton(self.tmp, REPO, "drizzle")
@@ -578,7 +582,7 @@ class P5Tests(unittest.TestCase):
         import foundry_phases as P
         self.D, self.P = D, P
         self.tmp = Path(tempfile.mkdtemp())
-        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        fx = REPO / "evals" / "fixtures" / REF["slug"]
         shutil.copytree(fx / ".foundry", self.tmp / ".foundry")
         for name in ("CONTEXT.md", "openapi.yaml"):
             shutil.copy(fx / name, self.tmp / name)
@@ -598,7 +602,7 @@ class P5Tests(unittest.TestCase):
         self.assertGreaterEqual(n, 60)
         self.assertEqual(errs, [])
         import csv
-        for name, minimum in (("ux-rules", 220), ("typography", 30), ("styles", 25), ("product-types", 60), ("charts", 25), ("components", 45)):
+        for name, minimum in (("ux-rules", 220), ("typography", 30), ("styles", 25), ("product-types", 55), ("charts", 25), ("components", 45)):
             with (REPO / "data" / f"{name}.csv").open(encoding="utf-8", newline="") as fh:
                 rows = list(csv.DictReader(fh))
             self.assertGreaterEqual(len(rows), minimum, name)
@@ -625,7 +629,7 @@ class P5Tests(unittest.TestCase):
         self.D.run_screens_skeleton(self.tmp, REPO)
         self.assertEqual(self.D.gate_screens(self.tmp, REPO), [])
         oe = (self.tmp / ".foundry" / "screens" / "order-entry.md").read_text(encoding="utf-8")
-        self.assertIn("order_send_to_kitchen", oe)
+        self.assertIn(REF["job_op"], oe)
         self.assertIn('"numpad"', oe)
         self.assertIn("| offline |", oe)
 
@@ -641,7 +645,7 @@ class P5Tests(unittest.TestCase):
         spec = foundry.parse_yaml((self.tmp / "openapi.yaml").read_text(encoding="utf-8"))
         ops = sum(1 for m in spec["paths"].values() for k in m if k in ("get", "post", "patch", "delete"))
         self.assertLessEqual(ops, 90)
-        self.assertNotIn("/kitchen-tickets", spec["paths"])
+        self.assertNotIn(REF["derived_path"], spec["paths"])
         self.assertIn("/admin/receipts", spec["paths"])
         self.assertIn("/order-lines/{id}/modify-order", spec["paths"])
 
@@ -652,7 +656,7 @@ class P6Tests(unittest.TestCase):
         import foundry_design as D
         self.X, self.D = X, D
         self.tmp = Path(tempfile.mkdtemp())
-        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        fx = REPO / "evals" / "fixtures" / REF["slug"]
         shutil.copytree(fx / ".foundry", self.tmp / ".foundry")
         for name in ("CONTEXT.md", "openapi.yaml"):
             shutil.copy(fx / name, self.tmp / name)
@@ -742,7 +746,7 @@ class P7Tests(unittest.TestCase):
         import foundry_build as B
         self.B = B
         self.tmp = Path(tempfile.mkdtemp())
-        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        fx = REPO / "evals" / "fixtures" / REF["slug"]
         shutil.copytree(fx / ".foundry", self.tmp / ".foundry")
         for name in ("CONTEXT.md", "openapi.yaml"):
             shutil.copy(fx / name, self.tmp / name)
@@ -809,19 +813,19 @@ class P7Tests(unittest.TestCase):
 
 class GateTests(unittest.TestCase):
     def test_fixture_passes_all_gates(self):
-        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        fx = REPO / "evals" / "fixtures" / REF["slug"]
         for name in ("intake", "pack-match", "grill", "prd"):
             self.assertEqual(foundry.GATES[name](fx, REPO), [], name)
 
     def test_prd_gate_reports_missing_must_have_and_stale_hash(self):
-        fx = REPO / "evals" / "fixtures" / "restaurant-pos"
+        fx = REPO / "evals" / "fixtures" / REF["slug"]
         tmp = Path(tempfile.mkdtemp())
         try:
             shutil.copytree(fx / ".foundry", tmp / ".foundry")
             prd = tmp / ".foundry" / "prd.md"
-            prd.write_text(prd.read_text(encoding="utf-8").replace("- `kds` —", "- kds —").replace("decisions_hash: ", "decisions_hash: x"), encoding="utf-8")
+            prd.write_text(prd.read_text(encoding="utf-8").replace(f"- `{REF['feature']}` —", f"- {REF['feature']} —").replace("decisions_hash: ", "decisions_hash: x"), encoding="utf-8")
             errs = foundry.gate_prd(tmp, REPO)
-            self.assertTrue(any("`kds`" in e for e in errs), errs)
+            self.assertTrue(any(f"`{REF['feature']}`" in e for e in errs), errs)
             self.assertTrue(any("stale" in e for e in errs), errs)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -844,6 +848,49 @@ class GateTests(unittest.TestCase):
             self.assertEqual(run(foundry.main, ["metrics", "--phase", "2", "--note", "x", "--dir", str(tmp)])[0], 0)
             lines = (tmp / ".foundry" / "metrics.jsonl").read_text(encoding="utf-8").splitlines()
             self.assertEqual(len(lines), 2)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class VocabularyTests(unittest.TestCase):
+    """Pack schema 2.0: the core reads domain words from `vocabulary` and pack reference CSVs, with generic fallbacks."""
+
+    def setUp(self):
+        import foundry_design, foundry_phases, foundry_security
+        self.D, self.P, self.X = foundry_design, foundry_phases, foundry_security
+
+    def test_pack_csv_rows_merge_in_place(self):
+        base = [r["id"] for r in foundry.data_rows("components", REPO, "")]
+        self.assertNotIn(REF["component"], base)
+        merged = [r["id"] for r in foundry.data_rows("components", REPO, REF["slug"])]
+        self.assertEqual(merged[merged.index(REF["component_after"]) + 1], REF["component"])
+        self.assertTrue(all("after" not in r for r in foundry.data_rows("components", REPO, REF["slug"])))
+
+    def test_money_tokens_come_from_vocabulary(self):
+        ref = foundry.load_pack(REPO, REF["slug"])
+        gen = foundry.load_pack(REPO, "generic")
+        self.assertTrue(self.X._money_job(REF["money_job"], ref))
+        self.assertFalse(self.X._money_job(REF["money_job"], gen))
+        self.assertTrue(self.X._money_job("collect-deposit", foundry.parse_yaml(PACK_EXAMPLE)))
+
+    def test_titles_hints_and_terms_fall_back(self):
+        ex = foundry.parse_yaml(PACK_EXAMPLE)
+        self.assertEqual(self.X._title(ex, "auth"), "Auth: staff sign-in and roles")
+        self.assertEqual(self.X._title(ex, "tenancy"), self.X.SCAFFOLD_TITLES["tenancy"])
+        self.assertEqual(self.P._hint(ex, "0001", "fallback"), "Device breadth (front-desk tablets, stylist phones)")
+        self.assertEqual(self.P._hint(ex, "0002", "fallback"), "fallback")
+        self.assertEqual(foundry.term(ex, "catalog_items", "catalog items"), "catalog items")
+
+    def test_complete_pack_needs_vocabulary(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            dst = tmp / "p"
+            shutil.copytree(REPO / "packs" / "generic", dst)
+            y = dst / "pack.yaml"
+            kept = [l for l in y.read_text(encoding="utf-8").splitlines() if not l.startswith(("vocabulary:", "  "))]
+            y.write_text("\n".join(kept) + "\n", encoding="utf-8")
+            errs = foundry.lint_complete_pack(y, foundry.parse_yaml(y.read_text(encoding="utf-8")))
+            self.assertTrue(any("vocabulary" in e.msg for e in errs), errs)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

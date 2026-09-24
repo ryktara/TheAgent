@@ -5331,7 +5331,7 @@ paths:
         job: "scan-and-sell"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5398,7 +5398,7 @@ paths:
         job: "sell-weighed-item"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5465,7 +5465,7 @@ paths:
         job: "take-payment"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5532,7 +5532,7 @@ paths:
         job: "issue-receipt"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5599,7 +5599,7 @@ paths:
         job: "return-exchange"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5666,7 +5666,7 @@ paths:
         job: "price-override"
         personas:
           - "store-manager"
-        authz: "role == store-manager or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == store-manager or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5733,7 +5733,7 @@ paths:
         job: "manage-promotions"
         personas:
           - "store-manager"
-        authz: "role == store-manager or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == store-manager or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5800,7 +5800,7 @@ paths:
         job: "loyalty-points"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5867,7 +5867,7 @@ paths:
         job: "gift-card-store-credit"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -5934,7 +5934,7 @@ paths:
         job: "layaway"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -6001,7 +6001,7 @@ paths:
         job: "manage-catalog"
         personas:
           - "store-manager"
-        authz: "role == store-manager or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == store-manager or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -6068,7 +6068,7 @@ paths:
         job: "purchase-orders"
         personas:
           - "stock-keeper"
-        authz: "role == stock-keeper or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == stock-keeper or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6135,7 +6135,7 @@ paths:
         job: "receive-goods"
         personas:
           - "stock-keeper"
-        authz: "role == stock-keeper or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == stock-keeper or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6202,7 +6202,7 @@ paths:
         job: "stock-take"
         personas:
           - "stock-keeper"
-        authz: "role == stock-keeper or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == stock-keeper or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6269,7 +6269,7 @@ paths:
         job: "stock-adjust"
         personas:
           - "stock-keeper"
-        authz: "role == stock-keeper or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == stock-keeper or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6336,7 +6336,7 @@ paths:
         job: "stock-transfer"
         personas:
           - "stock-keeper"
-        authz: "role == stock-keeper or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == stock-keeper or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6403,7 +6403,7 @@ paths:
         job: "manage-suppliers"
         personas:
           - "store-manager"
-        authz: "role == store-manager or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == store-manager or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6470,7 +6470,7 @@ paths:
         job: "e-invoicing"
         personas:
           - "accountant"
-        authz: "role == accountant or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == accountant or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -6537,7 +6537,7 @@ paths:
         job: "customer-display"
         personas:
           - "customer"
-        authz: "role == customer or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == customer or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -6604,7 +6604,7 @@ paths:
         job: "cash-management"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -6661,7 +6661,7 @@ paths:
         job: "reports-shrinkage"
         personas:
           - "owner"
-        authz: "role == owner or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == owner or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6728,7 +6728,7 @@ paths:
         job: "print-labels"
         personas:
           - "stock-keeper"
-        authz: "role == stock-keeper or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == stock-keeper or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: true
         audit: true
@@ -6795,7 +6795,7 @@ paths:
         job: "staff-roles"
         personas:
           - "owner"
-        authz: "role == owner or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == owner or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6862,7 +6862,7 @@ paths:
         job: "multi-store"
         personas:
           - "owner"
-        authz: "role == owner or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == owner or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true
@@ -6929,7 +6929,7 @@ paths:
         job: "offline-sync"
         personas:
           - "cashier"
-        authz: "role == cashier or role == owner; branch scope; manager PIN when the job guards it"
+        authz: "role == cashier or role == owner; branch scope; supervisor PIN when the job guards it"
         idempotent: true
         offline_capable: false
         audit: true

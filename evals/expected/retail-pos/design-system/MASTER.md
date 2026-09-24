@@ -66,7 +66,6 @@ Text-safe roles for any component label: text, text_muted, primary_fg. Non-text-
 | `tender-keypad` | Tender keypad | - | default,hover,focus,active,disabled,loading,error | 64 |
 | `pin-pad` | PIN pad | - | default,hover,focus,active,disabled,loading,error | 64 |
 | `quantity-stepper` | Quantity stepper | - | default,hover,focus,active,disabled,loading,error | 44 |
-| `modifier-sheet` | Modifier sheet | sheet | default,hover,focus,active,disabled,loading,error | 48 |
 | `data-table` | Data table | table | default,hover,focus,active,disabled,loading,error | 36 |
 | `virtual-list` | Virtual list | - | default,hover,focus,active,disabled,loading,error | 44 |
 | `toast` | Toast | sonner | default,loading,error | 0 |
@@ -74,9 +73,7 @@ Text-safe roles for any component label: text, text_muted, primary_fg. Non-text-
 | `dialog` | Dialog | dialog | default,hover,focus,active,disabled,loading,error | 44 |
 | `tabs` | Tabs | tabs | default,hover,focus,active,disabled,loading,error | 44 |
 | `select` | Select | select | default,hover,focus,active,disabled,loading,error | 44 |
-| `kds-ticket` | KDS ticket | - | default,focus,active,error | 56 |
 | `order-card` | Order card / item tile | card | default,hover,focus,active,disabled,loading,error | 72 |
-| `table-map-tile` | Table map tile | - | default,hover,focus,active,disabled,loading,error | 56 |
 | `receipt-preview` | Receipt preview | - | default,loading,error | 0 |
 | `empty-state` | Empty state | - | default | 44 |
 | `skeleton` | Skeleton | skeleton | loading | 0 |
@@ -86,7 +83,6 @@ Text-safe roles for any component label: text, text_muted, primary_fg. Non-text-
 | `search` | Search field | input | default,hover,focus,active,disabled,loading,error | 44 |
 | `customer-display` | Customer display | - | default,loading | 0 |
 | `split-bill` | Split bill board | - | default,hover,focus,active,disabled,loading,error | 48 |
-| `floor-canvas` | Floor canvas | - | default,focus,active | 56 |
 
 ## Do and avoid
 
@@ -126,4 +122,4 @@ Text-safe roles for any component label: text, text_muted, primary_fg. Non-text-
 - `PRT-03` QR code at least 25 mm square with quiet zone; one per receipt
 - `PRT-04` Header: branch name, address, tax number; footer: receipt number, date, device
 - `PRT-05` Bilingual receipt: Arabic block first for SA, English first for AE unless toggled
-- `PRT-06` Kitchen tickets: item names 2x size, modifiers indented, seat and course tags
+- `PRT-07` Reprint stamped REPRINT; voided receipts print VOID

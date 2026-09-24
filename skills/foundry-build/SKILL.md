@@ -37,9 +37,10 @@ reviewers hold the pack. Requires codebase-memory-mcp.
    `Conventions: <project root>/CLAUDE.md`; the project root; "run every command in the
    foreground, never background a monitor"; the builder contract (below). When
    `.foundry/tickets/T-xxx.progress.md` exists, append its ≤20 lines.
-   Builder returns `blocked` → dispatch a **second builder** once, same prompt plus the
-   progress file (the escalation slot). Second `blocked` → one **opus builder**, then record
-   `escalated: true`; a third `blocked` is final.
+   Builder returns `budget` (120 tool calls spent) → dispatch a fresh builder with the progress
+   file, as often as needed; it is not an escalation. Builder returns `blocked` → dispatch a
+   **second builder** once, same prompt plus the progress file (the escalation slot). Second
+   `blocked` → one **opus builder**, then record `escalated: true`; a third `blocked` is final.
 
    **Finisher.** Agent tool, `model: sonnet`, `run_in_background: false`. Prompt: the ticket id
    and title; `Skill: <plugin root>/skills/ticket-finisher/SKILL.md (read it first; it dispatches
@@ -50,7 +51,7 @@ reviewers hold the pack. Requires codebase-memory-mcp.
 3. **Contracts.** Builder (≤150 tokens):
 
    ```
-   {"ticket": "T-xxx", "status": "green|blocked", "loops": 1, "files_changed": 6, "tests_added": 4,
+   {"ticket": "T-xxx", "status": "green|blocked|budget", "loops": 1, "tool_calls": 84, "files_changed": 6, "tests_added": 4,
     "wizards": [], "progress": ".foundry/tickets/T-xxx.progress.md", "notes": "<≤2 lines>"}
    ```
 

@@ -1627,6 +1627,9 @@ def main(argv: list[str] | None = None) -> int:
     rn.add_argument("--tail", type=int, default=30)
     rn.add_argument("--dir", type=Path, default=Path.cwd())
     rn.add_argument("command", nargs=argparse.REMAINDER)
+    su = sub.add_parser("setup", help="/foundry-setup: doctor, pnpm, playwright browsers, codebase-memory-mcp registration, validate, self-test; --apply fixes what it can")
+    su.add_argument("--apply", action="store_true")
+    su.add_argument("--root", type=Path, default=ROOT)
     rc = sub.add_parser("release", help="release confirm --by <name>: human confirmation for regulated packs (unblocks gate release)")
     rc.add_argument("action", choices=("confirm",))
     rc.add_argument("--by")
@@ -1733,6 +1736,9 @@ def main(argv: list[str] | None = None) -> int:
             return O.run_tail([c for c in (list(a.command) + list(getattr(a, "cmd_extra", []))) if c != "--"], a.dir.resolve(), a.tail)
         if a.cmd == "release":
             return O.run_release_confirm(a.dir.resolve(), a.root.resolve(), a.by)
+        if a.cmd == "setup":
+            import foundry_setup as S
+            return S.run_setup(a.root.resolve(), a.apply)
         if a.cmd == "status":
             return O.run_status(a.dir.resolve(), a.root.resolve())
         if a.cmd == "wizard":

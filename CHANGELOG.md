@@ -46,6 +46,9 @@ inside a logged-in Claude Code session, reads no API key and has no headless mod
   duplicate; the installed plugin had failed to load (reason: found by the fresh-install test).
 - fix: eval fixture and golden `.foundry` folders were gitignored (never reached CI); now tracked.
 - fix: ticket globs ignore progress and status files (status counted a progress file as a ticket).
+- fix: `gate release` sets `FOUNDRY_SMOKE=1` for the local production smoke so apps can relax host-only checks
+  such as TLS to a localhost Postgres (reason: T-041's DB-TLS-in-production control stopped the api from starting
+  under the local smoke; the control stays enforced for real deployments).
 - fix: the embedded Postgres helper walks up to 30 ports when Windows reserves the requested one and prints the
   port it bound (reason: a dynamic excluded port range swallowed 54329 mid-build and the integration tier could not
   start; `netsh int ipv4 show excludedportrange` shows such ranges).

@@ -733,7 +733,8 @@ def gate_release(project: Path, root: Path, build: bool = True) -> list[str]:
     if code != 0:
         return [f"pnpm run build failed (exit {code}): " + " | ".join(B._tail(out, 8))]
     print(f"gate release: build ok in {secs:.0f}s; starting prod servers and running scripts/smoke.mjs")
-    code, out, secs = B.run_cmd("node scripts/smoke.mjs --start", project, timeout=600, env={"NODE_ENV": "production", "WEB_PORT": "3100", "API_PORT": "3101", "DEVICE_ENROL_CODE": os.environ.get("DEVICE_ENROL_CODE", "release-smoke-code")})
+    code, out, secs = B.run_cmd("node scripts/smoke.mjs --start", project, timeout=600, env={"NODE_ENV": "production", "WEB_PORT": "3100", "API_PORT": "3101", "DEVICE_ENROL_CODE": os.environ.get("DEVICE_ENROL_CODE", "release-smoke-code"),
+                                                                      "FOUNDRY_SMOKE": "1"})  # local prod smoke: apps may relax host-only checks (e.g. TLS to a localhost Postgres) when this is set
     for line in B._tail(out, 12):
         print("  " + line)
     if code != 0:

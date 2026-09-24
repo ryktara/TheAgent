@@ -18,9 +18,7 @@ segmented,Segmented control,toggle-group,@radix-ui/react-toggle-group,"default,h
 select,Select,select,@radix-ui/react-select,"default,hover,focus,active,disabled,loading,error",combobox,ArrowKeys Enter Escape Type-ahead,chevron mirrors,44
 combobox,Combobox,command,cmdk,"default,hover,focus,active,disabled,loading,error",combobox,ArrowKeys Enter Escape,mirrors,44
 date-picker,Date picker,calendar,react-day-picker,"default,hover,focus,active,disabled,loading,error",grid,ArrowKeys PageUp PageDown Enter,calendar mirrors; numerals LTR,44
-kds-ticket,KDS ticket,-,-,"default,focus,active,error",article,1-9 bump R recall,text mirrors; timer LTR,56
 order-card,Order card / item tile,card,-,"default,hover,focus,active,disabled,loading,error",button,Enter,price stays right-aligned,72
-table-map-tile,Table map tile,-,-,"default,hover,focus,active,disabled,loading,error",button,Enter ContextMenu,canvas coordinates unchanged,56
 receipt-preview,Receipt preview,-,-,"default,loading,error",document,-,bilingual blocks,0
 chart-card,Chart card,card,-,"default,loading,error",figure,Tab to points,axes mirror; numerals LTR,0
 kpi-tile,KPI tile,card,-,"default,loading,error",group,-,delta icon mirrors,0

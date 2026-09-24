@@ -1,0 +1,16 @@
+id,context,en,ar,ur,notes,reviewed,after
+state.success.order-entry,state,Sent to kitchen.,أُرسل إلى المطبخ.,کچن کو بھیج دیا گیا۔,,false,
+state.offline.order-entry,state,Offline. Orders are saved here and sent to the kitchen when online.,غير متصل. تُحفظ الطلبات هنا وتُرسل للمطبخ عند الاتصال.,آف لائن۔ آرڈر یہاں محفوظ ہیں اور آن لائن ہوتے ہی کچن کو بھیجے جائیں گے۔,,false,
+state.empty.kds,state,No open tickets.,لا توجد تذاكر مفتوحة.,کوئی کھلا ٹکٹ نہیں۔,,false,state.success.tender
+state.loading.kds,state,Connecting to the kitchen feed…,جارٍ الاتصال بقناة المطبخ…,کچن فیڈ سے جڑ رہا ہے…,,false,state.empty.kds
+state.error.kds,state,Kitchen feed lost. Tickets print as fallback.,انقطع اتصال المطبخ. تُطبع التذاكر كبديل.,کچن فیڈ منقطع ہے۔ متبادل کے طور پر ٹکٹ پرنٹ ہوں گے۔,,false,state.loading.kds
+state.offline.kds,state,Offline. Showing tickets from this device.,غير متصل. عرض التذاكر من هذا الجهاز.,آف لائن۔ اس ڈیوائس کے ٹکٹ دکھائے جا رہے ہیں۔,,false,state.error.kds
+state.locked.kds,state,Recall needs a manager PIN after 10 minutes.,الاستدعاء بعد 10 دقائق يتطلب رمز المدير.,10 منٹ بعد ریکال کے لیے منیجر پن درکار ہے۔,,false,state.offline.kds
+state.success.kds,state,Bumped.,تم الإنجاز.,بمپ ہو گیا۔,,false,state.locked.kds
+action.send-to-kitchen,action,Send to kitchen,إرسال إلى المطبخ,کچن کو بھیجیں,,false,action.add-item
+label.void-reason.kitchen-error,label,Kitchen error,خطأ في المطبخ,کچن کی غلطی,,false,label.void-reason.customer-changed
+label.dine-in,label,Dine-in,داخل المطعم,ڈائن اِن,,false,label.unpaid
+kds.new-ticket,receipt,New ticket,تذكرة جديدة,نیا ٹکٹ,,false,receipt.approval-code
+kds.all-day,receipt,All day,الإجمالي,کل دن,,false,kds.new-ticket
+kds.held,receipt,Held,معلّق,روکا ہوا,,false,kds.all-day
+kds.recalled,receipt,Recalled,مستدعى,ریکال شدہ,,false,kds.held

@@ -1,12 +1,12 @@
 stack_id,layer,package,scaffold_cmd,test_cmd,typecheck_cmd,lint_cmd,a11y_cmd,notes
 nextjs-pwa,web,next,npx create-next-app@latest web --ts --app --eslint --src-dir --import-alias @/* && npm i -w web next-pwa,npm test -w web,npx tsc -p web --noEmit,npx eslint web --ext .ts;.tsx,npx playwright test --project=a11y,PWA with service worker for offline shell; hardware breadth (iPad Android Windows) via browser
-expo,mobile,expo,npx create-expo-app@latest mobile --template blank-typescript,npm test -w mobile,npx tsc -p mobile --noEmit,npx eslint mobile --ext .ts;.tsx,,Waiter handheld and KDS tablet builds; EAS for store submission
+expo,mobile,expo,npx create-expo-app@latest mobile --template blank-typescript,npm test -w mobile,npx tsc -p mobile --noEmit,npx eslint mobile --ext .ts;.tsx,,Staff handheld and work-queue tablet builds; EAS for store submission
 hono-node,api,hono,npm create hono@latest api -- --template nodejs,npx vitest run --dir api,npx tsc -p api --noEmit,npx eslint api --ext .ts,,Lightweight router on Node 20; runs on VPS Fly.io or containers
 nestjs,api,@nestjs/core,npx @nestjs/cli new api --package-manager npm --strict,npm test -w api,npx tsc -p api --noEmit,npx eslint api --ext .ts,,Opinionated modules and DI; heavier than hono; pick for large teams
 postgres,db,postgres,docker compose up -d db,,,,,Postgres 16 with RLS when multi-tenant; pgcrypto for uuid
 sqlite-wasm,offline,@sqlite.org/sqlite-wasm,npm i -w web @sqlite.org/sqlite-wasm,npx vitest run --dir web/src/offline,,,,Browser-side store with OPFS persistence; pair with event outbox
 pglite,offline,@electric-sql/pglite,npm i -w web @electric-sql/pglite,npx vitest run --dir web/src/offline,,,,Postgres-in-WASM; same SQL dialect as server which simplifies sync
-socket.io,realtime,socket.io,npm i -w api socket.io && npm i -w web socket.io-client,npx vitest run --dir api/src/realtime,,,,KDS ticket push and table state fan-out; rooms per branch
+socket.io,realtime,socket.io,npm i -w api socket.io && npm i -w web socket.io-client,npx vitest run --dir api/src/realtime,,,,Work-queue push and board state fan-out; rooms per branch
 escpos-bridge,print,node-escpos,npm i -w bridge escpos escpos-network escpos-usb,npx vitest run --dir bridge,npx tsc -p bridge --noEmit,,,Local Node bridge on the LAN that receives print jobs over HTTP and drives ESC/POS printers and cash drawer
 prisma,db,prisma,npm i -w api -D prisma && npm i -w api @prisma/client && npx prisma init --datasource-provider postgresql,npx prisma validate,,,,Migrations via npx prisma migrate dev; schema at prisma/schema.prisma
 drizzle,db,drizzle-orm,npm i -w api drizzle-orm postgres && npm i -w api -D drizzle-kit,npx drizzle-kit check,npx tsc -p api --noEmit,,,SQL-first ORM; migrations via npx drizzle-kit generate then migrate

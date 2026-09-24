@@ -1,0 +1,19 @@
+id,priority,category,platform,rule,anti_pattern,why,source,applies_to,check,after
+NAV-11,9,navigation,all,"Cashier screens reachable in one tap from order entry (tender, table map, search)",Menu diving,Speed,foundry,nav,review,
+STY-16,4,style-consistency,all,Illustrations only in empty states and onboarding; none on operational screens,Illustrated KDS,Focus,foundry,empty-state,review,
+TCH-20,2,touch-interaction,all,Gloved and wet-hand operation: no pressure or multi-touch gestures required,Pinch-only zoom on floor map,Kitchen conditions,foundry,"floor-canvas,kds-ticket",review,
+A11Y-31,1,accessibility,all,Audio cues paired with visual cues and can be muted,Sound-only KDS alert,Deaf staff and noisy kitchens,WCAG2.2 1.2.1,kds-ticket,review,
+NAV-07,9,navigation,all,"Role-based navigation: items the role cannot use are hidden, not disabled",Disabled admin items for cashiers,Clarity,foundry,nav,review,
+A11Y-13,1,accessibility,all,"Colour is never the only carrier of meaning; pair with icon, text or pattern",KDS age shown by colour alone,Colour-blind kitchen staff,WCAG2.2 1.4.1,"badge,chart,kds-ticket",review,
+TYP-09,6,typography-color,all,Dark theme text 7:1 on operational dark surfaces (KDS),Grey on black at 4.5,Kitchen glare,foundry,kds-ticket,auto,TYP-08
+MOT-07,7,motion,all,New KDS ticket announces with a single chime plus a brief highlight,Continuous flashing,Attention,foundry,kds-ticket,review,MOT-06
+OPS-03,4,operational-ui,all,"Order-age colour: green under 5 min, amber under 10, red from 10, plus icon and timer text",Colour only,Kitchen priority,foundry,kds-ticket,auto,OPS-02
+OPS-04,4,operational-ui,all,"Bump bar keys 1 to 9 bump slot, R recall, S station; legend on screen",Mouse-only KDS,Kitchen hands,foundry,kds-ticket,review,OPS-03
+OPS-13,4,operational-ui,all,"Table map tiles show number large, covers and minutes small, colour by state with icon",Number only,Floor awareness,foundry,table-map-tile,review,OPS-12
+OPS-19,4,operational-ui,all,Dark theme for KDS with 7:1 text; light for cashier,Same theme everywhere,Glare,foundry,kds-ticket,auto,OPS-18
+PRT-06,5,print,all,"Kitchen tickets: item names 2x size, modifiers indented, seat and course tags",Small kitchen tickets,Readability at the pass,foundry,kds-ticket,review,PRT-05
+PERF-14,3,performance,all,KDS ticket appears within 1 s of firing over websocket,Polling every 10 s,Kitchen timing,foundry,kds-ticket,auto,PERF-13
+LAY-14,5,layout-responsive,all,KDS shows 4 to 6 tickets per row on a 15-inch screen; never fewer than 3,Two giant tickets,Throughput,foundry,kds-ticket,review,LAY-13
+TYP-13,6,typography-color,all,Order numbers and table numbers in the largest weight on their screens,Small ticket numbers,Call-out,foundry,"kds-ticket,table-map-tile",review,LAY-18
+TYP-16,6,typography-color,all,Kitchen screens use 20 px minimum with high x-height fonts,Thin fonts on KDS,Distance reading,foundry,kds-ticket,auto,TYP-15
+PRT-12,5,print,all,"Kitchen ticket header shows table, covers, server, time in 2x font",Tiny header,Pass speed,foundry,kds-ticket,review,PRT-11

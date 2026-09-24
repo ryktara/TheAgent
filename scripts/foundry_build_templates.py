@@ -169,7 +169,7 @@ import { mkdirSync } from "node:fs";
 /**
  * DoD screen pass: ONE Playwright run serves axe + screenshots for the routes the ticket declares (FOUNDRY_ROUTES).
  * Per route: light/ltr context runs axe and a screenshot; dark/ltr, light/rtl, dark/rtl take screenshots only.
- * fullPage is off for list-like routes (kds, reports, lists) to keep the shots and the run short.
+ * fullPage is off for list-like routes (work queues, reports, lists) to keep the shots and the run short.
  */
 const routes = (process.env.FOUNDRY_ROUTES ?? "/").split(",").map((r) => r.trim()).filter(Boolean);
 const ticket = process.env.FOUNDRY_TICKET ?? "adhoc";
@@ -181,7 +181,7 @@ const settle = async (page: import("@playwright/test").Page) => {
   await page.locator('[aria-busy="true"]').first().waitFor({ state: "detached", timeout: 15_000 }).catch(() => undefined);
 };
 const name = (route: string, theme: string, lang: string) => (route === "/" ? "home" : route.replace(/^\\//, "").replace(/[/?=&]/g, "-")) + `-${theme}-${lang === "ar" ? "rtl" : "ltr"}.png`;
-const fullPage = (route: string) => !/kds|report|list|inventory|audit/.test(route);
+const fullPage = (route: string) => !/__LIST_ROUTES__/.test(route);
 
 for (const route of routes) {
   test(`dod: axe ${route}`, async ({ browser }) => {
@@ -536,7 +536,7 @@ TEMPLATES["packages/db/package.json"] = """{
 TEMPLATES["packages/db/tsconfig.json"] = """{ "extends": "../../tsconfig.base.json", "compilerOptions": { "module": "NodeNext", "moduleResolution": "NodeNext", "types": ["node"] }, "include": ["src/**/*.ts"] }
 """
 TEMPLATES["packages/db/src/seed.ts"] = """// Seed for pack __PACK__: one branch, roles and sample data land in T-003. Idempotent by design.
-const summary = { branch: 1, roles: ["owner", "manager", "cashier", "waiter", "kitchen"], note: "T-003 fills menu, tax rules and sample orders" };
+const summary = { branch: 1, roles: __ROLES__, note: "__SEED_NOTE__" };
 console.warn(JSON.stringify({ seed: summary }));
 """
 TEMPLATES["packages/db/README.md"] = "# db\n\nPrisma schema copied from `.foundry` by the scaffold. `pnpm run validate`, `pnpm run migrate`, `pnpm run seed`.\n"

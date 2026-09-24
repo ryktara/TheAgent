@@ -1,4 +1,4 @@
-version: "1.9"
+version: "2.0"
 complete: true
 threshold: 0.7
 slug: restaurant-pos
@@ -115,4 +115,29 @@ questions:
   - {id: delivery-platforms, rank: 10, ask: "Which delivery platforms?", answer_type: choice, choices: [talabat, deliveroo, careem, noon-food, all], default: talabat, reversible: true, skip_if_brief_mentions: [talabat, deliveroo, careem, noon food], brief_hints: {talabat: [talabat], deliveroo: [deliveroo], careem: [careem], noon-food: [noon food]}, maps_to: integrations.delivery_platforms}
   - {id: central-menu-sync, rank: 11, ask: "One central menu pushed to every branch, or each branch edits its own?", answer_type: choice, choices: [central, per-branch], default: central, reversible: true, maps_to: org.menu_sync}
   - {id: payment-provider-name, rank: 12, ask: "Name the payment provider so integration research can start.", answer_type: text, default: "unknown", reversible: true, derive_from: {question: payments, map: {network-intl: "Network International", tap: "Tap Payments", stripe: "Stripe", checkout: "Checkout.com", magnati: "Magnati", telr: "Telr", paytabs: "PayTabs", cash-only: "none", other: null}}, maps_to: payments.provider_name}
+contexts: {ordering: [Order, OrderLine, Table, Course, Reservation, Record, Tenant], kitchen: [KitchenTicket], payments: [Payment, Tender, Refund, Receipt, Discount, TaxRule, Transaction], menu: [MenuItem, Variant, Modifier, ModifierGroup, Product, Instrument], inventory: [InventoryItem, Recipe, StockMovement, Sale, Return, Position], people: [Branch, Staff, Role, Customer, User, Account], reporting: [AuditEvent, Notification], sync: [SyncEvent]}
+offline_contexts: [ordering, kitchen, menu]
+vocabulary:
+  scaffold_ticket_titles: {auth: "Auth: device enrolment, staff PIN, manager override", tenancy: "Tenancy and branch scoping with RLS", schema: "Schema, migrations, seed data", tokens: "Design tokens, shell layout, RTL switch, component base", offline: "Offline store and sync outbox"}
+  adr_hints: {"0001": "Hardware breadth (tablets, Windows terminals, kitchen screens)", "0002": "Two actor classes: devices (POS terminals, KDS screens, print bridge) and staff (PIN, roles). Guarded actions need a manager override.", "0003": "Every financial record is scoped to a branch; receipts, floats and tax rules are per branch.", "0004": "Audit and fiscal records are append-only.", "0005": "Terminals keep taking orders when the internet drops;", "0006": "Card data never enters the POS.", "0007": "Local development must run on Windows without WSL", "0008": "Operational app with offline devices: failures surface late unless every request and sync event is traceable", "0009": "Arabic and Urdu need right-to-left layouts and bilingual receipts."}
+  adr_refs: {"0003": [central-menu-sync], "0006": [kds]}
+  design_defaults:
+    key_screens: [table-map, order-entry, tender, kds, shift-close, reports]
+    component_set: [numpad, tender-keypad, pin-pad, quantity-stepper, modifier-sheet, kds-ticket, order-card, table-map-tile, receipt-preview, banner-offline, split-bill, floor-canvas, customer-display, virtual-list]
+    theme_names: {default: ember-kitchen, kds: kds-dark}
+    screen_types: {kds: kds, delivery-inbox: kds, table-map: table-map, floor-editor: table-map, menu-management: list}
+    screen_components: {table-map: [table-map-tile, floor-canvas], floor-editor: [table-map-tile, floor-canvas]}
+    component_hints: {kds: kds-ticket}
+    keyboard: {kds: {"1–9": bump ticket in slot, R: recall last bump, S: cycle station}, table-map: {Arrows: move between tables, Enter: open order}}
+    list_routes: [kds, report, list, inventory, audit]
+  terms: {catalog: menu, catalog_items: menu items, canvas: floor, live_state: Ticket and table state}
+  glossary_hint_terms: [Order, KOT, Cover, Fire]
+  money_tokens: [payment, refund, void, comp, discount, shift, tender, sell, return, fund, trade, settle, end-of-day, tips-service-charge, split-bill]
+  operator_role: cashier
+  authz_guard: manager PIN when the job guards it
+  containers: [{name: pos-web, tech: stack, does: "Cashier, waiter and manager screens; offline store; print jobs", talks_to: "api, print-bridge, offline-store"}, {name: kds-web, tech: stack, does: Kitchen display per station, talks_to: api (websocket)}, {name: mobile-waiter, tech: mobile-waiter, does: Handheld order taking, talks_to: api}]
+  user_docs: {roles: [cashier, waiter], buttons: [add-item, send-to-kitchen, pay, cash, card, print-bill, split-bill, open-shift, close-shift], quick_start_title_en: Cashier quick start, quick_start_title_ar: "دليل الكاشير السريع", approval_note: "the approvals cashiers will ask you for (manager PIN)", routine: [Open shift with the float count., "Approve voids, comps, discounts and refunds with your PIN (every approval is audited with your id).", "Close shift: count cash, review variance, print the Z report.", "End of day: check sync status shows zero pending events before closing the terminals."]}
+  smoke: {route: /table-map, pattern: "table-map|Tables|الطاولات", label: table map}
+  seed_note: T-003 fills menu, tax rules and sample orders
+  event_consumers: {kitchen: {from: [ordering], states: [sent, fired, in-progress]}, sync: {from: [ordering, payments]}}
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md, sources: reference/sources.md}

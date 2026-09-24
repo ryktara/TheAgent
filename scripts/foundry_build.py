@@ -160,7 +160,7 @@ def run_cmd(cmd: str, cwd: Path, env: dict | None = None, timeout: int = 1800) -
 
 def free_port(port: int) -> int:
     """Kill whatever listens on `port` (the reused api dev server) so the Playwright run starts from a fresh in-memory
-    state. P10 fix: with reuseExistingServer the api kept the previous run's data (a waiter with PIN 4321 already
+    state. P10 fix: with reuseExistingServer the api kept the previous run's data (a staff member with PIN 4321 already
     existed, receipts already printed…) and specs that assume a fresh seed failed on every second run."""
     killed = 0
     try:
@@ -323,7 +323,10 @@ def scaffold_files(project: Path, pack: dict, app_name: str) -> dict[str, str]:
     from foundry_build_templates import TEMPLATES
     files = {}
     for rel, text in TEMPLATES.items():
-        files[rel] = text.replace("__APP_NAME__", app_name).replace("__PACK__", pack["slug"])
+        files[rel] = (text.replace("__APP_NAME__", app_name).replace("__PACK__", pack["slug"])
+                      .replace("__ROLES__", json.dumps([str(p) for p in pack.get("personas") or ["owner", "manager", "staff"] if p not in ("customer",)]))
+                      .replace("__SEED_NOTE__", str(F.vocab(pack, "seed_note", "T-003 fills catalog, tax rules and sample records")))
+                      .replace("__LIST_ROUTES__", "|".join(map(str, F.vocab(pack, "design_defaults.list_routes") or ["queue", "report", "list", "inventory", "audit"]))))
     return files
 
 

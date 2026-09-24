@@ -20,21 +20,15 @@ state.success.form,state,Saved.,تم الحفظ.,محفوظ ہو گیا۔,,false
 state.empty.order-entry,state,Tap an item to start the order.,اضغط على صنف لبدء الطلب.,آرڈر شروع کرنے کے لیے کسی آئٹم پر ٹیپ کریں۔,,false
 state.loading.order-entry,state,Loading menu…,جارٍ تحميل القائمة…,مینو لوڈ ہو رہا ہے…,,false
 state.error.order-entry,state,The menu could not be loaded. Retry.,تعذّر تحميل القائمة. أعد المحاولة.,مینو لوڈ نہیں ہو سکا۔ دوبارہ کوشش کریں۔,,false
-state.offline.order-entry,state,Offline. Orders are saved here and sent to the kitchen when online.,غير متصل. تُحفظ الطلبات هنا وتُرسل للمطبخ عند الاتصال.,آف لائن۔ آرڈر یہاں محفوظ ہیں اور آن لائن ہوتے ہی کچن کو بھیجے جائیں گے۔,,false
+state.offline.order-entry,state,Offline. Orders are saved here and sent when the connection returns.,غير متصل. تُحفظ الطلبات هنا وتُرسل عند عودة الاتصال.,آف لائن۔ آرڈر یہاں محفوظ ہیں اور کنکشن بحال ہونے پر بھیجے جائیں گے۔,,false
 state.locked.order-entry,state,Void over the limit needs a manager PIN.,الإلغاء فوق الحد يتطلب رمز المدير.,حد سے زیادہ کینسل کرنے کے لیے منیجر پن درکار ہے۔,,false
-state.success.order-entry,state,Sent to kitchen.,أُرسل إلى المطبخ.,کچن کو بھیج دیا گیا۔,,false
+state.success.order-entry,state,Order sent.,أُرسل الطلب.,آرڈر بھیج دیا گیا۔,,false
 state.empty.tender,state,Choose a tender to take payment.,اختر طريقة الدفع.,ادائیگی کے لیے طریقہ منتخب کریں۔,,false
 state.loading.tender,state,Waiting for the card terminal…,بانتظار جهاز الدفع…,کارڈ ٹرمینل کا انتظار ہے…,,false
 state.error.tender,state,Payment declined. Try another tender.,تم رفض الدفع. جرّب طريقة أخرى.,ادائیگی مسترد ہو گئی۔ کوئی اور طریقہ آزمائیں۔,,false
 state.offline.tender,state,Card terminal offline. Take cash or enter the approval code.,جهاز الدفع غير متصل. اقبل نقدًا أو أدخل رمز الموافقة.,کارڈ ٹرمینل آف لائن ہے۔ نقد لیں یا منظوری کوڈ درج کریں۔,,false
 state.locked.tender,state,Discount over policy needs a manager PIN.,الخصم فوق السياسة يتطلب رمز المدير.,پالیسی سے زیادہ رعایت کے لیے منیجر پن درکار ہے۔,,false
 state.success.tender,state,Paid. Change {change}.,تم الدفع. الباقي {change}.,ادا ہو گیا۔ بقایا {change}۔,,false
-state.empty.kds,state,No open tickets.,لا توجد تذاكر مفتوحة.,کوئی کھلا ٹکٹ نہیں۔,,false
-state.loading.kds,state,Connecting to the kitchen feed…,جارٍ الاتصال بقناة المطبخ…,کچن فیڈ سے جڑ رہا ہے…,,false
-state.error.kds,state,Kitchen feed lost. Tickets print as fallback.,انقطع اتصال المطبخ. تُطبع التذاكر كبديل.,کچن فیڈ منقطع ہے۔ متبادل کے طور پر ٹکٹ پرنٹ ہوں گے۔,,false
-state.offline.kds,state,Offline. Showing tickets from this device.,غير متصل. عرض التذاكر من هذا الجهاز.,آف لائن۔ اس ڈیوائس کے ٹکٹ دکھائے جا رہے ہیں۔,,false
-state.locked.kds,state,Recall needs a manager PIN after 10 minutes.,الاستدعاء بعد 10 دقائق يتطلب رمز المدير.,10 منٹ بعد ریکال کے لیے منیجر پن درکار ہے۔,,false
-state.success.kds,state,Bumped.,تم الإنجاز.,بمپ ہو گیا۔,,false
 state.empty.table-map,state,No floor plan yet. Open the floor editor.,لا توجد خريطة طاولات بعد. افتح محرر القاعة.,ابھی فلور پلان نہیں۔ فلور ایڈیٹر کھولیں۔,,false
 state.loading.table-map,state,Loading tables…,جارٍ تحميل الطاولات…,ٹیبل لوڈ ہو رہے ہیں…,,false
 state.error.table-map,state,Table status could not be refreshed.,تعذّر تحديث حالة الطاولات.,ٹیبل کی حالت تازہ نہیں ہو سکی۔,,false
@@ -54,7 +48,6 @@ state.offline.reports,state,Reports need a connection.,التقارير تتطل
 state.locked.reports,state,Owner access needed for this report.,هذا التقرير يتطلب صلاحية المالك.,اس رپورٹ کے لیے مالک کی رسائی درکار ہے۔,,false
 state.success.reports,state,Report ready.,التقرير جاهز.,رپورٹ تیار ہے۔,,false
 action.add-item,action,Add,إضافة,شامل کریں,,false
-action.send-to-kitchen,action,Send to kitchen,إرسال إلى المطبخ,کچن کو بھیجیں,,false
 action.hold,action,Hold,تعليق,روکیں,,false
 action.fire-course,action,Fire course,إرسال الطبق,کورس بھیجیں,,false
 action.print-bill,action,Print bill,طباعة الفاتورة,بل پرنٹ کریں,,false
@@ -133,7 +126,6 @@ label.expected,label,Expected,المتوقع,متوقع,,false
 label.variance,label,Variance,الفرق,فرق,,false
 label.void-reason.mistake,label,Entered by mistake,أُدخل بالخطأ,غلطی سے درج ہوا,,false
 label.void-reason.customer-changed,label,Customer changed mind,غيّر العميل رأيه,گاہک نے ارادہ بدل لیا,,false
-label.void-reason.kitchen-error,label,Kitchen error,خطأ في المطبخ,کچن کی غلطی,,false
 label.void-reason.out-of-stock,label,Out of stock,غير متوفر,اسٹاک ختم,,false
 label.void-reason.merge,label,Merged tables,دمج طاولات,ٹیبل ملائے گئے,,false
 label.comp-reason.complaint,label,Complaint,شكوى,شکایت,,false
@@ -144,7 +136,6 @@ label.station,label,Station,المحطة,اسٹیشن,,false
 label.rush,label,Rush,عاجل,فوری,,false
 label.paid,label,Paid,مدفوع,ادا شدہ,,false
 label.unpaid,label,Unpaid,غير مدفوع,غیر ادا شدہ,,false
-label.dine-in,label,Dine-in,داخل المطعم,ڈائن اِن,,false
 label.takeaway,label,Takeaway,سفري,پارسل,,false
 label.delivery,label,Delivery,توصيل,ڈیلیوری,,false
 receipt.header.tax-invoice,receipt,Tax invoice,فاتورة ضريبية,ٹیکس انوائس,,false
@@ -159,7 +150,3 @@ receipt.fbr-invoice,receipt,FBR invoice no.,رقم فاتورة FBR,ایف بی 
 receipt.cash,receipt,Cash,نقدًا,نقد,,false
 receipt.card-ending,receipt,Card ending,بطاقة تنتهي بـ,کارڈ آخری ہندسے,,false
 receipt.approval-code,receipt,Approval,رمز الموافقة,منظوری کوڈ,,false
-kds.new-ticket,receipt,New ticket,تذكرة جديدة,نیا ٹکٹ,,false
-kds.all-day,receipt,All day,الإجمالي,کل دن,,false
-kds.held,receipt,Held,معلّق,روکا ہوا,,false
-kds.recalled,receipt,Recalled,مستدعى,ریکال شدہ,,false

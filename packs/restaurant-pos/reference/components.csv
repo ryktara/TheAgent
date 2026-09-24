@@ -1,0 +1,3 @@
+id,component,shadcn_name,radix_primitive,states,a11y_role,keyboard,rtl_notes,min_target,after
+kds-ticket,KDS ticket,-,-,"default,focus,active,error",article,1-9 bump R recall,text mirrors; timer LTR,56,date-picker
+table-map-tile,Table map tile,-,-,"default,hover,focus,active,disabled,loading,error",button,Enter ContextMenu,canvas coordinates unchanged,56,order-card

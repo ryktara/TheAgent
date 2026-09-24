@@ -1,6 +1,4 @@
 id,name,tags,default_style,default_palette_tag,default_typography_tag,density,nav_pattern,key_screens,anti_patterns
-restaurant-pos,Restaurant POS,"pos,restaurant,operational,food",high-contrast-operational,pos,operational,high,action-bar,"table-map,order-entry,tender,kds,shift-close,reports","modal-per-action,small-targets,hover-only"
-kds,Kitchen Display,"kds,kitchen,operational,dark",high-contrast-operational,kds,operational,high,station-tabs,"kds,delivery-inbox","light-theme,small-text,colour-only"
 retail-pos,Retail POS,"pos,retail,operational",retail-bright,retail,retail,high,action-bar,"checkout,product-search,inventory,returns,z-report","hover-only,small-targets"
 supermarket-pos,Supermarket POS,"pos,retail,grocery,operational",operational-flat,retail,operational,high,action-bar,"checkout,product-search,z-report",image-heavy-tiles
 pharmacy-pos,Pharmacy POS,"pos,retail,pharmacy,health",clinical-calm,hms,readability,high,action-bar,"checkout,product-search,inventory",playful-colour
@@ -23,7 +21,6 @@ marketplace,Marketplace,"marketplace,ecommerce,consumer",marketplace-vivid,marke
 ecommerce-store,E-commerce Store,"ecommerce,retail,consumer",marketplace-vivid,retail,brand,medium,top-nav,"home,category,product,cart,checkout",dense-tables
 booking-appointments,Appointment Booking,"booking,scheduling,consumer",soft-saas,booking,friendly,medium,top-nav,"services,calendar,booking,confirmation",dense
 hotel-pms,Hotel PMS,"hotel,hospitality,admin",hospitality-warm,hospitality,hospitality,high,sidebar,"front-desk,reservations,housekeeping,folio,reports",playful
-restaurant-reservations,Restaurant Reservations,"restaurant,booking,hospitality",hospitality-warm,hospitality,hospitality,medium,top-nav,"availability,booking,waitlist,guests",dense
 logistics-dispatch,Logistics Dispatch,"logistics,fleet,operational",logistics-industrial,logistics,industrial,high,sidebar,"dispatch,map,drivers,orders,reports",consumer-styling
 warehouse-wms,Warehouse WMS,"logistics,warehouse,inventory,operational",logistics-industrial,logistics,industrial,high,action-bar,"receive,putaway,pick,pack,ship,count","hover-only,small-targets"
 delivery-rider-app,Delivery Rider App,"logistics,delivery,mobile",mobile-native,logistics,operational,medium,bottom-tabs,"tasks,map,proof-of-delivery,earnings",dense-tables
@@ -42,7 +39,7 @@ gym-membership,Gym Membership,"membership,booking,consumer",soft-saas,booking,fr
 salon-booking,Salon Booking,"booking,beauty,consumer",soft-saas,booking,friendly,medium,top-nav,"services,staff,calendar,booking",dense
 car-rental,Car Rental,"booking,mobility,consumer",soft-saas,booking,saas,medium,top-nav,"search,vehicle,booking,contract",dense
 parking-kiosk,Parking Kiosk,"kiosk,payments,operational",kiosk-large,pos,operational,low,single-task,"plate,pay,receipt",small-targets
-self-order-kiosk,Self-order Kiosk,"kiosk,restaurant,self-order",kiosk-large,pos,operational,low,single-task,"menu,cart,pay,number","small-targets,dense"
+self-order-kiosk,Self-order Kiosk,"kiosk,food,self-order",kiosk-large,pos,operational,low,single-task,"menu,cart,pay,number","small-targets,dense"
 queue-management,Queue Management,"queue,kiosk,operational",kiosk-large,pos,operational,low,single-task,"ticket,display,counter",dense
 event-ticketing,Event Ticketing,"events,ticketing,consumer",marketplace-vivid,marketplace,brand,medium,top-nav,"events,seat-map,checkout,tickets",dense
 membership-loyalty,Loyalty Program,"loyalty,retail,consumer",mobile-native,retail,friendly,medium,bottom-tabs,"card,points,offers,history",dense
@@ -53,13 +50,11 @@ charity-donations,Donations Platform,"nonprofit,payments,consumer",soft-saas,saa
 govt-services,Government Services Portal,"gov,forms,consumer",government-plain,admin,civic,low,top-nav,"services,form,status,documents",decoration
 dev-tools-dashboard,Developer Dashboard,"dev tools,saas,dashboard",minimal-mono,admin,developer,medium,sidebar,"projects,logs,keys,billing",playful
 iot-monitoring,IoT Monitoring,"iot,analytics,operational",dashboard-analytic,admin,dense,high,sidebar,"devices,telemetry,alerts,map",consumer-styling
-cloud-kitchen-ops,Cloud Kitchen Ops,"kds,restaurant,delivery,operational",high-contrast-operational,kds,operational,high,station-tabs,"delivery-inbox,kds,brands,reports",light-only
-food-court-pos,Food Court POS,"pos,restaurant,kiosk",high-contrast-operational,pos,operational,high,action-bar,"order-entry,tender,qr-self-order,number-display",hover-only
-hotel-fnb-pos,Hotel F&B POS,"pos,restaurant,hotel,hospitality",hospitality-warm,hospitality,hospitality,high,action-bar,"table-map,order-entry,tender,room-charge,reports",playful
-cafe-pos,Cafe POS,"pos,cafe,restaurant",retail-bright,pos,operational,high,action-bar,"order-entry,tender,shift-close,reports",dense-tables-only
+food-court-pos,Food Court POS,"pos,food,kiosk",high-contrast-operational,pos,operational,high,action-bar,"order-entry,tender,qr-self-order,number-display",hover-only
+hotel-fnb-pos,Hotel F&B POS,"pos,food,hotel,hospitality",hospitality-warm,hospitality,hospitality,high,action-bar,"table-map,order-entry,tender,room-charge,reports",playful
+cafe-pos,Cafe POS,"pos,cafe,food",retail-bright,pos,operational,high,action-bar,"order-entry,tender,shift-close,reports",dense-tables-only
 bakery-pos,Bakery POS,"pos,bakery,retail",retail-bright,retail,retail,high,action-bar,"order-entry,tender,production-list",dark-only
-catering-manager,Catering Manager,"catering,events,restaurant",soft-saas,hospitality,hospitality,medium,sidebar,"events,menus,quotes,kitchen-plan",kiosk
-inventory-restaurant,Restaurant Inventory,"inventory,restaurant,admin",table-first,pos,operational,high,sidebar,"inventory,recipe-editor,purchasing,wastage",playful
+catering-manager,Catering Manager,"catering,events,food",soft-saas,hospitality,hospitality,medium,sidebar,"events,menus,quotes,prep-plan",kiosk
 trading-admin,Brokerage Back Office,"trading,fintech,admin,compliance",table-first,trading,dense,high,sidebar,"accounts,orders,settlements,compliance,reports",playful
 crypto-exchange,Crypto Exchange,"trading,crypto,dark",fintech-dark,trading,dense,high,top-nav,"markets,trade,wallet,history",light-only
 insurance-portal,Insurance Portal,"insurance,forms,consumer",government-plain,fintech,civic,low,top-nav,"quote,policy,claim,documents",dense

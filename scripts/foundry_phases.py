@@ -56,12 +56,14 @@ def _camel_state(state: str) -> str:
 
 
 OFFLINE_CONTEXTS = {"ordering", "kitchen", "menu"}
+_DEFAULT_CONTEXTS, _DEFAULT_HINTS, _DEFAULT_OFFLINE = list(CONTEXTS), {k: list(v) for k, v in CONTEXT_HINTS.items()}, set(OFFLINE_CONTEXTS)
 
 
 def apply_pack_contexts(pack: dict) -> None:
     """Generalisation fix (P10): a pack may declare `contexts: {name: [Entity, …]}` and `offline_contexts: [name, …]`;
     they replace the restaurant defaults for every skeleton that runs after this call."""
     global CONTEXTS, CONTEXT_HINTS, OFFLINE_CONTEXTS
+    CONTEXTS, CONTEXT_HINTS, OFFLINE_CONTEXTS = list(_DEFAULT_CONTEXTS), {k: list(v) for k, v in _DEFAULT_HINTS.items()}, set(_DEFAULT_OFFLINE)  # reset: packs without `contexts` keep the defaults
     ctx = pack.get("contexts")
     if isinstance(ctx, dict) and ctx:
         CONTEXT_HINTS = {k: [str(x) for x in (v or [])] for k, v in ctx.items()}

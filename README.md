@@ -1,90 +1,126 @@
 # FOUNDRY
 
 Foundry is a Claude Code plugin that turns a one-line brief into a designed, architected,
-implemented and tested application while asking the founder at most seven questions.
-It is built for non-technical founders: type `/foundry "I need a POS for my shop"` and let the
-pipeline run.
+implemented and tested web application, asking the founder at most 7 questions plus 3 follow-ups.
+It runs inside your logged-in Claude Code session and writes everything to `.foundry/` in your app repo.
 
 ## Install
 
+Base tools (Git, Node LTS, Python 3.11+), then Claude Code:
+
 ```
-claude plugins install ./foundry
+winget install --id Git.Git -e; winget install --id OpenJS.NodeJS.LTS -e; winget install --id Python.Python.3.12 -e   # Windows
+brew install git node python@3.12                                                                                    # macOS
+npm install -g @anthropic-ai/claude-code
 ```
 
-For a local checkout you can also register the folder as a local marketplace and install from
-it. Confirm the install by checking that `/foundry` appears in the slash-command list.
+Then the plugin, from a local checkout (or `<owner>/<repo>`):
 
-Requirements: Claude Code, Python 3.11+ (stdlib only). Windows, macOS and Linux are supported;
-use `scripts/foundry.ps1` or `scripts/foundry.sh`. Implementation phases depend on the
-codebase-memory-mcp server for code intelligence.
+```
+claude plugin marketplace add /path/to/foundry
+claude plugin install foundry@foundry-local
+```
 
-**Subscription-only, by design.** Foundry runs inside your logged-in Claude Code session and nowhere
-else. It never reads or asks for an API key, never drives the CLI non-interactively, and has no
-headless mode. The two evals that need a model (trigger accuracy and the unattended end-to-end
-run) are run by a human typing `/foundry-eval` in a session; CI runs `python evals/run.py`, which is
-deterministic (skeletons, gates, golden artefact diffs, and the latest `/foundry-eval` results).
+In a `claude` session, run `/foundry-setup`; done when the last line starts with `setup: ready`.
+Step by step, with troubleshooting: [docs/INSTALL-WINDOWS.md](docs/INSTALL-WINDOWS.md),
+[docs/INSTALL-MAC-LINUX.md](docs/INSTALL-MAC-LINUX.md).
 
-## Pipeline overview
+## Quickstart
 
-`/foundry` takes the brief, matches it against a domain pack (industry knowledge shipped as YAML
-and CSV), asks a bounded set of questions to close the decision frontier, then produces a PRD,
-domain model with glossary, architecture with ADRs, data and API contracts, a design system,
-screen specs, threat model and compliance map, and a DAG of tracer-bullet tickets.
-`/foundry-build` implements each ticket under typecheck, test, lint, semgrep and axe gates with
-screenshots, runs code, UI and security reviews, hands human-only steps to a wizard, releases,
-and writes a handoff file that a fresh session can resume from with `/foundry-resume`.
-Full table: [docs/pipeline.md](docs/pipeline.md).
+Full guide: [docs/QUICKSTART.md](docs/QUICKSTART.md) ([Arabic](docs/QUICKSTART.ar.md)).
+From an empty app folder:
 
-## Status
+```
+/foundry "<one line: what the business is, where, what you already know>"
+/foundry-build
+/foundry-resume
+/release
+```
 
-| Step | Deliverable | Status |
-|------|-------------|--------|
-| P0 | Scaffold + house style, validate, scaffold-pack, tests, CI | done |
-| P1 | Pack schema 1.1 + generic pack + pack-match skill + deterministic matcher | done |
-| P2 | Bounded grilling + decision ledger + PRD + /foundry phases 0–3 | done |
-| P3 | first full reference pack, prd-skeleton, rematch, pack lint | done |
-| P4 | Domain model, architecture + 9 ADRs, data model, API contract, doctor, query | done |
-| P5 | Design layer: 7 data CSVs, design-check, design-system, screen specs | done |
-| P6 | Security controls, threat model, compliance, tickets; /foundry ends at phase 10 | done |
-| P7a | Build loop machinery: CBM mandatory, DoD runner, hooks, implement-ticket + review skills, T-000 scaffold executed | done |
-| P7b | T-001…T-008 built through the loop on the Sharjah brief; 7 plugin fixes; examples in docs/examples | done |
-| P8 | Loop efficiency (tiers, one Playwright run, ticket card, review pack), transcript metrics + cost, wizard, release, handoff/resume, status dashboard | done |
-| P9 | Context isolation (thin parent + implementer subagent), model routing (docs/models.md), evals with thresholds (golden diffs, e2e, trigger test), 12 more dogfood tickets | done |
-| P10 | Subscription-only rule, ticket-builder/ticket-finisher context split with hunk-only re-review, `/foundry-eval`, pack schema 1.9 (`regulated`), retail-pos + trading-app packs, generalisation proof | done |
-| P11 | Packaging | planned |
+`/foundry` plans (phases 0 to 10), `/foundry-build` implements the next 4 tickets (`--n 10` for more),
+`/foundry-resume` continues in a new session, `/release` produces deploy files and a smoke-tested build.
 
-## Build loop commands (P8–P10)
+## Packs available
 
-| Command | What it does |
-|---------|--------------|
-| `build activate --ticket T-xxx` | stamps the ticket window and prints the ticket card (the spec, ≤80 lines) |
-| `dod --ticket T-xxx --tier fast\|full` | fast = typecheck+lint+unit in parallel (≤30 s); full = every step, one Playwright run for smoke+axe+shots |
-| `review-pack --ticket T-xxx [--hunks-since <sha>\|last]` | `.foundry/reviews/T-xxx.pack.md` (≤600-token header) + `.diff`: the only inputs reviewers get; on re-review only the hunks changed since the last pack plus each family's previous blocking list |
-| `run --tail 30 -- <cmd>` | run a test runner or pnpm command, keep the full log in `.foundry/logs/`, print the last 30 lines only (builder and finisher use it for every noisy command) |
-| `release confirm --by <name>` | human confirmation for `regulated: true` packs; `gate release` stays red until it exists |
-| `metrics ingest [--since ts] [--transcripts dir]` | real tokens per ticket from Claude Code transcripts (`~/.claude/projects/<cwd-encoded>/*.jsonl`, incl. `<session>/subagents/`), priced by `data/model-prices.csv` |
-| `metrics report [--phases] [--compare a.jsonl b.jsonl] [--by-model]` | self-reported and transcript columns, cache read, context peak, cost (per model with --by-model), escalations; before/after diff |
-| `status` | one-screen dashboard: phase, tickets, dod pass rate, blockers, wizards, tokens, estimate |
-| `wizard status\|scaffold` | human-only prerequisites: md + ps1 + sh that prompt, validate, write .env.local, verify |
-| `release-skeleton`, `gate release` | CHANGELOG, Dockerfiles, compose+Caddy or fly.toml, runbook, smoke, user docs; smoke on a local prod build |
-| `handoff write\|show` | handoff.md frontmatter (phase, active_ticket, done, blocked, wizards_pending, next_command, cbm_project, generation) |
+| Pack | Status | Covers |
+|------|--------|--------|
+| restaurant-pos | complete | restaurants and cafes: tables, kitchen display, offline tills, bilingual receipts |
+| retail-pos | complete | shops and supermarkets: barcodes, stock, returns, e-invoicing |
+| trading-app | complete, regulated | brokerage and trading apps: orders, portfolio, KYC; release needs a licence confirm |
+| generic | fallback | any brief no domain pack matches with confidence 0.7 or more |
 
-Subagent transcripts live under `<session>/subagents/<agent>.jsonl` next to the session file and are attributed to the ticket window like any other turn (`subagent_turns` on the ingest row). Transcript path: Claude Code writes `~/.claude/projects/<session cwd with every non-alphanumeric as "-">/<session>.jsonl`
-and subagent transcripts under `<session>/subagents/`. `metrics ingest` scans every folder, keeps files modified since the
-earliest ticket window and attributes each assistant turn by timestamp to the ticket whose activate/complete stamps
-(`.foundry/build.yaml` `stamps`) enclose it. Windows for tickets built before stamps existed are back-filled from their
-ticket-end record.
+Write a new pack in a day: [docs/PACK-AUTHORING.md](docs/PACK-AUTHORING.md).
+
+## Pipeline
+
+Phases 0 to 15; gates, inputs and outputs per phase: [docs/pipeline.md](docs/pipeline.md).
+
+```
++-----------+   +-----------+   +---------------------+   +-----------+   +-----------+
+| 0 brief   |-->| 1 match   |-->| 2 grill             |-->| 3 PRD     |-->| 4 domain  |
+|           |   |   pack    |   |   <=7 + 3 questions |   |           |   |           |
++-----------+   +-----------+   +---------------------+   +-----------+   +-----------+
+                                                                                |
++-----------+   +-----------+   +---------------------+   +-----------+         |
+| 8 screens |<--| 7 design  |<--| 6 data + API        |<--| 5 archi-  |<--------+
+|           |   |   system  |   |                     |   |   tecture |
++-----------+   +-----------+   +---------------------+   +-----------+
+      |
+      v
++-----------+   +-----------+   +------------------------------------------------+
+| 9 threats |-->| 10 tickets|-->| 11-12 build loop, per ticket                   |
+| + comply  |   |   (DAG)   |   |   builder -> finisher -> 3 reviewers           |
++-----------+   +-----------+   |   (code, ui, security)                         |
+                                +------------------------------------------------+
+                                                   |
+                +-----------+   +-----------+   +-----------+
+                | 15 handoff|<--| 14 release|<--| 13 wizards|
+                +-----------+   +-----------+   +-----------+
+```
+
+## Cost expectations
+
+Measured on the reference app, subscription usage converted at sonnet list prices.
+
+<!-- COST: filled from docs/examples/restaurant-pos/COST.md -->
+
+| Measure | Value |
+|---------|-------|
+| Per feature ticket, median | TBD |
+| Full reference app, total | TBD |
+
+Your own numbers, from the app folder: `python <foundry>/scripts/foundry.py metrics report --by-model`.
+
+## Limits
+
+- Web-first: every app is nextjs-pwa + hono + postgres. Expo mobile is on the roadmap.
+- Subscription-only: no API key, no non-interactive CLI, no headless mode. Model evals run through `/foundry-eval` in a session.
+- Human-only steps (provider keys, domains, licences) are handed to you as wizards; the feature ships stubbed until you run it.
+- Regulated packs block release until a named person runs `release confirm --by <name>`.
+- DoD runs (Playwright, embedded Postgres, parallel test runners) need a quiet machine; close other heavy work while building.
+
+## Roadmap
+
+- Expo stack for native mobile apps.
+- More domain packs.
+- Preview environments per ticket.
+- Cross-project intelligence: lessons from one app's build feeding the next.
 
 ## Layout
 
 ```
-.claude-plugin/plugin.json   plugin manifest
-skills/                      SKILL.md folders (at most 150 lines each)
-packs/                       domain packs + index.csv
-data/                        CSV knowledge queried by scripts
-schemas/                     JSON Schema draft 2020-12
-scripts/                     foundry.py CLI + wrappers + tests
-hooks/                       planned PostToolUse / Stop hooks
-evals/                       golden briefs + expected outcomes
-docs/pipeline.md             16-row phase table (0–15)
+.claude-plugin/   plugin manifest and local marketplace (foundry-local)
+skills/           one SKILL.md folder per skill and subagent
+packs/            domain packs, packs/index.csv, packs/README.md (schema 2.0)
+data/             CSV knowledge the scripts query
+schemas/          JSON Schema draft 2020-12
+scripts/          foundry.py CLI, wrappers, tests
+hooks/            session start, guards, metrics, stop check
+evals/            briefs, expected outcomes, fixtures, thresholds, run.py
+docs/             install, quickstart, pipeline, models, pack authoring, orchestrator, examples
+CHANGELOG.md      step-by-step history (P0 to P11)
 ```
+
+## Licence
+
+Copyright (c) 2026 Al Sadq IT Solutions LLC. All rights reserved. See [LICENSE](LICENSE).

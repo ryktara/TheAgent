@@ -30,7 +30,7 @@ specs, then reviewed once by you, then proven by a smoke test on a production bu
 
    Writes CHANGELOG.md (from `feat|fix|chore(T-xxx)` commits), `apps/api/Dockerfile`,
    `apps/web/Dockerfile`, `compose.prod.yml` + `Caddyfile` (VPS) or `fly.toml` (Fly) per ADR
-   0007, `runbook.md`, `scripts/smoke.mjs`, `user-docs/cashier-quick-start.{en,ar}.md` and
+   0007, `runbook.md`, `scripts/smoke.mjs`, `user-docs/<operator_role>-quick-start.{en,ar}.md` (pack `vocabulary.operator_role`, default operator) and
    `user-docs/manager-guide.en.md` from the screen specs and copy.csv.
    Done when: the command lists the files it wrote.
 
@@ -48,8 +48,8 @@ specs, then reviewed once by you, then proven by a smoke test on a production bu
    ```
 
    The gate checks every file, runs `pnpm run build`, starts api and web from the build on
-   ports 3101/3100, and runs `scripts/smoke.mjs` (health, device enrol + whoami, table map,
-   home). Fix the build or the app, never the smoke assertions, until it passes.
+   ports 3101/3100, and runs `scripts/smoke.mjs` (health, device enrol + whoami, the pack
+   `vocabulary.smoke` route, home). Fix the build or the app, never the smoke assertions, until it passes.
    Done when: `gate release: pass` with `smoke: N/N passed`.
 
 5. **Tag and hand off.**

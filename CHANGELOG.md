@@ -2,6 +2,17 @@
 
 One entry per build step. Newest first.
 
+## P11 — v1.0
+
+- Pack schema 2.0: `vocabulary:` block (scaffold ticket titles, ADR hints/refs, design defaults, glossary hint terms,
+  copy overrides, money tokens, terms, operator role, smoke route, containers, event consumers); required on complete packs.
+- Core is pack-agnostic: restaurant prose, MONEY_TOKENS/MONEY_JOBS, KDS/table-map component and screen rules, smoke route,
+  user-doc names and seed roles now come from the pack; restaurant-only data rows moved to `packs/restaurant-pos/reference/*.csv`
+  and merge over `data/*.csv` in place (`foundry.data_rows`, `query --pack`).
+- restaurant-pos vocabulary reproduces its golden artefacts byte for byte; retail-pos and trading-app got real vocabularies and
+  regenerated goldens; generic got a minimal vocabulary.
+- Tests read domain strings from `evals/fixtures/reference-pack.yaml`; new VocabularyTests cover merge, money tokens and fallbacks.
+
 ## P10 — Subscription-only, context split, retail/trading packs (2026-09-23)
 
 - Subscription-only hard rule (CLAUDE.md, README): no API key anywhere, no non-interactive CLI, no headless mode.

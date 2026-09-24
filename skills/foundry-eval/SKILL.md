@@ -3,7 +3,7 @@ name: foundry-eval
 description: Run the model-needing evals inside this Claude Code session (no API key, no headless mode): --stage triggers scores which skill fires for 40 prompts; --stage e2e runs /foundry unattended, gates 0–10, /foundry-build --n 2 and the release smoke in a temp dir against evals/thresholds.yaml.
 invocation: user
 model: sonnet
-reads: [evals/triggers.csv, evals/thresholds.yaml, evals/briefs/restaurant-pos.md]
+reads: [evals/triggers.csv, evals/thresholds.yaml, evals/fixtures/reference-pack.yaml, evals/briefs/]
 writes: [evals/results/triggers-<date>.json, evals/results/e2e-<date>.json]
 gate: python evals/run.py --stage results
 ---
@@ -35,13 +35,13 @@ deterministic stages only, and the two stages below are run by a person typing `
    (≥ `trigger_accuracy_min`); on FAIL list the misses verbatim in the report.
 
 2. **E2E.** In a fresh temp directory (`git init`), run `/foundry --unattended` on
-   `evals/briefs/restaurant-pos.md` exactly as the foundry skill says (phases 0–10, zero
+   `evals/briefs/<slug>.md` (slug from `evals/fixtures/reference-pack.yaml`) exactly as the foundry skill says (phases 0–10, zero
    questions), note the wall seconds; then `/foundry-build --n 2` (scaffold + first feature
    through ticket-builder and ticket-finisher), note its wall seconds; then `release-skeleton`
    and `gate release`. Assert and record:
 
    ```
-   python evals/run.py --assert-e2e <temp dir> --phases-wall <s> --build-wall <s> --pack restaurant-pos
+   python evals/run.py --assert-e2e <temp dir> --phases-wall <s> --build-wall <s> --pack <slug>
    ```
 
    Done when: `evals/results/e2e-<date>.json` exists; every gate 0–10 passed, questions asked

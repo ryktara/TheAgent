@@ -12,7 +12,7 @@ Both paths obey the same rules; a finding cites the rule id and the path that br
 | SYNC-04 | Idempotency | `(device_id, seq)` unique; a replay returns the stored ack; the batch Idempotency-Key replays the whole response |
 | SYNC-05 | Audit event | every applied transition writes `audit_events` with `actor_id`, `device_id`, `entity`, `entity_id` and `offline: true` in the same transaction |
 | SYNC-06 | State guard | the transition is applied only from the states the domain allows (DRAFT→SENT, SENT→VOID by merge, BUMPED→RECALLED within the window); other states produce a conflict, not a silent no-op |
-| SYNC-07 | Derived data never client-supplied | kitchen ticket lines, receipt numbers, table state come from server data; client copies are ignored |
+| SYNC-07 | Derived data never client-supplied | work-queue ticket lines, receipt numbers, board state come from server data; client copies are ignored |
 | SYNC-08 | Approver on the push | manager-gated actions (transfer, void/comp, recall after the window, discount over limit) require a manager/owner session on the push or an approver id resolved server-side; a client-sent role or flag is never an approval |
 | SYNC-09 | Unhandled means refused | an action the sync store does not implement returns a conflict naming the REST operation to use; it is never merged as generic fields |
 | SYNC-10 | Test parity | the integration suite has one assertion per offline transition: the refused case and the applied case with its audit row |

@@ -208,13 +208,12 @@ def cbm_present() -> bool:
 
 
 # ----------------------------------------------------------------------------- query
-def run_query(root: Path, name: str, filters: dict[str, str], n: int, as_json: bool) -> int:
+def run_query(root: Path, name: str, filters: dict[str, str], n: int, as_json: bool, pack: str | None = None) -> int:
     p = root / "data" / (name if name.endswith(".csv") else f"{name}.csv")
     if not p.exists():
         print(f"query: {p} not found")
         return 1
-    with p.open(encoding="utf-8", newline="") as fh:
-        rows = list(csv.DictReader(fh))
+    rows = F.data_rows(p.stem, root, pack or "")
     for col, val in filters.items():
         if rows and col not in rows[0]:
             print(f"query: unknown column '{col}'; columns: {', '.join(rows[0].keys())}")

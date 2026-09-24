@@ -1646,6 +1646,7 @@ def main(argv: list[str] | None = None) -> int:
     qy.add_argument("--n", type=int, default=20)
     qy.add_argument("--json", action="store_true")
     qy.add_argument("--root", type=Path, default=ROOT)
+    qy.add_argument("--pack", default=None, help="merge packs/<slug>/reference/<csv>.csv over data/ (schema 2.0)")
     for name, helptext in (("domain-skeleton", "emit .foundry/domain.yaml and CONTEXT.md"), ("arch-skeleton", "emit 9 ADRs and architecture.md"),
                            ("api-skeleton", "emit openapi.yaml and .foundry/events.yaml")):
         sk = sub.add_parser(name, help=helptext)
@@ -1730,7 +1731,7 @@ def main(argv: list[str] | None = None) -> int:
                 i += 2
             else:
                 i += 1
-        return P.run_query(a.root.resolve(), a.csv, filters, a.n, a.json)
+        return P.run_query(a.root.resolve(), a.csv, filters, a.n, a.json, a.pack)
     if extra and a.cmd == "run":
         a.cmd_extra = extra
     elif extra:

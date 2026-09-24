@@ -63,10 +63,10 @@ trade-off. Template: ADR-TEMPLATE.md (sibling). Each ADR stays under 60 lines.
 |----|-----|-------|
 | 0001 | Stack | offline, platform |
 | 0002 | Auth and sessions | service-model, branches |
-| 0003 | Tenancy and branches | branches, central-menu-sync |
+| 0003 | Tenancy and branches | branches + pack `vocabulary.adr_refs.0003` |
 | 0004 | Data store and migrations | region |
 | 0005 | Offline and sync | offline |
-| 0006 | Integrations boundary | payments, delivery, kds |
+| 0006 | Integrations boundary | payments, delivery + pack `vocabulary.adr_refs.0006` |
 | 0007 | Deployment and environments | branches |
 | 0008 | Observability | offline |
 | 0009 | Internationalisation and RTL | region |

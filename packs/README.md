@@ -38,10 +38,10 @@ Stay inside this subset:
 Outside the subset: anchors, multi-line strings (`|`, `>`), multi-line flow collections,
 block mappings nested inside block lists. Validate catches parse errors with `file:line`.
 
-## pack.yaml example (schema 1.9)
+## pack.yaml example (schema 2.0)
 
 ```yaml
-version: "1.9"
+version: "2.0"
 complete: false
 threshold: 0.7
 slug: restaurant-pos
@@ -62,6 +62,7 @@ stack_default: {web: nextjs, api: hono, db: postgres, mobile: expo}
 ui_profile: {style: high-contrast-operational, density: high, touch: 48dp}
 questions:
   - {id: service-model, rank: 1, ask: "Dine-in, quick-service, or both?", answer_type: choice, choices: [dine-in, quick-service, both], default: both, reversible: false, skip_if_brief_mentions: [dine-in, quick-service, qsr], brief_hints: {dine-in: [table service, waiters], quick-service: [qsr, counter]}, maps_to: service.model}
+vocabulary: {money_tokens: [payment, refund, void, discount, tender], scaffold_ticket_titles: {auth: "Auth: device enrolment, staff PIN, manager override"}}
 reference: {screens: reference/screens.md, workflows: reference/workflows.md, glossary: reference/glossary.csv, compliance: reference/compliance.md, ux_patterns: reference/ux-patterns.md}
 ```
 
@@ -100,12 +101,39 @@ Schema: `schemas/pack.schema.json`.
   scaffolds the `regulator-licence` wizard (REGULATOR_NAME, LICENCE_REF, LICENCE_EXPIRY, COMPLIANCE_OFFICER_EMAIL) and
   `gate release` fails until a human runs `python scripts/foundry.py release confirm --by <name>` after that wizard is done.
 
+## Vocabulary (2.0)
+
+Schema 2.0 makes the core pack-agnostic: every domain word the skeletons used to hard-code now comes
+from `vocabulary:` (required on `complete: true` packs; every key inside is optional and falls back to
+generic wording). Nested block mappings are fine here (`vocabulary:` → `design_defaults:` → keys).
+
+| Field | Read by | Meaning |
+|-------|---------|---------|
+| scaffold_ticket_titles | tickets-skeleton | `{auth, tenancy, schema, tokens, offline}` titles for T-001..T-005; `offline` only when the pack has offline contexts |
+| adr_hints | arch-skeleton | `{"0001": …, …, "0009": …}` 1–2 sentences of domain context woven into each ADR's Context |
+| adr_refs | arch-skeleton | `{"0006": [question ids]}` extra decisions an ADR cites |
+| design_defaults.key_screens | design, screens | replaces the product type's key screens (drives rule boosts) |
+| design_defaults.component_set | design | operational component ids added for high-density POS products |
+| design_defaults.theme_names | design | `{default: <palette id>, …}` used when `ui_profile.themes` is absent |
+| design_defaults.screen_types / screen_components / component_hints / keyboard / list_routes | screens, scaffold | screen id → copy type; screen id → components; screens.md word → component; screen id → `{key: action}`; routes screenshotted without fullPage |
+| glossary_hint_terms | domain-skeleton | glossary terms always kept in CONTEXT.md |
+| copy_overrides | screens, release | `{<copy id>: {en, ar, ur}}`; wins over `reference/copy.csv`, which wins over `data/copy.csv` |
+| money_tokens | threat-skeleton, tickets | substrings of job ids that mark money-moving operations (generic: payment, refund, void, discount, tender, settle) |
+| terms | arch, tickets | `{catalog, catalog_items, canvas, live_state}` noun phrases in core prose |
+| operator_role, user_docs, smoke, seed_note | release, scaffold | front-line role (names `user-docs/<role>-quick-start.*`), user-doc buttons/routine, the smoke route + pattern, the seed note |
+| authz_guard, containers, event_consumers | api, arch, domain | x-foundry.authz tail; architecture container rows; extra event consumers per context |
+
+`reference/*.csv` next to the pack (components, copy, palettes, product-types, ux-rules, security-controls,
+threat-patterns, stacks) merges over `data/<name>.csv` for that pack only: a row whose id exists in
+`data/` replaces it in place, a new row goes after the row named in its optional `after` column.
+restaurant-pos fills every field so its golden artefacts reproduce the pre-2.0 output byte for byte.
+
 ## Pack lint (`complete: true`)
 
 `validate` additionally requires: every job screen has a `## <screen-id>` heading in
 screens.md; every CamelCase name in invariants is an entity and every entity appears in an
 invariant or in screens.md; every `compliance_must` id appears in compliance.md; glossary.csv has
-at least 80 rows; reference/sources.md exists and every VERIFIED row carries a URL; every `maps_to` is unique; every `enables` target is a should_have id; regional control ids exist in compliance.md.
+at least 80 rows; `vocabulary` is present; reference/sources.md exists and every VERIFIED row carries a URL; every `maps_to` is unique; every `enables` target is a should_have id; regional control ids exist in compliance.md.
 
 ## Question bank (1.7)
 

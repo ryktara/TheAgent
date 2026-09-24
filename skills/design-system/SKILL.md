@@ -67,6 +67,6 @@ adjusts for brand; the validator guards contrast and scales.
 | typography | overlap of use_case and mood with product tags; Arabic-capable pairs boosted for RTL regions |
 | style | `ui_profile.style` when it is a styles.csv id, else the product type default |
 | rules | priority ≤ 5 rules whose applies_to hits the product's key screens, 15 max |
-| components | base set + operational set for high-density POS/KDS + charts for analytics |
+| components | base set + operational set (pack `vocabulary.design_defaults.component_set`) for high-density POS and work-queue screens + charts for analytics |
 
 `foundry.py query palettes --industry_tags pos` lists alternatives when the founder rejects the pick.

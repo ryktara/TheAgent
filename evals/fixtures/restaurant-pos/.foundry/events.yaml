@@ -1,0 +1,64 @@
+pack: "restaurant-pos"
+events:
+  - {name: "OrderSent", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "OrderInProgress", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "OrderReady", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderServed", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderBilled", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderPaid", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderClosed", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderVoid", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderRefunded", producer: "ordering", payload: "#/components/schemas/Order", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineFired", producer: "ordering", payload: "#/components/schemas/OrderLine", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "OrderLineReady", producer: "ordering", payload: "#/components/schemas/OrderLine", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineServed", producer: "ordering", payload: "#/components/schemas/OrderLine", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineHeld", producer: "ordering", payload: "#/components/schemas/OrderLine", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineVoided", producer: "ordering", payload: "#/components/schemas/OrderLine", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineComped", producer: "ordering", payload: "#/components/schemas/OrderLine", consumers: ["reporting", "sync"]}
+  - {name: "ModifierHidden", producer: "menu", payload: "#/components/schemas/Modifier", consumers: ["reporting"]}
+  - {name: "ModifierGroupHidden", producer: "menu", payload: "#/components/schemas/ModifierGroup", consumers: ["reporting"]}
+  - {name: "TableSeated", producer: "ordering", payload: "#/components/schemas/Table", consumers: ["reporting", "sync"]}
+  - {name: "TableOrdered", producer: "ordering", payload: "#/components/schemas/Table", consumers: ["reporting", "sync"]}
+  - {name: "TableBilled", producer: "ordering", payload: "#/components/schemas/Table", consumers: ["reporting", "sync"]}
+  - {name: "TableDirty", producer: "ordering", payload: "#/components/schemas/Table", consumers: ["reporting", "sync"]}
+  - {name: "TableBlocked", producer: "ordering", payload: "#/components/schemas/Table", consumers: ["reporting", "sync"]}
+  - {name: "ShiftReconciled", producer: "ordering", payload: "#/components/schemas/Shift", consumers: ["reporting", "sync"]}
+  - {name: "ShiftClosed", producer: "ordering", payload: "#/components/schemas/Shift", consumers: ["reporting", "sync"]}
+  - {name: "PaymentAuthorised", producer: "payments", payload: "#/components/schemas/Payment", consumers: ["reporting", "sync"]}
+  - {name: "PaymentCaptured", producer: "payments", payload: "#/components/schemas/Payment", consumers: ["reporting", "sync"]}
+  - {name: "PaymentDeclined", producer: "payments", payload: "#/components/schemas/Payment", consumers: ["reporting", "sync"]}
+  - {name: "PaymentRefunded", producer: "payments", payload: "#/components/schemas/Payment", consumers: ["reporting", "sync"]}
+  - {name: "PaymentVoided", producer: "payments", payload: "#/components/schemas/Payment", consumers: ["reporting", "sync"]}
+  - {name: "TenderDisabled", producer: "payments", payload: "#/components/schemas/Tender", consumers: ["reporting", "sync"]}
+  - {name: "RefundApproved", producer: "payments", payload: "#/components/schemas/Refund", consumers: ["reporting", "sync"]}
+  - {name: "RefundProcessed", producer: "payments", payload: "#/components/schemas/Refund", consumers: ["reporting", "sync"]}
+  - {name: "RefundFailed", producer: "payments", payload: "#/components/schemas/Refund", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptReprinted", producer: "payments", payload: "#/components/schemas/Receipt", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptVoided", producer: "payments", payload: "#/components/schemas/Receipt", consumers: ["reporting", "sync"]}
+  - {name: "MenuItemSoldOut", producer: "menu", payload: "#/components/schemas/MenuItem", consumers: ["reporting"]}
+  - {name: "MenuItemHidden", producer: "menu", payload: "#/components/schemas/MenuItem", consumers: ["reporting"]}
+  - {name: "MenuItemSeasonal", producer: "menu", payload: "#/components/schemas/MenuItem", consumers: ["reporting"]}
+  - {name: "VariantHidden", producer: "menu", payload: "#/components/schemas/Variant", consumers: ["reporting"]}
+  - {name: "CourseFired", producer: "ordering", payload: "#/components/schemas/Course", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "CourseServed", producer: "ordering", payload: "#/components/schemas/Course", consumers: ["reporting", "sync"]}
+  - {name: "KitchenTicketInProgress", producer: "kitchen", payload: "#/components/schemas/KitchenTicket", consumers: ["reporting"]}
+  - {name: "KitchenTicketReady", producer: "kitchen", payload: "#/components/schemas/KitchenTicket", consumers: ["reporting"]}
+  - {name: "KitchenTicketBumped", producer: "kitchen", payload: "#/components/schemas/KitchenTicket", consumers: ["reporting"]}
+  - {name: "KitchenTicketRecalled", producer: "kitchen", payload: "#/components/schemas/KitchenTicket", consumers: ["reporting"]}
+  - {name: "ReservationConfirmed", producer: "ordering", payload: "#/components/schemas/Reservation", consumers: ["reporting", "sync"]}
+  - {name: "ReservationSeated", producer: "ordering", payload: "#/components/schemas/Reservation", consumers: ["reporting", "sync"]}
+  - {name: "ReservationNoShow", producer: "ordering", payload: "#/components/schemas/Reservation", consumers: ["reporting", "sync"]}
+  - {name: "ReservationCancelled", producer: "ordering", payload: "#/components/schemas/Reservation", consumers: ["reporting", "sync"]}
+  - {name: "CustomerRegistered", producer: "people", payload: "#/components/schemas/Customer", consumers: ["reporting"]}
+  - {name: "CustomerBlocked", producer: "people", payload: "#/components/schemas/Customer", consumers: ["reporting"]}
+  - {name: "DiscountExpired", producer: "payments", payload: "#/components/schemas/Discount", consumers: ["reporting", "sync"]}
+  - {name: "TaxRuleRetired", producer: "payments", payload: "#/components/schemas/TaxRule", consumers: ["reporting", "sync"]}
+  - {name: "BranchSuspended", producer: "people", payload: "#/components/schemas/Branch", consumers: ["reporting"]}
+  - {name: "StaffSuspended", producer: "people", payload: "#/components/schemas/Staff", consumers: ["reporting"]}
+  - {name: "RoleActive", producer: "people", payload: "#/components/schemas/Role", consumers: ["reporting"]}
+  - {name: "InventoryItemDiscontinued", producer: "inventory", payload: "#/components/schemas/InventoryItem", consumers: ["reporting"]}
+  - {name: "RecipeRetired", producer: "inventory", payload: "#/components/schemas/Recipe", consumers: ["reporting"]}
+  - {name: "StockMovementRecorded", producer: "inventory", payload: "#/components/schemas/StockMovement", consumers: ["reporting"]}
+  - {name: "SyncEventSent", producer: "sync", payload: "#/components/schemas/SyncEvent", consumers: ["reporting"]}
+  - {name: "SyncEventAcked", producer: "sync", payload: "#/components/schemas/SyncEvent", consumers: ["reporting"]}
+  - {name: "SyncEventConflict", producer: "sync", payload: "#/components/schemas/SyncEvent", consumers: ["reporting"]}

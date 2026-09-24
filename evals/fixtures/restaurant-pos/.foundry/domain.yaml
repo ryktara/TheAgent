@@ -1,0 +1,304 @@
+pack: "restaurant-pos"
+decisions_hash: "ceb231ab5069"
+contexts: ["ordering", "kitchen", "payments", "menu", "inventory", "people", "reporting", "sync"]
+entities:
+  - name: "Order"
+    owned_by: "ordering"
+    exposure: "public"
+    fields: ["id", "client_uuid", "device_seq", "branch_id", "table_id", "channel", "covers", "subtotal", "discount_total", "service_charge", "tax_total", "total", "opened_at", "closed_at"]
+    states: ["draft", "sent", "in-progress", "ready", "served", "billed", "paid", "closed", "void", "refunded"]
+    invariants: ["Order.total == sum(OrderLine.line_total) - Order.discount_total + Order.service_charge + Order.tax_total, computed in minor units", "When TaxRule.inclusive is true, tax_total is extracted from tax-inclusive prices and rounding happens once per Order, not per line", "An Order in state paid has captured Payment amounts summing exactly to Order.total", "A Shift closes only when every Order opened on its device is paid, void or transferred", "Every offline Order carries a client_uuid and a device_seq that is monotonic per device", "A KitchenTicket is derived from fired OrderLines; it never holds lines that are not on the Order", "A Table in state seated or ordered references exactly one open Order", "Merging Tables moves every OrderLine to one surviving Order and voids the others with reason merge", "A Discount that requires a PIN is applied only with an approver Staff id recorded on the Order", "Every state change on Order, Payment, Refund, Shift and Discount writes one audit log event", "A Reservation in state seated references exactly one Table and one open Order"]
+    transitions:
+      - {from: "draft", to: "sent", by: "waiter", guard: ""}
+      - {from: "sent", to: "in-progress", by: "waiter", guard: ""}
+      - {from: "in-progress", to: "ready", by: "waiter", guard: ""}
+      - {from: "ready", to: "served", by: "waiter", guard: ""}
+      - {from: "served", to: "billed", by: "waiter", guard: ""}
+      - {from: "billed", to: "paid", by: "waiter", guard: ""}
+      - {from: "sent", to: "closed", by: "manager", guard: "reason recorded"}
+      - {from: "sent", to: "void", by: "manager", guard: "reason recorded"}
+      - {from: "sent", to: "refunded", by: "manager", guard: "reason recorded"}
+  - name: "OrderLine"
+    owned_by: "ordering"
+    exposure: "derived"
+    fields: ["order_id", "menu_item_id", "variant_id", "qty", "unit_price", "modifiers_total", "line_total", "course", "seat", "notes", "allergens"]
+    states: ["pending", "held", "fired", "ready", "served", "voided", "comped"]
+    invariants: ["Order.total == sum(OrderLine.line_total) - Order.discount_total + Order.service_charge + Order.tax_total, computed in minor units", "An OrderLine in state voided or comped carries a reason and an approver Staff id", "A KitchenTicket is derived from fired OrderLines; it never holds lines that are not on the Order", "Merging Tables moves every OrderLine to one surviving Order and voids the others with reason merge", "StockMovement of kind sale is written once per served OrderLine using the Recipe of its MenuItem", "MenuItem in state sold-out cannot be added to a new OrderLine on any channel", "A Modifier price_delta is added to OrderLine.modifiers_total once per selected quantity, within its ModifierGroup min and max", "A Course fires all its OrderLines together; a fired Course keeps its sequence", "A Variant price_delta applies to OrderLine.unit_price before any Modifier"]
+    transitions:
+      - {from: "pending", to: "fired", by: "waiter", guard: ""}
+      - {from: "fired", to: "ready", by: "waiter", guard: ""}
+      - {from: "ready", to: "served", by: "waiter", guard: ""}
+      - {from: "fired", to: "held", by: "manager", guard: "reason recorded"}
+      - {from: "fired", to: "voided", by: "manager", guard: "reason recorded"}
+      - {from: "fired", to: "comped", by: "manager", guard: "reason recorded"}
+  - name: "Modifier"
+    owned_by: "menu"
+    exposure: "derived"
+    fields: ["group_id", "name", "price_delta", "max_qty"]
+    states: ["active", "hidden"]
+    invariants: ["A Modifier price_delta is added to OrderLine.modifiers_total once per selected quantity, within its ModifierGroup min and max", "A Variant price_delta applies to OrderLine.unit_price before any Modifier"]
+    transitions:
+      - {from: "active", to: "hidden", by: "manager", guard: "reason recorded"}
+  - name: "ModifierGroup"
+    owned_by: "menu"
+    exposure: "derived"
+    fields: ["name", "min_select", "max_select", "required"]
+    states: ["active", "hidden"]
+    invariants: ["A Modifier price_delta is added to OrderLine.modifiers_total once per selected quantity, within its ModifierGroup min and max"]
+    transitions:
+      - {from: "active", to: "hidden", by: "manager", guard: "reason recorded"}
+  - name: "Table"
+    owned_by: "ordering"
+    exposure: "public"
+    fields: ["branch_id", "zone", "number", "seats", "shape", "x", "y"]
+    states: ["free", "seated", "ordered", "billed", "dirty", "blocked"]
+    invariants: ["A Table in state seated or ordered references exactly one open Order", "Merging Tables moves every OrderLine to one surviving Order and voids the others with reason merge", "A Reservation in state seated references exactly one Table and one open Order"]
+    transitions:
+      - {from: "free", to: "seated", by: "waiter", guard: ""}
+      - {from: "seated", to: "ordered", by: "waiter", guard: ""}
+      - {from: "ordered", to: "billed", by: "waiter", guard: ""}
+      - {from: "seated", to: "dirty", by: "manager", guard: "reason recorded"}
+      - {from: "seated", to: "blocked", by: "manager", guard: "reason recorded"}
+  - name: "Shift"
+    owned_by: "ordering"
+    exposure: "internal"
+    fields: ["branch_id", "device_id", "opened_by", "opening_float", "closing_count", "expected_cash", "variance"]
+    states: ["open", "closed", "reconciled"]
+    invariants: ["A Shift closes only when every Order opened on its device is paid, void or transferred", "Every state change on Order, Payment, Refund, Shift and Discount writes one audit log event"]
+    transitions:
+      - {from: "open", to: "reconciled", by: "cashier", guard: ""}
+      - {from: "reconciled", to: "closed", by: "manager", guard: "reason recorded"}
+  - name: "Payment"
+    owned_by: "payments"
+    exposure: "public"
+    fields: ["order_id", "amount", "tender_id", "provider_ref", "approval_code", "captured_at"]
+    states: ["pending", "authorised", "captured", "declined", "refunded", "voided"]
+    invariants: ["An Order in state paid has captured Payment amounts summing exactly to Order.total", "A Refund never exceeds the captured amount of its Payment minus prior Refunds", "A SyncEvent in state conflict is resolved by the server rule last-writer-wins per field except Payment, which is append-only", "Every state change on Order, Payment, Refund, Shift and Discount writes one audit log event", "A Tender of kind cash opens the drawer; a Tender of kind card requires a provider_ref and approval_code on its Payment"]
+    transitions:
+      - {from: "pending", to: "authorised", by: "cashier", guard: ""}
+      - {from: "authorised", to: "captured", by: "cashier", guard: ""}
+      - {from: "authorised", to: "declined", by: "manager", guard: "reason recorded"}
+      - {from: "authorised", to: "refunded", by: "manager", guard: "reason recorded"}
+      - {from: "authorised", to: "voided", by: "manager", guard: "reason recorded"}
+  - name: "Tender"
+    owned_by: "payments"
+    exposure: "internal"
+    fields: ["name", "kind", "provider", "surcharge_pct", "opens_drawer"]
+    states: ["active", "disabled"]
+    invariants: ["A Tender of kind cash opens the drawer; a Tender of kind card requires a provider_ref and approval_code on its Payment"]
+    transitions:
+      - {from: "active", to: "disabled", by: "manager", guard: "reason recorded"}
+  - name: "Refund"
+    owned_by: "payments"
+    exposure: "internal"
+    fields: ["payment_id", "amount", "reason", "approver_id"]
+    states: ["requested", "approved", "processed", "failed"]
+    invariants: ["A Refund never exceeds the captured amount of its Payment minus prior Refunds", "Every state change on Order, Payment, Refund, Shift and Discount writes one audit log event"]
+    transitions:
+      - {from: "requested", to: "approved", by: "manager", guard: ""}
+      - {from: "approved", to: "processed", by: "manager", guard: ""}
+      - {from: "approved", to: "failed", by: "manager", guard: "reason recorded"}
+  - name: "Receipt"
+    owned_by: "payments"
+    exposure: "internal"
+    fields: ["order_id", "branch_id", "number", "fiscal_qr", "language", "issued_at"]
+    states: ["issued", "reprinted", "voided"]
+    invariants: ["Receipt numbers are gapless and increasing per Branch; a reprint reuses the number and marks Receipt reprinted", "Receipt.language is one of the Branch receipt languages and defaults to the Customer preference"]
+    transitions:
+      - {from: "issued", to: "reprinted", by: "manager", guard: "reason recorded"}
+      - {from: "issued", to: "voided", by: "manager", guard: "reason recorded"}
+  - name: "MenuItem"
+    owned_by: "menu"
+    exposure: "public"
+    fields: ["category_id", "plu", "name_en", "name_ar", "price", "tax_rule_id", "kitchen_station", "image"]
+    states: ["active", "sold-out", "hidden", "seasonal"]
+    invariants: ["StockMovement of kind sale is written once per served OrderLine using the Recipe of its MenuItem", "MenuItem in state sold-out cannot be added to a new OrderLine on any channel"]
+    transitions:
+      - {from: "active", to: "sold-out", by: "manager", guard: "reason recorded"}
+      - {from: "active", to: "hidden", by: "manager", guard: "reason recorded"}
+      - {from: "active", to: "seasonal", by: "manager", guard: "reason recorded"}
+  - name: "Variant"
+    owned_by: "menu"
+    exposure: "derived"
+    fields: ["menu_item_id", "name", "price_delta", "sku"]
+    states: ["active", "hidden"]
+    invariants: ["A Variant price_delta applies to OrderLine.unit_price before any Modifier"]
+    transitions:
+      - {from: "active", to: "hidden", by: "manager", guard: "reason recorded"}
+  - name: "Course"
+    owned_by: "ordering"
+    exposure: "derived"
+    fields: ["order_id", "sequence", "name", "fired_at"]
+    states: ["scheduled", "fired", "served"]
+    invariants: ["A Course fires all its OrderLines together; a fired Course keeps its sequence"]
+    transitions:
+      - {from: "scheduled", to: "fired", by: "cashier", guard: ""}
+      - {from: "fired", to: "served", by: "cashier", guard: ""}
+  - name: "KitchenTicket"
+    owned_by: "kitchen"
+    exposure: "derived"
+    fields: ["order_id", "station", "lines", "fired_at", "bumped_at", "age_seconds"]
+    states: ["new", "in-progress", "ready", "bumped", "recalled"]
+    invariants: ["A KitchenTicket is derived from fired OrderLines; it never holds lines that are not on the Order"]
+    transitions:
+      - {from: "new", to: "in-progress", by: "waiter", guard: ""}
+      - {from: "in-progress", to: "ready", by: "waiter", guard: ""}
+      - {from: "ready", to: "bumped", by: "waiter", guard: ""}
+      - {from: "in-progress", to: "recalled", by: "manager", guard: "reason recorded"}
+  - name: "Reservation"
+    owned_by: "ordering"
+    exposure: "public"
+    fields: ["customer_id", "party_size", "slot", "table_id", "notes"]
+    states: ["requested", "confirmed", "seated", "no-show", "cancelled"]
+    invariants: ["A Reservation in state seated references exactly one Table and one open Order"]
+    transitions:
+      - {from: "requested", to: "confirmed", by: "cashier", guard: ""}
+      - {from: "confirmed", to: "seated", by: "cashier", guard: ""}
+      - {from: "confirmed", to: "no-show", by: "manager", guard: "reason recorded"}
+      - {from: "confirmed", to: "cancelled", by: "manager", guard: "reason recorded"}
+  - name: "Customer"
+    owned_by: "people"
+    exposure: "public"
+    fields: ["name", "phone", "email", "loyalty_points", "khaata_balance", "allergens"]
+    states: ["guest", "registered", "blocked"]
+    invariants: ["Receipt.language is one of the Branch receipt languages and defaults to the Customer preference"]
+    transitions:
+      - {from: "guest", to: "registered", by: "cashier", guard: ""}
+      - {from: "registered", to: "blocked", by: "manager", guard: "reason recorded"}
+  - name: "Discount"
+    owned_by: "payments"
+    exposure: "internal"
+    fields: ["name", "kind", "value", "scope", "requires_pin", "channel"]
+    states: ["active", "expired"]
+    invariants: ["A Discount that requires a PIN is applied only with an approver Staff id recorded on the Order", "Every state change on Order, Payment, Refund, Shift and Discount writes one audit log event"]
+    transitions:
+      - {from: "active", to: "expired", by: "manager", guard: "reason recorded"}
+  - name: "TaxRule"
+    owned_by: "payments"
+    exposure: "internal"
+    fields: ["region", "name", "rate", "inclusive", "applies_to"]
+    states: ["active", "retired"]
+    invariants: ["When TaxRule.inclusive is true, tax_total is extracted from tax-inclusive prices and rounding happens once per Order, not per line", "Service charge applies to subtotal after discounts and before tax unless TaxRule says otherwise"]
+    transitions:
+      - {from: "active", to: "retired", by: "manager", guard: "reason recorded"}
+  - name: "Branch"
+    owned_by: "people"
+    exposure: "internal"
+    fields: ["name", "region", "currency", "timezone", "receipt_prefix", "fiscal_regime"]
+    states: ["active", "suspended"]
+    invariants: ["Receipt numbers are gapless and increasing per Branch; a reprint reuses the number and marks Receipt reprinted", "Receipt.language is one of the Branch receipt languages and defaults to the Customer preference"]
+    transitions:
+      - {from: "active", to: "suspended", by: "manager", guard: "reason recorded"}
+  - name: "Staff"
+    owned_by: "people"
+    exposure: "internal"
+    fields: ["name", "pin_hash", "role_id", "branch_ids"]
+    states: ["active", "suspended"]
+    invariants: ["An OrderLine in state voided or comped carries a reason and an approver Staff id", "A Discount that requires a PIN is applied only with an approver Staff id recorded on the Order"]
+    transitions:
+      - {from: "active", to: "suspended", by: "manager", guard: "reason recorded"}
+  - name: "Role"
+    owned_by: "people"
+    exposure: "internal"
+    fields: ["name", "permissions"]
+    states: ["active"]
+    invariants: ["Role has exactly one state at a time"]
+    transitions:
+      - {from: "*", to: "active", by: "cashier", guard: ""}
+  - name: "InventoryItem"
+    owned_by: "inventory"
+    exposure: "public"
+    fields: ["name", "unit", "on_hand", "par_level", "cost"]
+    states: ["active", "discontinued"]
+    invariants: ["InventoryItem.on_hand == sum(StockMovement.qty) for that item since the last count"]
+    transitions:
+      - {from: "active", to: "discontinued", by: "manager", guard: "reason recorded"}
+  - name: "Recipe"
+    owned_by: "inventory"
+    exposure: "derived"
+    fields: ["menu_item_id", "components", "yield"]
+    states: ["active", "retired"]
+    invariants: ["StockMovement of kind sale is written once per served OrderLine using the Recipe of its MenuItem"]
+    transitions:
+      - {from: "active", to: "retired", by: "manager", guard: "reason recorded"}
+  - name: "StockMovement"
+    owned_by: "inventory"
+    exposure: "derived"
+    fields: ["inventory_item_id", "qty", "kind", "reference", "at"]
+    states: ["recorded"]
+    invariants: ["StockMovement of kind sale is written once per served OrderLine using the Recipe of its MenuItem", "InventoryItem.on_hand == sum(StockMovement.qty) for that item since the last count"]
+    transitions:
+      - {from: "*", to: "recorded", by: "cashier", guard: ""}
+  - name: "SyncEvent"
+    owned_by: "sync"
+    exposure: "internal"
+    fields: ["device_id", "seq", "entity", "payload", "created_at"]
+    states: ["pending", "sent", "acked", "conflict"]
+    invariants: ["A SyncEvent in state conflict is resolved by the server rule last-writer-wins per field except Payment, which is append-only"]
+    transitions:
+      - {from: "pending", to: "sent", by: "cashier", guard: ""}
+      - {from: "sent", to: "acked", by: "cashier", guard: ""}
+      - {from: "sent", to: "conflict", by: "manager", guard: "reason recorded"}
+events:
+  - {name: "OrderSent", entity: "Order", transition: "draft->sent", producer: "ordering", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "OrderInProgress", entity: "Order", transition: "sent->in-progress", producer: "ordering", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "OrderReady", entity: "Order", transition: "in-progress->ready", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderServed", entity: "Order", transition: "ready->served", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderBilled", entity: "Order", transition: "served->billed", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderPaid", entity: "Order", transition: "billed->paid", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderClosed", entity: "Order", transition: "sent->closed", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderVoid", entity: "Order", transition: "sent->void", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderRefunded", entity: "Order", transition: "sent->refunded", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineFired", entity: "OrderLine", transition: "pending->fired", producer: "ordering", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "OrderLineReady", entity: "OrderLine", transition: "fired->ready", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineServed", entity: "OrderLine", transition: "ready->served", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineHeld", entity: "OrderLine", transition: "fired->held", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineVoided", entity: "OrderLine", transition: "fired->voided", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "OrderLineComped", entity: "OrderLine", transition: "fired->comped", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "ModifierHidden", entity: "Modifier", transition: "active->hidden", producer: "menu", consumers: ["reporting"]}
+  - {name: "ModifierGroupHidden", entity: "ModifierGroup", transition: "active->hidden", producer: "menu", consumers: ["reporting"]}
+  - {name: "TableSeated", entity: "Table", transition: "free->seated", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "TableOrdered", entity: "Table", transition: "seated->ordered", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "TableBilled", entity: "Table", transition: "ordered->billed", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "TableDirty", entity: "Table", transition: "seated->dirty", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "TableBlocked", entity: "Table", transition: "seated->blocked", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "ShiftReconciled", entity: "Shift", transition: "open->reconciled", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "ShiftClosed", entity: "Shift", transition: "reconciled->closed", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "PaymentAuthorised", entity: "Payment", transition: "pending->authorised", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "PaymentCaptured", entity: "Payment", transition: "authorised->captured", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "PaymentDeclined", entity: "Payment", transition: "authorised->declined", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "PaymentRefunded", entity: "Payment", transition: "authorised->refunded", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "PaymentVoided", entity: "Payment", transition: "authorised->voided", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "TenderDisabled", entity: "Tender", transition: "active->disabled", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "RefundApproved", entity: "Refund", transition: "requested->approved", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "RefundProcessed", entity: "Refund", transition: "approved->processed", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "RefundFailed", entity: "Refund", transition: "approved->failed", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptReprinted", entity: "Receipt", transition: "issued->reprinted", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptVoided", entity: "Receipt", transition: "issued->voided", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "MenuItemSoldOut", entity: "MenuItem", transition: "active->sold-out", producer: "menu", consumers: ["reporting"]}
+  - {name: "MenuItemHidden", entity: "MenuItem", transition: "active->hidden", producer: "menu", consumers: ["reporting"]}
+  - {name: "MenuItemSeasonal", entity: "MenuItem", transition: "active->seasonal", producer: "menu", consumers: ["reporting"]}
+  - {name: "VariantHidden", entity: "Variant", transition: "active->hidden", producer: "menu", consumers: ["reporting"]}
+  - {name: "CourseFired", entity: "Course", transition: "scheduled->fired", producer: "ordering", consumers: ["reporting", "kitchen", "sync"]}
+  - {name: "CourseServed", entity: "Course", transition: "fired->served", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "KitchenTicketInProgress", entity: "KitchenTicket", transition: "new->in-progress", producer: "kitchen", consumers: ["reporting"]}
+  - {name: "KitchenTicketReady", entity: "KitchenTicket", transition: "in-progress->ready", producer: "kitchen", consumers: ["reporting"]}
+  - {name: "KitchenTicketBumped", entity: "KitchenTicket", transition: "ready->bumped", producer: "kitchen", consumers: ["reporting"]}
+  - {name: "KitchenTicketRecalled", entity: "KitchenTicket", transition: "in-progress->recalled", producer: "kitchen", consumers: ["reporting"]}
+  - {name: "ReservationConfirmed", entity: "Reservation", transition: "requested->confirmed", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "ReservationSeated", entity: "Reservation", transition: "confirmed->seated", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "ReservationNoShow", entity: "Reservation", transition: "confirmed->no-show", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "ReservationCancelled", entity: "Reservation", transition: "confirmed->cancelled", producer: "ordering", consumers: ["reporting", "sync"]}
+  - {name: "CustomerRegistered", entity: "Customer", transition: "guest->registered", producer: "people", consumers: ["reporting"]}
+  - {name: "CustomerBlocked", entity: "Customer", transition: "registered->blocked", producer: "people", consumers: ["reporting"]}
+  - {name: "DiscountExpired", entity: "Discount", transition: "active->expired", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "TaxRuleRetired", entity: "TaxRule", transition: "active->retired", producer: "payments", consumers: ["reporting", "sync"]}
+  - {name: "BranchSuspended", entity: "Branch", transition: "active->suspended", producer: "people", consumers: ["reporting"]}
+  - {name: "StaffSuspended", entity: "Staff", transition: "active->suspended", producer: "people", consumers: ["reporting"]}
+  - {name: "RoleActive", entity: "Role", transition: "*->active", producer: "people", consumers: ["reporting"]}
+  - {name: "InventoryItemDiscontinued", entity: "InventoryItem", transition: "active->discontinued", producer: "inventory", consumers: ["reporting"]}
+  - {name: "RecipeRetired", entity: "Recipe", transition: "active->retired", producer: "inventory", consumers: ["reporting"]}
+  - {name: "StockMovementRecorded", entity: "StockMovement", transition: "*->recorded", producer: "inventory", consumers: ["reporting"]}
+  - {name: "SyncEventSent", entity: "SyncEvent", transition: "pending->sent", producer: "sync", consumers: ["reporting"]}
+  - {name: "SyncEventAcked", entity: "SyncEvent", transition: "sent->acked", producer: "sync", consumers: ["reporting"]}
+  - {name: "SyncEventConflict", entity: "SyncEvent", transition: "sent->conflict", producer: "sync", consumers: ["reporting"]}

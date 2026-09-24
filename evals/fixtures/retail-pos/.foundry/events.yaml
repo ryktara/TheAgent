@@ -1,0 +1,70 @@
+pack: "retail-pos"
+events:
+  - {name: "ProductActive", producer: "catalog", payload: "#/components/schemas/Product", consumers: ["reporting"]}
+  - {name: "ProductDiscontinued", producer: "catalog", payload: "#/components/schemas/Product", consumers: ["reporting"]}
+  - {name: "VariantOutOfStock", producer: "catalog", payload: "#/components/schemas/Variant", consumers: ["reporting"]}
+  - {name: "VariantActive", producer: "catalog", payload: "#/components/schemas/Variant", consumers: ["reporting"]}
+  - {name: "VariantDiscontinued", producer: "catalog", payload: "#/components/schemas/Variant", consumers: ["reporting"]}
+  - {name: "BarcodeRetired", producer: "catalog", payload: "#/components/schemas/Barcode", consumers: ["reporting"]}
+  - {name: "SaleParked", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SaleOpen", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SaleTendering", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SalePaid", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SalePartiallyReturned", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SaleReturned", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SaleVoid", producer: "sales", payload: "#/components/schemas/Sale", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "SaleLineVoided", producer: "sales", payload: "#/components/schemas/SaleLine", consumers: ["reporting", "sync"]}
+  - {name: "SaleLineReturned", producer: "sales", payload: "#/components/schemas/SaleLine", consumers: ["reporting", "sync"]}
+  - {name: "TenderAuthorised", producer: "sales", payload: "#/components/schemas/Tender", consumers: ["reporting", "sync"]}
+  - {name: "TenderCaptured", producer: "sales", payload: "#/components/schemas/Tender", consumers: ["reporting", "sync"]}
+  - {name: "TenderDeclined", producer: "sales", payload: "#/components/schemas/Tender", consumers: ["reporting", "sync"]}
+  - {name: "TenderRefunded", producer: "sales", payload: "#/components/schemas/Tender", consumers: ["reporting", "sync"]}
+  - {name: "TenderVoided", producer: "sales", payload: "#/components/schemas/Tender", consumers: ["reporting", "sync"]}
+  - {name: "ReturnApproved", producer: "sales", payload: "#/components/schemas/Return", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "ReturnRefunded", producer: "sales", payload: "#/components/schemas/Return", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "ReturnExchanged", producer: "sales", payload: "#/components/schemas/Return", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "ReturnRejected", producer: "sales", payload: "#/components/schemas/Return", consumers: ["reporting", "sync", "inventory"]}
+  - {name: "PromotionScheduled", producer: "sales", payload: "#/components/schemas/Promotion", consumers: ["reporting", "sync"]}
+  - {name: "PromotionActive", producer: "sales", payload: "#/components/schemas/Promotion", consumers: ["reporting", "sync"]}
+  - {name: "PromotionExpired", producer: "sales", payload: "#/components/schemas/Promotion", consumers: ["reporting", "sync"]}
+  - {name: "LoyaltyAccountFrozen", producer: "customers", payload: "#/components/schemas/LoyaltyAccount", consumers: ["reporting"]}
+  - {name: "LoyaltyAccountActive", producer: "customers", payload: "#/components/schemas/LoyaltyAccount", consumers: ["reporting"]}
+  - {name: "LoyaltyAccountClosed", producer: "customers", payload: "#/components/schemas/LoyaltyAccount", consumers: ["reporting"]}
+  - {name: "CustomerRegistered", producer: "customers", payload: "#/components/schemas/Customer", consumers: ["reporting"]}
+  - {name: "CustomerBlocked", producer: "customers", payload: "#/components/schemas/Customer", consumers: ["reporting"]}
+  - {name: "GiftCardActive", producer: "customers", payload: "#/components/schemas/GiftCard", consumers: ["reporting"]}
+  - {name: "GiftCardRedeemed", producer: "customers", payload: "#/components/schemas/GiftCard", consumers: ["reporting"]}
+  - {name: "GiftCardExpired", producer: "customers", payload: "#/components/schemas/GiftCard", consumers: ["reporting"]}
+  - {name: "GiftCardVoid", producer: "customers", payload: "#/components/schemas/GiftCard", consumers: ["reporting"]}
+  - {name: "LayawayPaid", producer: "customers", payload: "#/components/schemas/Layaway", consumers: ["reporting"]}
+  - {name: "LayawayCollected", producer: "customers", payload: "#/components/schemas/Layaway", consumers: ["reporting"]}
+  - {name: "LayawayCancelled", producer: "customers", payload: "#/components/schemas/Layaway", consumers: ["reporting"]}
+  - {name: "LayawayExpired", producer: "customers", payload: "#/components/schemas/Layaway", consumers: ["reporting"]}
+  - {name: "PurchaseOrderSent", producer: "inventory", payload: "#/components/schemas/PurchaseOrder", consumers: ["reporting"]}
+  - {name: "PurchaseOrderPartiallyReceived", producer: "inventory", payload: "#/components/schemas/PurchaseOrder", consumers: ["reporting"]}
+  - {name: "PurchaseOrderReceived", producer: "inventory", payload: "#/components/schemas/PurchaseOrder", consumers: ["reporting"]}
+  - {name: "PurchaseOrderClosed", producer: "inventory", payload: "#/components/schemas/PurchaseOrder", consumers: ["reporting"]}
+  - {name: "PurchaseOrderCancelled", producer: "inventory", payload: "#/components/schemas/PurchaseOrder", consumers: ["reporting"]}
+  - {name: "GoodsReceiptPosted", producer: "inventory", payload: "#/components/schemas/GoodsReceipt", consumers: ["reporting"]}
+  - {name: "StockCountCounting", producer: "inventory", payload: "#/components/schemas/StockCount", consumers: ["reporting"]}
+  - {name: "StockCountReview", producer: "inventory", payload: "#/components/schemas/StockCount", consumers: ["reporting"]}
+  - {name: "StockCountPosted", producer: "inventory", payload: "#/components/schemas/StockCount", consumers: ["reporting"]}
+  - {name: "StockMovementRecorded", producer: "inventory", payload: "#/components/schemas/StockMovement", consumers: ["reporting"]}
+  - {name: "TransferDispatched", producer: "inventory", payload: "#/components/schemas/Transfer", consumers: ["reporting"]}
+  - {name: "TransferInTransit", producer: "inventory", payload: "#/components/schemas/Transfer", consumers: ["reporting"]}
+  - {name: "TransferReceived", producer: "inventory", payload: "#/components/schemas/Transfer", consumers: ["reporting"]}
+  - {name: "TransferDiscrepancy", producer: "inventory", payload: "#/components/schemas/Transfer", consumers: ["reporting"]}
+  - {name: "SupplierBlocked", producer: "inventory", payload: "#/components/schemas/Supplier", consumers: ["reporting"]}
+  - {name: "CashDrawerSessionClosed", producer: "sales", payload: "#/components/schemas/CashDrawerSession", consumers: ["reporting", "sync"]}
+  - {name: "CashDrawerSessionReconciled", producer: "sales", payload: "#/components/schemas/CashDrawerSession", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptReported", producer: "sales", payload: "#/components/schemas/Receipt", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptReportFailed", producer: "sales", payload: "#/components/schemas/Receipt", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptReprinted", producer: "sales", payload: "#/components/schemas/Receipt", consumers: ["reporting", "sync"]}
+  - {name: "ReceiptVoided", producer: "sales", payload: "#/components/schemas/Receipt", consumers: ["reporting", "sync"]}
+  - {name: "SyncEventSent", producer: "sync", payload: "#/components/schemas/SyncEvent", consumers: ["reporting"]}
+  - {name: "SyncEventAcked", producer: "sync", payload: "#/components/schemas/SyncEvent", consumers: ["reporting"]}
+  - {name: "SyncEventConflict", producer: "sync", payload: "#/components/schemas/SyncEvent", consumers: ["reporting"]}
+  - {name: "TaxRuleRetired", producer: "sales", payload: "#/components/schemas/TaxRule", consumers: ["reporting", "sync"]}
+  - {name: "StaffSuspended", producer: "people", payload: "#/components/schemas/Staff", consumers: ["reporting"]}
+  - {name: "StaffActive", producer: "people", payload: "#/components/schemas/Staff", consumers: ["reporting"]}
+  - {name: "StoreSuspended", producer: "people", payload: "#/components/schemas/Store", consumers: ["reporting"]}

@@ -1,4 +1,6 @@
 __pycache__/
 *.pyc
 .foundry/
+!evals/fixtures/**/.foundry/
+!evals/expected/**/.foundry/
 evals/results/answers.json

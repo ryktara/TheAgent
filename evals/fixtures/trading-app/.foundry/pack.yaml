@@ -1,0 +1,17 @@
+chosen: "trading-app"
+confidence: 0.986
+threshold: 0.7
+chosen_by: "keywords"
+matched_terms: ["deposit", "investor", "investors", "leveraged", "live prices", "p&l", "portfolio", "psx", "stocks", "trade", "trading", "trading app"]
+alternates:
+  - {slug: "generic", confidence: 0.192, matched_terms: ["app", "users"]}
+  - {slug: "retail-pos", confidence: 0.0, matched_terms: ["retail", "stock"]}
+unmatched_aspects: ["account", "disclosures", "limit", "market", "regulatory", "risk", "warnings"]
+prefilled:
+  - {question_id: "asset-class", value: "equities", source: "brief", matched: "stocks", maps_to: "market.asset_class"}
+  - {question_id: "region", value: "PK", source: "brief", matched: "pakistan", maps_to: "region.country"}
+  - {question_id: "leverage", value: true, source: "brief", matched: "leveraged", maps_to: "features.leverage"}
+  - {question_id: "platform", value: "mobile", source: "brief", matched: "mobile trading app", maps_to: "platform.targets"}
+  - {question_id: "market", value: "PSX", source: "brief", matched: "psx", maps_to: "market.primary"}
+flags: []
+matcher_version: "1.1"

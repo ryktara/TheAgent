@@ -1,0 +1,15 @@
+chosen: "restaurant-pos"
+confidence: 1.0
+threshold: 0.7
+chosen_by: "keywords"
+matched_terms: ["dine-in", "restaurant"]
+alternates:
+  - {slug: "generic", confidence: 0.0, matched_terms: []}
+  - {slug: "retail-pos", confidence: 0.0, matched_terms: []}
+unmatched_aspects: ["cards", "only"]
+prefilled:
+  - {question_id: "service-model", value: "dine-in", source: "brief", matched: "dine-in", maps_to: "service.model"}
+  - {question_id: "region", value: "AE", source: "brief", matched: "sharjah", maps_to: "region.country"}
+  - {question_id: "payments", value: "network-intl", source: "brief", matched: "network international", maps_to: "payments.provider"}
+flags: []
+matcher_version: "1.1"

@@ -1,0 +1,287 @@
+pack: "trading-app"
+decisions_hash: "97bd6752b826"
+contexts: ["accounts", "markets", "trading", "compliance", "growth", "people", "reporting", "sync"]
+entities:
+  - name: "Account"
+    owned_by: "accounts"
+    exposure: "public"
+    fields: ["id", "owner_id", "kind", "base_currency", "kyc_tier", "jurisdiction", "islamic", "leverage_enabled", "risk_ack_at", "opened_at"]
+    states: ["pending-kyc", "active", "restricted", "frozen", "closed"]
+    invariants: ["Position.qty == sum of signed Fill.qty for its Account and Instrument; Position is never written directly", "A withdrawal Transfer is paid only to a beneficiary in the name of the Account owner", "Order leverage <= min(Instrument.max_leverage, RiskLimit.max_leverage for the Account jurisdiction)", "A leveraged Order requires Account.risk_ack_at within the current risk-warning version", "A MarginCall opens when Account equity < maintenance margin and at most one MarginCall per Account is open", "An Islamic Account never accrues overnight swap LedgerEntry rows"]
+    transitions:
+      - {from: "pending-kyc", to: "active", by: "retail-trader", guard: ""}
+      - {from: "active", to: "frozen", by: "retail-trader", guard: ""}
+      - {from: "active", to: "restricted", by: "retail-trader", guard: "reason recorded"}
+      - {from: "active", to: "closed", by: "retail-trader", guard: "reason recorded"}
+  - name: "Wallet"
+    owned_by: "accounts"
+    exposure: "derived"
+    fields: ["account_id", "currency", "balance", "reserved", "available"]
+    states: ["active", "frozen"]
+    invariants: ["Wallet.balance == sum(LedgerEntry credit - debit) for that Wallet; available == balance - reserved", "No Order moves to accepted without a passed buying-power or margin check against RiskLimit and Wallet.available", "Client money sits in segregated Wallet rows; house Wallet rows never net against client rows", "A PaperAccount never posts LedgerEntry rows to a real Wallet and its Order rows never route to a venue"]
+    transitions:
+      - {from: "active", to: "frozen", by: "retail-trader", guard: ""}
+  - name: "Instrument"
+    owned_by: "markets"
+    exposure: "public"
+    fields: ["symbol", "venue", "asset_class", "currency", "tick_size", "lot_size", "max_leverage", "shariah_flag", "session_hours"]
+    states: ["draft", "tradable", "halted", "close-only", "delisted"]
+    invariants: ["Position.qty == sum of signed Fill.qty for its Account and Instrument; Position is never written directly", "Order leverage <= min(Instrument.max_leverage, RiskLimit.max_leverage for the Account jurisdiction)", "Only Instrument rows in state tradable accept new Order rows; close-only accepts reducing orders"]
+    transitions:
+      - {from: "draft", to: "tradable", by: "retail-trader", guard: ""}
+      - {from: "tradable", to: "close-only", by: "retail-trader", guard: ""}
+      - {from: "tradable", to: "halted", by: "retail-trader", guard: "reason recorded"}
+      - {from: "tradable", to: "delisted", by: "retail-trader", guard: "reason recorded"}
+  - name: "Order"
+    owned_by: "trading"
+    exposure: "public"
+    fields: ["id", "client_order_id", "account_id", "instrument_id", "side", "type", "tif", "qty", "limit_price", "stop_price", "parent_id", "oco_group", "filled_qty", "avg_price", "reject_reason", "submitted_at"]
+    states: ["new", "accepted", "partially-filled", "filled", "cancelled", "rejected"]
+    invariants: ["No Order moves to accepted without a passed buying-power or margin check against RiskLimit and Wallet.available", "Sum of Fill.qty for an Order never exceeds Order.qty; filled_qty == sum(Fill.qty)", "An Order in state cancelled or rejected receives no Fill with executed_at after the state change", "Order leverage <= min(Instrument.max_leverage, RiskLimit.max_leverage for the Account jurisdiction)", "A leveraged Order requires Account.risk_ack_at within the current risk-warning version", "An Order submitted twice with the same client_order_id yields one Order", "A PaperAccount never posts LedgerEntry rows to a real Wallet and its Order rows never route to a venue", "A CopyLink copies an Order only when the follower passes the same risk checks as a manual Order", "Only Instrument rows in state tradable accept new Order rows; close-only accepts reducing orders"]
+    transitions:
+      - {from: "new", to: "accepted", by: "retail-trader", guard: ""}
+      - {from: "accepted", to: "partially-filled", by: "retail-trader", guard: ""}
+      - {from: "partially-filled", to: "filled", by: "retail-trader", guard: ""}
+      - {from: "accepted", to: "cancelled", by: "retail-trader", guard: "reason recorded"}
+      - {from: "accepted", to: "rejected", by: "retail-trader", guard: "reason recorded"}
+  - name: "Fill"
+    owned_by: "trading"
+    exposure: "derived"
+    fields: ["order_id", "exec_id", "qty", "price", "fee", "venue", "executed_at"]
+    states: ["booked", "busted"]
+    invariants: ["Position.qty == sum of signed Fill.qty for its Account and Instrument; Position is never written directly", "Sum of Fill.qty for an Order never exceeds Order.qty; filled_qty == sum(Fill.qty)", "An Order in state cancelled or rejected receives no Fill with executed_at after the state change", "A Candle is derived from trades; a closed Candle never changes after its interval ends except on a busted Fill"]
+    transitions:
+      - {from: "booked", to: "busted", by: "retail-trader", guard: ""}
+  - name: "Position"
+    owned_by: "trading"
+    exposure: "derived"
+    fields: ["account_id", "instrument_id", "qty", "avg_cost", "realised_pnl", "unrealised_pnl", "margin_used"]
+    states: ["open", "closed"]
+    invariants: ["Position.qty == sum of signed Fill.qty for its Account and Instrument; Position is never written directly"]
+    transitions:
+      - {from: "open", to: "closed", by: "retail-trader", guard: "reason recorded"}
+  - name: "LedgerEntry"
+    owned_by: "accounts"
+    exposure: "internal"
+    fields: ["txn_id", "wallet_id", "debit", "credit", "currency", "kind", "reference", "posted_at"]
+    states: ["posted"]
+    invariants: ["Every ledger transaction posts LedgerEntry rows whose debits minus credits sum to zero per currency", "Wallet.balance == sum(LedgerEntry credit - debit) for that Wallet; available == balance - reserved", "A PaperAccount never posts LedgerEntry rows to a real Wallet and its Order rows never route to a venue", "An Islamic Account never accrues overnight swap LedgerEntry rows"]
+    transitions:
+      - {from: "*", to: "posted", by: "retail-trader", guard: ""}
+  - name: "Transfer"
+    owned_by: "accounts"
+    exposure: "public"
+    fields: ["account_id", "direction", "rail", "amount", "currency", "beneficiary_id", "cooldown_until", "travel_rule_ref"]
+    states: ["requested", "held", "approved", "sent", "settled", "failed", "cancelled"]
+    invariants: ["A Transfer of direction withdrawal requires KycCase approved at the tier covering the amount and now >= cooldown_until", "A withdrawal Transfer is paid only to a beneficiary in the name of the Account owner", "A crypto withdrawal Transfer above the travel-rule threshold carries originator and beneficiary data before it is sent"]
+    transitions:
+      - {from: "requested", to: "approved", by: "retail-trader", guard: ""}
+      - {from: "approved", to: "sent", by: "retail-trader", guard: ""}
+      - {from: "sent", to: "settled", by: "retail-trader", guard: ""}
+      - {from: "approved", to: "held", by: "retail-trader", guard: "reason recorded"}
+      - {from: "approved", to: "failed", by: "retail-trader", guard: "reason recorded"}
+      - {from: "approved", to: "cancelled", by: "retail-trader", guard: "reason recorded"}
+  - name: "RiskLimit"
+    owned_by: "trading"
+    exposure: "internal"
+    fields: ["scope", "scope_id", "jurisdiction", "max_leverage", "max_order_value", "max_position_value", "maintenance_margin_pct", "stop_out_pct"]
+    states: ["active", "suspended"]
+    invariants: ["No Order moves to accepted without a passed buying-power or margin check against RiskLimit and Wallet.available", "Order leverage <= min(Instrument.max_leverage, RiskLimit.max_leverage for the Account jurisdiction)", "When equity falls below the stop-out level of RiskLimit, positions close largest-loss first and an AuditEvent records each close"]
+    transitions:
+      - {from: "active", to: "suspended", by: "retail-trader", guard: "reason recorded"}
+  - name: "MarginCall"
+    owned_by: "trading"
+    exposure: "public"
+    fields: ["account_id", "equity", "maintenance", "deficit", "deadline", "opened_at"]
+    states: ["open", "met", "liquidating", "closed"]
+    invariants: ["A MarginCall opens when Account equity < maintenance margin and at most one MarginCall per Account is open"]
+    transitions:
+      - {from: "open", to: "met", by: "retail-trader", guard: ""}
+      - {from: "met", to: "liquidating", by: "retail-trader", guard: ""}
+      - {from: "met", to: "closed", by: "retail-trader", guard: "reason recorded"}
+  - name: "KycCase"
+    owned_by: "accounts"
+    exposure: "public"
+    fields: ["account_id", "tier_requested", "vendor", "vendor_ref", "pep_hit", "sanctions_hit", "risk_score", "reviewer_id", "decided_at"]
+    states: ["draft", "submitted", "in-review", "approved", "rejected", "needs-info", "expired"]
+    invariants: ["A Transfer of direction withdrawal requires KycCase approved at the tier covering the amount and now >= cooldown_until", "A KycCase decision and every ComplianceCase closure record a reviewer Staff id different from the case creator", "A Referral reward posts only after the referee KycCase is approved and first funding settles"]
+    transitions:
+      - {from: "draft", to: "submitted", by: "retail-trader", guard: ""}
+      - {from: "submitted", to: "in-review", by: "retail-trader", guard: ""}
+      - {from: "in-review", to: "approved", by: "retail-trader", guard: ""}
+      - {from: "approved", to: "needs-info", by: "retail-trader", guard: ""}
+      - {from: "submitted", to: "rejected", by: "retail-trader", guard: "reason recorded"}
+      - {from: "submitted", to: "expired", by: "retail-trader", guard: "reason recorded"}
+  - name: "ComplianceCase"
+    owned_by: "compliance"
+    exposure: "internal"
+    fields: ["kind", "subject_account_id", "alert_ids", "assignee_id", "str_ref", "closed_at"]
+    states: ["open", "investigating", "escalated", "closed-no-action", "reported"]
+    invariants: ["A KycCase decision and every ComplianceCase closure record a reviewer Staff id different from the case creator"]
+    transitions:
+      - {from: "open", to: "investigating", by: "compliance-officer", guard: ""}
+      - {from: "investigating", to: "escalated", by: "compliance-officer", guard: ""}
+      - {from: "escalated", to: "closed-no-action", by: "compliance-officer", guard: ""}
+      - {from: "closed-no-action", to: "reported", by: "compliance-officer", guard: ""}
+  - name: "Alert"
+    owned_by: "trading"
+    exposure: "public"
+    fields: ["account_id", "instrument_id", "condition", "threshold", "last_side", "triggered_at"]
+    states: ["armed", "triggered", "disarmed"]
+    invariants: ["An Alert fires once per crossing: it re-arms only after the Quote returns across the threshold"]
+    transitions:
+      - {from: "armed", to: "triggered", by: "retail-trader", guard: ""}
+      - {from: "triggered", to: "disarmed", by: "retail-trader", guard: ""}
+  - name: "Statement"
+    owned_by: "compliance"
+    exposure: "public"
+    fields: ["account_id", "kind", "period_start", "period_end", "file_ref", "checksum"]
+    states: ["generating", "issued"]
+    invariants: ["A Statement is immutable once issued; corrections issue a new Statement referencing the old one"]
+    transitions:
+      - {from: "generating", to: "issued", by: "retail-trader", guard: ""}
+  - name: "Watchlist"
+    owned_by: "markets"
+    exposure: "public"
+    fields: ["account_id", "name", "instrument_ids", "sort"]
+    states: ["active"]
+    invariants: ["Watchlist has exactly one state at a time"]
+    transitions:
+      - {from: "*", to: "active", by: "retail-trader", guard: ""}
+  - name: "Quote"
+    owned_by: "markets"
+    exposure: "derived"
+    fields: ["instrument_id", "bid", "ask", "last", "bid_size", "ask_size", "ts"]
+    states: ["live", "stale"]
+    invariants: ["An Alert fires once per crossing: it re-arms only after the Quote returns across the threshold"]
+    transitions:
+      - {from: "live", to: "stale", by: "retail-trader", guard: ""}
+  - name: "Candle"
+    owned_by: "markets"
+    exposure: "derived"
+    fields: ["instrument_id", "interval", "open", "high", "low", "close", "volume", "start"]
+    states: ["open", "closed"]
+    invariants: ["A Candle is derived from trades; a closed Candle never changes after its interval ends except on a busted Fill"]
+    transitions:
+      - {from: "open", to: "closed", by: "retail-trader", guard: "reason recorded"}
+  - name: "NewsItem"
+    owned_by: "markets"
+    exposure: "internal"
+    fields: ["source", "headline", "instrument_ids", "url", "published_at"]
+    states: ["published", "retracted"]
+    invariants: ["NewsItem has exactly one state at a time"]
+    transitions:
+      - {from: "published", to: "retracted", by: "retail-trader", guard: ""}
+  - name: "PaperAccount"
+    owned_by: "trading"
+    exposure: "public"
+    fields: ["owner_id", "virtual_balance", "currency", "reset_count"]
+    states: ["active", "reset"]
+    invariants: ["A PaperAccount never posts LedgerEntry rows to a real Wallet and its Order rows never route to a venue"]
+    transitions:
+      - {from: "active", to: "reset", by: "retail-trader", guard: ""}
+  - name: "Referral"
+    owned_by: "growth"
+    exposure: "public"
+    fields: ["referrer_id", "referee_id", "code", "reward", "qualified_at"]
+    states: ["invited", "signed-up", "qualified", "rewarded", "void"]
+    invariants: ["A Referral reward posts only after the referee KycCase is approved and first funding settles"]
+    transitions:
+      - {from: "invited", to: "signed-up", by: "retail-trader", guard: ""}
+      - {from: "signed-up", to: "qualified", by: "retail-trader", guard: ""}
+      - {from: "qualified", to: "rewarded", by: "retail-trader", guard: ""}
+      - {from: "signed-up", to: "void", by: "retail-trader", guard: "reason recorded"}
+  - name: "CopyLink"
+    owned_by: "growth"
+    exposure: "public"
+    fields: ["follower_account_id", "leader_account_id", "ratio", "max_allocation", "stop_loss_pct"]
+    states: ["active", "paused", "stopped"]
+    invariants: ["A CopyLink copies an Order only when the follower passes the same risk checks as a manual Order"]
+    transitions:
+      - {from: "active", to: "paused", by: "pro-trader", guard: ""}
+      - {from: "paused", to: "stopped", by: "pro-trader", guard: ""}
+  - name: "SupportTicket"
+    owned_by: "growth"
+    exposure: "public"
+    fields: ["account_id", "category", "is_complaint", "sla_due", "assignee_id"]
+    states: ["open", "pending-customer", "escalated", "resolved", "closed"]
+    invariants: ["A SupportTicket flagged as complaint gets an acknowledgement and a due date on creation"]
+    transitions:
+      - {from: "open", to: "pending-customer", by: "retail-trader", guard: ""}
+      - {from: "pending-customer", to: "escalated", by: "retail-trader", guard: ""}
+      - {from: "escalated", to: "resolved", by: "retail-trader", guard: ""}
+      - {from: "pending-customer", to: "closed", by: "retail-trader", guard: "reason recorded"}
+  - name: "AuditEvent"
+    owned_by: "compliance"
+    exposure: "internal"
+    fields: ["actor_id", "actor_role", "action", "entity", "entity_id", "before_hash", "after_hash", "ip", "at", "prev_hash"]
+    states: ["recorded"]
+    invariants: ["When equity falls below the stop-out level of RiskLimit, positions close largest-loss first and an AuditEvent records each close", "AuditEvent is append-only; each row carries prev_hash of the previous row so tampering breaks the chain"]
+    transitions:
+      - {from: "*", to: "recorded", by: "compliance-officer", guard: ""}
+  - name: "Staff"
+    owned_by: "people"
+    exposure: "internal"
+    fields: ["name", "email", "role", "mfa_enrolled", "four_eyes_group"]
+    states: ["active", "suspended"]
+    invariants: ["A KycCase decision and every ComplianceCase closure record a reviewer Staff id different from the case creator"]
+    transitions:
+      - {from: "active", to: "suspended", by: "admin", guard: "reason recorded"}
+events:
+  - {name: "AccountActive", entity: "Account", transition: "pending-kyc->active", producer: "accounts", consumers: ["reporting"]}
+  - {name: "AccountFrozen", entity: "Account", transition: "active->frozen", producer: "accounts", consumers: ["reporting"]}
+  - {name: "AccountRestricted", entity: "Account", transition: "active->restricted", producer: "accounts", consumers: ["reporting"]}
+  - {name: "AccountClosed", entity: "Account", transition: "active->closed", producer: "accounts", consumers: ["reporting"]}
+  - {name: "WalletFrozen", entity: "Wallet", transition: "active->frozen", producer: "accounts", consumers: ["reporting"]}
+  - {name: "InstrumentTradable", entity: "Instrument", transition: "draft->tradable", producer: "markets", consumers: ["reporting"]}
+  - {name: "InstrumentCloseOnly", entity: "Instrument", transition: "tradable->close-only", producer: "markets", consumers: ["reporting"]}
+  - {name: "InstrumentHalted", entity: "Instrument", transition: "tradable->halted", producer: "markets", consumers: ["reporting"]}
+  - {name: "InstrumentDelisted", entity: "Instrument", transition: "tradable->delisted", producer: "markets", consumers: ["reporting"]}
+  - {name: "OrderAccepted", entity: "Order", transition: "new->accepted", producer: "trading", consumers: ["reporting"]}
+  - {name: "OrderPartiallyFilled", entity: "Order", transition: "accepted->partially-filled", producer: "trading", consumers: ["reporting"]}
+  - {name: "OrderFilled", entity: "Order", transition: "partially-filled->filled", producer: "trading", consumers: ["reporting"]}
+  - {name: "OrderCancelled", entity: "Order", transition: "accepted->cancelled", producer: "trading", consumers: ["reporting"]}
+  - {name: "OrderRejected", entity: "Order", transition: "accepted->rejected", producer: "trading", consumers: ["reporting"]}
+  - {name: "FillBusted", entity: "Fill", transition: "booked->busted", producer: "trading", consumers: ["reporting"]}
+  - {name: "PositionClosed", entity: "Position", transition: "open->closed", producer: "trading", consumers: ["reporting"]}
+  - {name: "LedgerEntryPosted", entity: "LedgerEntry", transition: "*->posted", producer: "accounts", consumers: ["reporting"]}
+  - {name: "TransferApproved", entity: "Transfer", transition: "requested->approved", producer: "accounts", consumers: ["reporting"]}
+  - {name: "TransferSent", entity: "Transfer", transition: "approved->sent", producer: "accounts", consumers: ["reporting"]}
+  - {name: "TransferSettled", entity: "Transfer", transition: "sent->settled", producer: "accounts", consumers: ["reporting"]}
+  - {name: "TransferHeld", entity: "Transfer", transition: "approved->held", producer: "accounts", consumers: ["reporting"]}
+  - {name: "TransferFailed", entity: "Transfer", transition: "approved->failed", producer: "accounts", consumers: ["reporting"]}
+  - {name: "TransferCancelled", entity: "Transfer", transition: "approved->cancelled", producer: "accounts", consumers: ["reporting"]}
+  - {name: "RiskLimitSuspended", entity: "RiskLimit", transition: "active->suspended", producer: "trading", consumers: ["reporting"]}
+  - {name: "MarginCallMet", entity: "MarginCall", transition: "open->met", producer: "trading", consumers: ["reporting"]}
+  - {name: "MarginCallLiquidating", entity: "MarginCall", transition: "met->liquidating", producer: "trading", consumers: ["reporting"]}
+  - {name: "MarginCallClosed", entity: "MarginCall", transition: "met->closed", producer: "trading", consumers: ["reporting"]}
+  - {name: "KycCaseSubmitted", entity: "KycCase", transition: "draft->submitted", producer: "accounts", consumers: ["reporting"]}
+  - {name: "KycCaseInReview", entity: "KycCase", transition: "submitted->in-review", producer: "accounts", consumers: ["reporting"]}
+  - {name: "KycCaseApproved", entity: "KycCase", transition: "in-review->approved", producer: "accounts", consumers: ["reporting"]}
+  - {name: "KycCaseNeedsInfo", entity: "KycCase", transition: "approved->needs-info", producer: "accounts", consumers: ["reporting"]}
+  - {name: "KycCaseRejected", entity: "KycCase", transition: "submitted->rejected", producer: "accounts", consumers: ["reporting"]}
+  - {name: "KycCaseExpired", entity: "KycCase", transition: "submitted->expired", producer: "accounts", consumers: ["reporting"]}
+  - {name: "ComplianceCaseInvestigating", entity: "ComplianceCase", transition: "open->investigating", producer: "compliance", consumers: ["reporting"]}
+  - {name: "ComplianceCaseEscalated", entity: "ComplianceCase", transition: "investigating->escalated", producer: "compliance", consumers: ["reporting"]}
+  - {name: "ComplianceCaseClosedNoAction", entity: "ComplianceCase", transition: "escalated->closed-no-action", producer: "compliance", consumers: ["reporting"]}
+  - {name: "ComplianceCaseReported", entity: "ComplianceCase", transition: "closed-no-action->reported", producer: "compliance", consumers: ["reporting"]}
+  - {name: "AlertTriggered", entity: "Alert", transition: "armed->triggered", producer: "trading", consumers: ["reporting"]}
+  - {name: "AlertDisarmed", entity: "Alert", transition: "triggered->disarmed", producer: "trading", consumers: ["reporting"]}
+  - {name: "StatementIssued", entity: "Statement", transition: "generating->issued", producer: "compliance", consumers: ["reporting"]}
+  - {name: "WatchlistActive", entity: "Watchlist", transition: "*->active", producer: "markets", consumers: ["reporting"]}
+  - {name: "QuoteStale", entity: "Quote", transition: "live->stale", producer: "markets", consumers: ["reporting"]}
+  - {name: "CandleClosed", entity: "Candle", transition: "open->closed", producer: "markets", consumers: ["reporting"]}
+  - {name: "NewsItemRetracted", entity: "NewsItem", transition: "published->retracted", producer: "markets", consumers: ["reporting"]}
+  - {name: "PaperAccountReset", entity: "PaperAccount", transition: "active->reset", producer: "trading", consumers: ["reporting"]}
+  - {name: "ReferralSignedUp", entity: "Referral", transition: "invited->signed-up", producer: "growth", consumers: ["reporting"]}
+  - {name: "ReferralQualified", entity: "Referral", transition: "signed-up->qualified", producer: "growth", consumers: ["reporting"]}
+  - {name: "ReferralRewarded", entity: "Referral", transition: "qualified->rewarded", producer: "growth", consumers: ["reporting"]}
+  - {name: "ReferralVoid", entity: "Referral", transition: "signed-up->void", producer: "growth", consumers: ["reporting"]}
+  - {name: "CopyLinkPaused", entity: "CopyLink", transition: "active->paused", producer: "growth", consumers: ["reporting"]}
+  - {name: "CopyLinkStopped", entity: "CopyLink", transition: "paused->stopped", producer: "growth", consumers: ["reporting"]}
+  - {name: "SupportTicketPendingCustomer", entity: "SupportTicket", transition: "open->pending-customer", producer: "growth", consumers: ["reporting"]}
+  - {name: "SupportTicketEscalated", entity: "SupportTicket", transition: "pending-customer->escalated", producer: "growth", consumers: ["reporting"]}
+  - {name: "SupportTicketResolved", entity: "SupportTicket", transition: "escalated->resolved", producer: "growth", consumers: ["reporting"]}
+  - {name: "SupportTicketClosed", entity: "SupportTicket", transition: "pending-customer->closed", producer: "growth", consumers: ["reporting"]}
+  - {name: "AuditEventRecorded", entity: "AuditEvent", transition: "*->recorded", producer: "compliance", consumers: ["reporting"]}
+  - {name: "StaffSuspended", entity: "Staff", transition: "active->suspended", producer: "people", consumers: ["reporting"]}

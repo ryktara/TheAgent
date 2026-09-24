@@ -1,0 +1,21 @@
+pack: "restaurant-pos"
+mode: "unattended"
+budget:
+  round1_max: 7
+  round2_max: 3
+  round1_used: 5
+  round2_used: 1
+flags: []
+decisions:
+  - {id: "service-model", question: "Dine-in with table service, quick-service counter, or both?", value: "dine-in", source: "timeout-default", reversible: false, rationale: "unattended: brief prefill accepted", round: 1, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "service.model"}
+  - {id: "region", question: "Primary country?", value: "AE", source: "brief", reversible: true, rationale: "brief matched 'sharjah'", round: 0, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "region.country"}
+  - {id: "payments", question: "Card payments via which provider?", value: "network-intl", source: "brief", reversible: true, rationale: "brief matched 'network international'", round: 0, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "payments.provider"}
+  - {id: "branches", question: "Single location or multi-branch?", value: "single", source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "org.branches"}
+  - {id: "kds", question: "Kitchen display screen, printed tickets, or both?", value: "both", source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "kitchen.output"}
+  - {id: "delivery", question: "Integrate delivery platforms?", value: false, source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "integrations.delivery"}
+  - {id: "offline", question: "Must order-taking keep working when internet drops?", value: true, source: "timeout-default", reversible: false, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "nfr.offline"}
+  - {id: "reservations", question: "Reservations and waitlist inside the POS?", value: false, source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 2, asked_at: "2026-09-18T11:32:21+00:00", maps_to: "features.reservations"}
+  - {id: "qr-self-order", question: "Customers order from a QR menu at the table or counter?", value: false, source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-18T11:32:21+00:00", maps_to: "features.qr_self_order"}
+  - {id: "delivery-platforms", question: "Which delivery platforms?", value: "talabat", source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-18T11:32:21+00:00", maps_to: "integrations.delivery_platforms"}
+  - {id: "central-menu-sync", question: "One central menu pushed to every branch, or each branch edits its own?", value: "central", source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-18T11:32:21+00:00", maps_to: "org.menu_sync"}
+  - {id: "payment-provider-name", question: "Name the payment provider so integration research can start.", value: "Network International", source: "agent-fact", reversible: true, rationale: "derived from payments=network-intl", asked_at: "2026-09-18T11:32:21+00:00", maps_to: "payments.provider_name"}

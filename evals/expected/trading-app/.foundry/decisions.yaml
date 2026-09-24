@@ -1,0 +1,21 @@
+pack: "trading-app"
+mode: "unattended"
+budget:
+  round1_max: 7
+  round2_max: 3
+  round1_used: 7
+  round2_used: 1
+flags: []
+decisions:
+  - {id: "asset-class", question: "Which asset classes: listed equities, forex/CFDs, crypto, or multi-asset?", value: "equities", source: "timeout-default", reversible: false, rationale: "unattended: brief prefill accepted", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "market.asset_class"}
+  - {id: "region", question: "Primary jurisdiction?", value: "PK", source: "timeout-default", reversible: false, rationale: "unattended: brief prefill accepted", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "region.country"}
+  - {id: "leverage", question: "Offer leveraged or margin trading?", value: true, source: "timeout-default", reversible: false, rationale: "unattended: brief prefill accepted", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "features.leverage"}
+  - {id: "platform", question: "Mobile only, or mobile and web?", value: "mobile", source: "brief", reversible: true, rationale: "brief matched 'mobile trading app'", round: 0, asked_at: "2026-09-23T08:52:50+00:00", maps_to: "platform.targets"}
+  - {id: "market", question: "Which venue first?", value: "PSX", source: "timeout-default", reversible: false, rationale: "unattended: brief prefill accepted", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "market.primary"}
+  - {id: "custody-model", question: "Do you hold your own licence, or route through a licensed partner broker?", value: "partner-broker", source: "timeout-default", reversible: false, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "broker.model"}
+  - {id: "islamic-accounts", question: "Offer Islamic swap-free accounts?", value: false, source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "features.islamic_accounts"}
+  - {id: "kyc-vendor", question: "KYC via which vendor?", value: "sumsub", source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "kyc.provider"}
+  - {id: "leverage-max", question: "Maximum retail leverage (e.g. 30 for 30:1)?", value: 2, source: "timeout-default", reversible: false, rationale: "unattended: pack default taken", round: 2, asked_at: "2026-09-23T08:52:51+00:00", maps_to: "features.leverage_max"}
+  - {id: "crypto", question: "Include crypto trading and custody?", value: false, source: "agent-fact", reversible: false, rationale: "derived from asset-class=equities", asked_at: "2026-09-23T08:52:51+00:00", maps_to: "features.crypto"}
+  - {id: "funding-rails", question: "Deposit rails?", value: "bank-transfer", source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-23T08:52:51+00:00", maps_to: "funding.methods"}
+  - {id: "copy-trading", question: "Let followers copy lead traders?", value: false, source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-23T08:52:51+00:00", maps_to: "features.copy_trading"}

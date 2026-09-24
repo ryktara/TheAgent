@@ -1,0 +1,21 @@
+pack: "retail-pos"
+mode: "unattended"
+budget:
+  round1_max: 7
+  round2_max: 3
+  round1_used: 5
+  round2_used: 0
+flags: []
+decisions:
+  - {id: "region", question: "Primary country?", value: "SA", source: "brief", reversible: true, rationale: "brief matched 'riyadh'", round: 0, asked_at: "2026-09-23T08:52:40+00:00", maps_to: "region.country"}
+  - {id: "branches", question: "Single store or multiple stores?", value: "single", source: "brief", reversible: true, rationale: "brief matched 'one store'", round: 0, asked_at: "2026-09-23T08:52:40+00:00", maps_to: "org.branches"}
+  - {id: "variants", question: "Do products come in sizes or colours?", value: true, source: "brief", reversible: true, rationale: "brief matched 'colour'", round: 0, asked_at: "2026-09-23T08:52:40+00:00", maps_to: "catalog.variants"}
+  - {id: "einvoice", question: "Government e-invoicing or fiscal reporting required?", value: true, source: "timeout-default", reversible: false, rationale: "unattended: brief prefill accepted", round: 1, asked_at: "2026-09-23T08:52:41+00:00", maps_to: "compliance.einvoice"}
+  - {id: "loyalty", question: "Loyalty points programme?", value: true, source: "brief", reversible: true, rationale: "brief matched 'loyalty'", round: 0, asked_at: "2026-09-23T08:52:40+00:00", maps_to: "features.loyalty"}
+  - {id: "payments", question: "Card payments via which provider?", value: "network-intl", source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:41+00:00", maps_to: "payments.provider"}
+  - {id: "weighed-items", question: "Do you sell weighed items from a scale (fruit, meat, bulk)?", value: false, source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:41+00:00", maps_to: "catalog.weighed_items"}
+  - {id: "offline", question: "Must checkout keep working when internet drops?", value: true, source: "timeout-default", reversible: false, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:41+00:00", maps_to: "nfr.offline"}
+  - {id: "gift-cards", question: "Sell gift cards or give store credit on returns?", value: false, source: "timeout-default", reversible: true, rationale: "unattended: pack default taken", round: 1, asked_at: "2026-09-23T08:52:41+00:00", maps_to: "features.gift_cards"}
+  - {id: "customer-credit", question: "Do regular customers buy on credit (khaata / udhaar)?", value: false, source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-23T08:52:42+00:00", maps_to: "features.customer_credit"}
+  - {id: "stock-transfer", question: "Transfer stock between stores inside the app?", value: true, source: "pack-default", reversible: true, rationale: "pack default", asked_at: "2026-09-23T08:52:42+00:00", maps_to: "inventory.transfers"}
+  - {id: "payment-provider-name", question: "Name the payment provider so integration research can start.", value: "Network International", source: "agent-fact", reversible: true, rationale: "derived from payments=network-intl", asked_at: "2026-09-23T08:52:42+00:00", maps_to: "payments.provider_name"}

@@ -1,0 +1,117 @@
+---
+id: "copy-leaders"
+jobs: ["copy-trade"]
+personas: ["pro-trader"]
+route: "/copy-leaders"
+routes: [{path: "/copy-leaders"}]
+layout: "bottom-tabs / high density"
+components: ["button", "empty-state", "input", "skeleton", "toast"]
+data:
+  reads: ["copy_link_get", "copy_link_list"]
+  writes: ["copy_link_copy_trade", "copy_link_create", "copy_link_update"]
+  events: []
+offline: false
+print: false
+---
+
+# copy-leaders
+
+## Purpose
+
+Browse lead traders with verified stats
+
+Role access: pro-trader.
+
+## Layout zones
+
+Desktop / tablet:
+
+```
++--------------------------------------------------------------+
+| copy-leaders                                                 |
++--------------------------------------------------------------+
+| Cards: return                 | max drawdown                 |
+| Cards: return                 | max drawdown                 |
+| Cards: return                 | max drawdown                 |
++--------------------------------------------------------------+
+| risk score                                                   |
++--------------------------------------------------------------+
+| followers                                                    |
++--------------------------------------------------------------+
+```
+
+Phone:
+
+```
++----------------------------------+
+| copy-leaders                     |
++----------------------------------+
+| Cards: return                    |
+|                                  |
+| max drawdown                     |
+|                                  |
+| risk score                       |
+|                                  |
+| followers                        |
+|                                  |
++----------------------------------+
+```
+
+## Actions
+
+| Action | Kind | Component |
+|--------|------|-----------|
+| View profile, follow | primary | `button` |
+
+## States
+
+| State | Copy (en) | Copy (ur) | Notes |
+|-------|-----------|-----------|-------|
+| empty | Nothing here yet. | ابھی یہاں کچھ نہیں ہے۔ <!-- unreviewed --> | copy.csv |
+| loading | Loading… | لوڈ ہو رہا ہے… <!-- unreviewed --> | copy.csv |
+| error | Something went wrong. Retry, or contact the manager. | کچھ غلط ہو گیا۔ دوبارہ کوشش کریں یا منیجر سے رابطہ کریں۔ <!-- unreviewed --> | copy.csv |
+| offline | Offline. Changes are saved on this device and sync when the connection returns. | آف لائن۔ تبدیلیاں اس ڈیوائس پر محفوظ ہیں اور کنکشن واپس آنے پر سنک ہوں گی۔ <!-- unreviewed --> | copy.csv |
+| locked | A manager PIN is needed for this action. | اس عمل کے لیے منیجر پن درکار ہے۔ <!-- unreviewed --> | copy.csv |
+| success | Done. | ہو گیا۔ <!-- unreviewed --> | copy.csv |
+
+## Validation and error copy
+
+- `FRM-02` Error copy says what happened and how to fix it in one sentence.
+- `FRM-01` Validate on blur; re-validate on change after the first error; summarise on submit.
+- `FRM-03` Submit stays enabled; errors listed on attempt.
+
+## Keyboard and shortcuts
+
+| Key | Action |
+|-----|--------|
+| Tab / Shift+Tab | move focus |
+| Enter | activate |
+| Escape | close dialog or sheet |
+
+## Accessibility checklist
+
+- `A11Y-01`
+- `A11Y-02`
+- `A11Y-03`
+- `A11Y-08`
+- `A11Y-10`
+- `A11Y-11`
+- `A11Y-12`
+- `A11Y-14`
+
+## RTL notes
+
+- `RTL-01`
+- `RTL-03`
+- `RTL-05`
+- `RTL-07`
+
+## Telemetry
+
+- `screen.copy-leaders.viewed` (persona, branch)
+- `screen.copy-leaders.action` (action id, duration_ms)
+- `screen.copy-leaders.error` (code)
+
+## Open questions
+
+- none

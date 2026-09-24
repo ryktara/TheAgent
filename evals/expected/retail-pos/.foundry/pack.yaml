@@ -1,0 +1,17 @@
+chosen: "retail-pos"
+confidence: 0.993
+threshold: 0.7
+chosen_by: "keywords"
+matched_terms: ["barcode", "barcodes", "clothing", "colour", "exchanges", "loyalty points", "returns", "shop", "size", "stock", "store", "zatca"]
+alternates:
+  - {slug: "trading-app", confidence: 0.0, matched_terms: ["exchange", "stocks"]}
+  - {slug: "generic", confidence: 0.0, matched_terms: []}
+unmatched_aspects: ["compliant", "levels", "per", "sale", "scanning", "second"]
+prefilled:
+  - {question_id: "region", value: "SA", source: "brief", matched: "riyadh", maps_to: "region.country"}
+  - {question_id: "branches", value: "single", source: "brief", matched: "one store", maps_to: "org.branches"}
+  - {question_id: "variants", value: true, source: "brief", matched: "colour", maps_to: "catalog.variants"}
+  - {question_id: "einvoice", value: true, source: "brief", matched: "e-invoices", maps_to: "compliance.einvoice"}
+  - {question_id: "loyalty", value: true, source: "brief", matched: "loyalty", maps_to: "features.loyalty"}
+flags: []
+matcher_version: "1.1"

@@ -1,0 +1,189 @@
+pack: "restaurant-pos"
+region: "AE"
+decisions_hash: "ceb231ab5069"
+pci_scope: "SAQ-A"
+pci_reason: "provider network-intl: hosted page or redirect online, semi-integrated terminal in person; card fields never on merchant pages (SEC-PAY-01, SEC-PAY-02)"
+controls:
+  - {id: "C-AE-01", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-AE-02", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-AE-03", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-AE-04", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-01", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-02", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-03", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-04", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-05", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-06", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-07", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "C-ALL-08", source: "pack compliance.md", status: "planned", evidence: null, owner: "T-041"}
+  - {id: "SEC-AUTH-01", source: "ASVS-5.0 V6.2", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-02", source: "ASVS-5.0 V6.2", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-03", source: "ASVS-5.0 V6.2", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-04", source: "ASVS-5.0 V6.3", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-05", source: "foundry", status: "planned", evidence: null, owner: "T-001"}
+  - {id: "SEC-AUTH-06", source: "ASVS-5.0 V6.4", status: "planned", evidence: null, owner: "T-001"}
+  - {id: "SEC-AUTH-07", source: "ASVS-5.0 V6.3", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-08", source: "ASVS-5.0 V6.4", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-09", source: "ASVS-5.0 V6.3", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-11", source: "foundry", status: "planned", evidence: null, owner: "T-001"}
+  - {id: "SEC-AUTH-12", source: "foundry", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-13", source: "ASVS-5.0 V6.4", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-AUTH-14", source: "ASVS-5.0 V6.4", status: "planned", evidence: null, owner: "T-039"}
+  - {id: "SEC-SESS-01", source: "ASVS-5.0 V7.2", status: "planned", evidence: null, owner: "T-001"}
+  - {id: "SEC-SESS-02", source: "ASVS-5.0 V7.4", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS-03", source: "ASVS-5.0 V7.3", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS-04", source: "ASVS-5.0 V7.3", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS-05", source: "ASVS-5.0 V7.3", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS-06", source: "foundry", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS-07", source: "ASVS-5.0 V7.5", status: "planned", evidence: null, owner: "T-001"}
+  - {id: "SEC-SESS-08", source: "ASVS-5.0 V7.4", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-ACC-01", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-001"}
+  - {id: "SEC-ACC-02", source: "OWASP-API-Top10-2023 API1", status: "planned", evidence: null, owner: "T-002"}
+  - {id: "SEC-ACC-03", source: "OWASP-API-Top10-2023 API5", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC-04", source: "OWASP-API-Top10-2023 API3", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC-06", source: "foundry", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC-07", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC-09", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC-10", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-IN-01", source: "ASVS-5.0 V2.1", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN-02", source: "ASVS-5.0 V2.1", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN-03", source: "ASVS-5.0 V1.2", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN-04", source: "ASVS-5.0 V1.2", status: "planned", evidence: null, owner: "T-003"}
+  - {id: "SEC-IN-07", source: "foundry", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN-08", source: "foundry", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN-09", source: "ASVS-5.0 V1.5", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN-10", source: "ASVS-5.0 V2.1", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-CRY-01", source: "ASVS-5.0 V12", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY-02", source: "ASVS-5.0 V11", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY-03", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY-04", source: "ASVS-5.0 V11", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY-06", source: "ASVS-5.0 V11", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-DATA-01", source: "PCI-DSS-4.0 req 3", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-02", source: "PCI-DSS-4.0 req 3", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-03", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-04", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-05", source: "foundry", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-06", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-07", source: "foundry", status: "planned", evidence: null, owner: "T-003"}
+  - {id: "SEC-DATA-08", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-09", source: "foundry", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA-10", source: "foundry", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-LOG-01", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG-02", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-006"}
+  - {id: "SEC-LOG-03", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG-04", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG-05", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG-06", source: "foundry", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG-07", source: "foundry", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG-08", source: "ASVS-5.0 V16", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-API-01", source: "foundry", status: "planned", evidence: null, owner: "T-008"}
+  - {id: "SEC-API-02", source: "OWASP-API-Top10-2023 API4", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API-03", source: "OWASP-API-Top10-2023 API3", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API-04", source: "OWASP-API-Top10-2023 API10", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-API-05", source: "OWASP-API-Top10-2023 API10", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-API-06", source: "OWASP-API-Top10-2023 API7", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-API-07", source: "ASVS-5.0 V3", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API-08", source: "ASVS-5.0 V3", status: "planned", evidence: null, owner: "T-004"}
+  - {id: "SEC-API-09", source: "foundry", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API-10", source: "foundry", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API-11", source: "foundry", status: "planned", evidence: null, owner: "T-005"}
+  - {id: "SEC-API-12", source: "OWASP-API-Top10-2023 API10", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API-13", source: "OWASP-API-Top10-2023 API6", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-CFG-01", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG-02", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG-03", source: "ASVS-5.0 V15", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG-04", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG-05", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-000"}
+  - {id: "SEC-CFG-06", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG-07", source: "foundry", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG-08", source: "foundry", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-SC-01", source: "ASVS-5.0 V15", status: "planned", evidence: null, owner: "T-000"}
+  - {id: "SEC-SC-02", source: "ASVS-5.0 V15", status: "planned", evidence: null, owner: "T-049"}
+  - {id: "SEC-SC-03", source: "ASVS-5.0 V15", status: "planned", evidence: null, owner: "T-049"}
+  - {id: "SEC-SC-04", source: "foundry", status: "planned", evidence: null, owner: "T-049"}
+  - {id: "SEC-SC-05", source: "ASVS-5.0 V15", status: "planned", evidence: null, owner: "T-049"}
+  - {id: "SEC-SC-06", source: "foundry", status: "planned", evidence: null, owner: "T-000"}
+  - {id: "SEC-BL-01", source: "ASVS-5.0 V2.3", status: "planned", evidence: null, owner: "T-006"}
+  - {id: "SEC-BL-02", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-03", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-04", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-05", source: "foundry", status: "planned", evidence: null, owner: "T-008"}
+  - {id: "SEC-BL-06", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-07", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-08", source: "foundry", status: "planned", evidence: null, owner: "T-005"}
+  - {id: "SEC-BL-09", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-10", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-11", source: "foundry", status: "planned", evidence: null, owner: "T-005"}
+  - {id: "SEC-BL-12", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-13", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-14", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL-16", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-PAY-01", source: "PCI-DSS-4.0 SAQ A", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-PAY-02", source: "PCI-DSS-4.0 req 9", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-PAY-03", source: "PCI-DSS-4.0 req 8", status: "planned", evidence: null, owner: "T-033"}
+  - {id: "SEC-PAY-04", source: "foundry", status: "planned", evidence: null, owner: "T-047"}
+  - {id: "SEC-PAY-05", source: "foundry", status: "planned", evidence: null, owner: "T-047"}
+  - {id: "SEC-PAY-07", source: "foundry", status: "planned", evidence: null, owner: "T-047"}
+  - {id: "SEC-AGT-01", source: "OWASP-Agentic-Top10-2026 ASI01", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-02", source: "OWASP-Agentic-Top10-2026 ASI02", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-03", source: "OWASP-Agentic-Top10-2026 ASI03", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-04", source: "OWASP-Agentic-Top10-2026 ASI04", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-05", source: "OWASP-Agentic-Top10-2026 ASI05", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-06", source: "OWASP-Agentic-Top10-2026 ASI06", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-07", source: "OWASP-Agentic-Top10-2026 ASI07", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-08", source: "OWASP-Agentic-Top10-2026 ASI08", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-09", source: "OWASP-Agentic-Top10-2026 ASI09", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-10", source: "OWASP-Agentic-Top10-2026 ASI10", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-11", source: "OWASP-Agentic-Top10-2026 ASI05", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-AGT-12", source: "OWASP-Agentic-Top10-2026 ASI03", status: "planned", evidence: null, owner: "T-037"}
+  - {id: "SEC-OFF-01", source: "foundry", status: "planned", evidence: null, owner: "T-005"}
+  - {id: "SEC-OFF-02", source: "foundry", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-OFF-03", source: "foundry", status: "planned", evidence: null, owner: "T-005"}
+  - {id: "SEC-OFF-04", source: "foundry", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-OFF-05", source: "foundry", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-FIS-03", source: "foundry", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-FIS-04", source: "foundry", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-IN2-01", source: "ASVS-5.0 V1.1", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN2-02", source: "ASVS-5.0 V4", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN2-03", source: "ASVS-5.0 V1.2", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN2-05", source: "foundry", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN2-06", source: "ASVS-5.0 V2.1", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN2-07", source: "ASVS-5.0 V2.1", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-IN2-08", source: "ASVS-5.0 V2.3", status: "planned", evidence: null, owner: "T-046"}
+  - {id: "SEC-SESS2-01", source: "ASVS-5.0 V7.4", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS2-02", source: "foundry", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS2-03", source: "foundry", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-SESS2-04", source: "ASVS-5.0 V7.2", status: "planned", evidence: null, owner: "T-048"}
+  - {id: "SEC-ACC2-01", source: "OWASP-API-Top10-2023 API1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC2-02", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC2-03", source: "OWASP-API-Top10-2023 API1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC2-04", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC2-05", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-ACC2-06", source: "ASVS-5.0 V8.1", status: "planned", evidence: null, owner: "T-036"}
+  - {id: "SEC-CRY2-01", source: "ASVS-5.0 V11", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY2-02", source: "foundry", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY2-04", source: "ASVS-5.0 V9", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-CRY2-05", source: "ASVS-5.0 V12", status: "planned", evidence: null, owner: "T-043"}
+  - {id: "SEC-DATA2-01", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA2-02", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA2-03", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA2-04", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-DATA2-05", source: "ASVS-5.0 V14", status: "planned", evidence: null, owner: "T-044"}
+  - {id: "SEC-LOG2-01", source: "foundry", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG2-02", source: "foundry", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG2-03", source: "foundry", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-LOG2-04", source: "foundry", status: "planned", evidence: null, owner: "T-045"}
+  - {id: "SEC-API2-02", source: "foundry", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API2-03", source: "OWASP-API-Top10-2023 API4", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API2-04", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-API2-05", source: "ASVS-5.0 V4", status: "planned", evidence: null, owner: "T-038"}
+  - {id: "SEC-CFG2-01", source: "foundry", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG2-02", source: "foundry", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG2-03", source: "PCI-DSS-4.0 req 6", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-CFG2-04", source: "ASVS-5.0 V13", status: "planned", evidence: null, owner: "T-042"}
+  - {id: "SEC-BL2-01", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL2-02", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL2-03", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL2-04", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL2-05", source: "foundry", status: "planned", evidence: null, owner: "T-040"}
+  - {id: "SEC-BL2-06", source: "foundry", status: "planned", evidence: null, owner: "T-040"}

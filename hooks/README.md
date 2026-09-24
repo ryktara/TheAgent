@@ -1,6 +1,6 @@
 # Hooks
 
-Registered through `.claude-plugin/plugin.json` → `hooks/hooks.json`. Every hook is Python 3.11+
+Loaded automatically from `hooks/hooks.json` (the plugin manifest must not reference it again: Claude Code 2.1 reports a duplicate hooks file and refuses to load the plugin). Every hook is Python 3.11+
 stdlib, reads the Claude Code JSON payload on stdin, writes JSON on stdout, and fails open
 (any error → exit 0 with no output). `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin.
 

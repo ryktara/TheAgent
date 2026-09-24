@@ -497,9 +497,9 @@ def run_tickets_skeleton(project: Path, root: Path) -> int:
     out = project / ".foundry" / "tickets"
     out.mkdir(parents=True, exist_ok=True)
     # Re-runs re-number job tickets when priorities change; purge stale generated files (status.yaml files are kept).
-    for stale in out.glob("T-*.md"):
+    for stale in out.glob("T-???-*.md"):
         stale.unlink()
-    for old in out.glob("T-*.md"):
+    for old in out.glob("T-???-*.md"):
         old.unlink()
     for t in tickets:
         (out / f"{t['id']}-{_slug(t['title'])[:40]}.md").write_text(_ticket_md(t), encoding="utf-8", newline="\n")
@@ -532,7 +532,7 @@ def _regulated_wizard(project: Path, root: Path) -> None:
 
 def load_tickets(project: Path) -> list[dict]:
     out = []
-    for p in sorted((project / ".foundry" / "tickets").glob("T-*.md")):
+    for p in sorted((project / ".foundry" / "tickets").glob("T-???-*.md")):
         fm, _ = _fm(p)
         fm["_file"] = p.name
         out.append(fm)
@@ -569,7 +569,7 @@ def gate_tickets(project: Path, root: Path) -> list[str]:
     if errs:
         return errs
     tdir = project / ".foundry" / "tickets"
-    if not tdir.exists() or not list(tdir.glob("T-*.md")):
+    if not tdir.exists() or not list(tdir.glob("T-???-*.md")):
         return [".foundry/tickets/ has no tickets"]
     tickets = load_tickets(project)
     order, terrs = topo(tickets)

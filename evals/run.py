@@ -368,7 +368,7 @@ def assert_e2e(project: Path, phases_wall: float | None, build_wall: float | Non
         r = subprocess.run([sys.executable, str(ROOT / "scripts" / "foundry.py"), "gate", str(g), "--dir", str(project)], capture_output=True, text=True, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             errs.append(f"gate {g} failed: {r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr[-200:]}")
-    n_tickets = len(list((project / ".foundry" / "tickets").glob("T-*.md"))) if (project / ".foundry" / "tickets").exists() else 0
+    n_tickets = len(list((project / ".foundry" / "tickets").glob("T-???-*.md"))) if (project / ".foundry" / "tickets").exists() else 0
     if asked > int(th.get("questions_asked_max", 0)):
         errs.append(f"questions asked {asked} > {th.get('questions_asked_max')}")
     if not (int(th.get("tickets_min", 35)) <= n_tickets <= int(th.get("tickets_max", 60))):

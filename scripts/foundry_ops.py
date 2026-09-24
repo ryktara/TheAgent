@@ -524,7 +524,7 @@ def run_metrics_report(project: Path, compare: list[Path] | None = None, phases:
 # ----------------------------------------------------------------------------- status dashboard
 def run_status(project: Path, root: Path) -> int:
     st = B.load_build(project)
-    tickets = sorted((project / ".foundry" / "tickets").glob("T-*.md")) if (project / ".foundry" / "tickets").exists() else []
+    tickets = sorted((project / ".foundry" / "tickets").glob("T-???-*.md")) if (project / ".foundry" / "tickets").exists() else []
     total = len(tickets)
     done = st.get("done") or []
     phase = 11 if total else _last_phase(project)
@@ -744,7 +744,7 @@ def gate_release(project: Path, root: Path, build: bool = True) -> list[str]:
 # ----------------------------------------------------------------------------- handoff
 def handoff_frontmatter(project: Path, root: Path, next_command: str | None = None) -> dict:
     st = B.load_build(project)
-    tickets = list((project / ".foundry" / "tickets").glob("T-*.md")) if (project / ".foundry" / "tickets").exists() else []
+    tickets = list((project / ".foundry" / "tickets").glob("T-???-*.md")) if (project / ".foundry" / "tickets").exists() else []
     phase = 11 if tickets else _last_phase(project)
     pending = [w["slug"] for w in wizard_list(project) if w["status"] == "pending"]
     done = st.get("done") or []

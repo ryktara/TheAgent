@@ -358,7 +358,7 @@ def master_md(pack: dict, ledger: dict, pal: dict, typo: dict, style: dict, ptyp
     out += ["", "## Scales", "", f"- Spacing: {', '.join(v['$value'] for v in tokens['space'].values())}",
             f"- Radius: {', '.join(v['$value'] for v in tokens['radius'].values())} ({style['radius']} base)",
             f"- Shadow: none, sm, md ({style['shadow']} default)", f"- Z-index: {', '.join(tokens['z'].keys())}",
-            f"- Motion: {', '.join(f'{k} {v['$value']}' for k, v in tokens['motion']['duration'].items())}; reduced-motion variant removes movement",
+            f"- Motion: {', '.join(k + ' ' + v['$value'] for k, v in tokens['motion']['duration'].items())}; reduced-motion variant removes movement",
             f"- Touch: minimum {tokens['touch']['min']['$value']}; numpad keys 64px", ""]
     out += ["## Components", "", f"Text-safe roles for any component label: {', '.join(TEXT_ROLES)}. Non-text-only roles: {', '.join(tokens['foundry']['non_text_only']) or 'none'} (fills, borders, icons only).", "",
             "| Id | Component | shadcn | States | Min target |", "|----|-----------|--------|--------|------------|"]

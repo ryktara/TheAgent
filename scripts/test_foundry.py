@@ -783,7 +783,11 @@ class P7Tests(unittest.TestCase):
         (self.tmp / "package.json").write_text(json.dumps(pkg), encoding="utf-8")
         (self.tmp / ".foundry" / "reviews").mkdir(exist_ok=True)
         (self.tmp / ".foundry" / "reviews" / "T-000.changes.json").write_text(json.dumps({"risk": "low"}), encoding="utf-8")
-        code, out = run(self.B.run_dod, self.tmp, REPO, "T-000")
+        import shutil as _sh
+        from unittest import mock
+        real_which = _sh.which
+        with mock.patch.object(self.B.shutil, "which", lambda n, *a, **k: None if n == "semgrep" else real_which(n, *a, **k)):  # hermetic: never run a real semgrep
+            code, out = run(self.B.run_dod, self.tmp, REPO, "T-000")
         self.assertEqual(code, 1, out)
         self.assertIn("unit", out)
         st = foundry.parse_yaml((self.tmp / ".foundry" / "tickets" / "T-000.status.yaml").read_text(encoding="utf-8"))

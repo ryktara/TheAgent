@@ -17,7 +17,7 @@ npm install -g @anthropic-ai/claude-code
 Then the plugin, from GitHub:
 
 ```
-claude plugin marketplace add ryktara/TheAgent
+claude plugin marketplace add ryktara/Foundry
 claude plugin install foundry@theagent
 ```
 

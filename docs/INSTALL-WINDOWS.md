@@ -53,7 +53,7 @@ lists `codebase-memory`.
 ## 5. Foundry plugin
 
 ```powershell
-claude plugin marketplace add ryktara/TheAgent        # or a local checkout: "D:\path\to\foundry"
+claude plugin marketplace add ryktara/Foundry        # or a local checkout: "D:\path\to\foundry"
 claude plugin install foundry@theagent
 ```
 

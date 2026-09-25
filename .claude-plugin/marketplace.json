@@ -4,7 +4,7 @@
     "name": "ryktara"
   },
   "metadata": {
-    "description": "Marketplace for the Foundry plugin (github.com/ryktara/TheAgent); the same file serves a local checkout."
+    "description": "Marketplace for the Foundry plugin (github.com/ryktara/Foundry); the same file serves a local checkout."
   },
   "plugins": [
     {

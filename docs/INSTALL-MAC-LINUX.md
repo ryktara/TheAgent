@@ -45,7 +45,7 @@ one-liner), then merge into `~/.claude.json`:
 ## 5. Plugin and setup check
 
 ```sh
-claude plugin marketplace add ryktara/TheAgent     # or a local checkout: /path/to/foundry
+claude plugin marketplace add ryktara/Foundry     # or a local checkout: /path/to/foundry
 claude plugin install foundry@theagent
 ```
 

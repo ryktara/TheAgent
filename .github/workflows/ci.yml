@@ -15,6 +15,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: pnpm (the DoD runner test drives stub package scripts through it)
+        run: npm install -g pnpm
       - name: Validate skills, packs, schemas
         run: python scripts/foundry.py validate
       - name: Design check (palette contrast)

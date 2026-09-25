@@ -778,6 +778,7 @@ class P7Tests(unittest.TestCase):
         code, out = run(foundry.main, ["build", "activate", "--ticket", "T-999", "--dir", str(self.tmp)])
         self.assertEqual(code, 1)
 
+    @unittest.skipUnless(shutil.which("pnpm") and shutil.which("node"), "pnpm and node required")
     def test_dod_runner_with_stub_scripts(self):
         pkg = {"name": "x", "scripts": {"typecheck": "node -e \"process.exit(0)\"", "lint": "node -e \"console.log('lint ok')\"", "test:unit": "node -e \"process.exit(2)\""}}
         (self.tmp / "package.json").write_text(json.dumps(pkg), encoding="utf-8")

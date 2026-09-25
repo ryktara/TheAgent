@@ -80,14 +80,18 @@ Phases 0 to 15; gates, inputs and outputs per phase: [docs/pipeline.md](docs/pip
 
 ## Cost expectations
 
-Measured on the reference app, subscription usage converted at sonnet list prices.
-
-<!-- COST: filled from docs/examples/restaurant-pos/COST.md -->
+Measured on the reference app (restaurant-pos, 49 tickets, P8–P11 transcripts), subscription usage
+priced at public list prices: sonnet for builder, finisher and reviewers, haiku for ui-review, the
+parent's own turns at the opus tier. Full table: docs/examples/restaurant-pos/COST.md.
 
 | Measure | Value |
 |---------|-------|
-| Per feature ticket, median | TBD |
-| Full reference app, total | TBD |
+| Per feature ticket, median | $21.20 |
+| Per compliance ticket, median | $10.16 |
+| Per integration ticket, median | $5.21 |
+| Full reference app, total (49 tickets) | $1,059.64 (sonnet $473.57, haiku $7.67, parent $578.39) |
+| Wall time, sum of ticket windows | 46 h |
+| Design pipeline, phases 0–10 (retail-pos run) | $4.29, under 30 min |
 
 Your own numbers, from the app folder: `python <foundry>/scripts/foundry.py metrics report --by-model`.
 

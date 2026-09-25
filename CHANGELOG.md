@@ -30,6 +30,12 @@ inside a logged-in Claude Code session, reads no API key and has no headless mod
 
 ## P11 — v1.0
 
+- fix: the smoke template's `--start` now boots an embedded loopback Postgres (`.pg/smoke`, FOUNDRY_PG_PORT+1),
+  migrates, seeds and supplies the production-required env before starting the api (reason: `gate release`
+  timed out on /health because the fail-fast production config loader had no database and no env).
+- Reference app finished 49/49: T-900 release gate passes; COST.md regenerated from all 49 tickets
+  ($1,059.64 total, feature median $21.20); README cost table filled; evals/thresholds.yaml refreshed.
+
 - Pack schema 2.0: `vocabulary:` block (scaffold ticket titles, ADR hints/refs, design defaults, glossary hint terms,
   copy overrides, money tokens, terms, operator role, smoke route, containers, event consumers); required on complete packs.
 - Core is pack-agnostic: restaurant prose, MONEY_TOKENS/MONEY_JOBS, KDS/table-map component and screen rules, smoke route,

@@ -150,7 +150,8 @@ Required env (`.env` next to compose, never committed): `POSTGRES_PASSWORD`, `DE
 
 RELEASE_TEMPLATES["scripts/smoke.mjs"] = """// Release smoke (gate release): /health, login (enrol + whoami), __SMOKE_LABEL__. With --start it builds nothing but boots
 // the production servers from the local build (api via tsx, web via next start) on WEB_PORT/API_PORT, runs, then stops them.
-import { spawn, spawnSync } from "node:child_process";
+import { spawn, spawnSync, execSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const args = process.argv.slice(2);
@@ -161,6 +162,7 @@ const apiUrl = process.env.API_URL ?? `http://localhost:${apiPort}`;
 const enrolCode = process.env.DEVICE_ENROL_CODE ?? "release-smoke-code";
 const branch = process.env.SMOKE_BRANCH_ID ?? "11111111-1111-4111-8111-111111111111";
 const procs = [];
+let stopPg = () => {};
 
 function start(cmd, argv, env) {
   const p = spawn(cmd, argv, { env: { ...process.env, ...env }, shell: process.platform === "win32", stdio: ["ignore", "pipe", "pipe"] });
@@ -181,7 +183,27 @@ const check = (name, ok, detail = "") => { checks.push({ name, ok, detail }); co
 
 try {
   if (args.includes("--start")) {
-    start("pnpm", ["--filter", "@__APP_NAME__/api", "exec", "tsx", "src/index.ts"], { PORT: apiPort, API_PORT: apiPort, DEVICE_ENROL_CODE: enrolCode, WEB_ORIGIN: webUrl, NODE_ENV: "production" });
+    // The local production smoke needs what a real deploy gets from .env (the fail-fast config loader has no dev
+    // defaults under NODE_ENV=production): an embedded loopback Postgres on FOUNDRY_PG_PORT+1 (never the dev or
+    // integration cluster), migrations, the demo seed, and the required vars. TLS to that loopback Postgres is
+    // waived only under FOUNDRY_SMOKE=1, which `gate release` sets for this one subprocess.
+    let databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      const pgPort = Number(process.env.FOUNDRY_PG_PORT ?? 54330) + 1;
+      const out = execSync(`node packages/db/scripts/pg-local.mjs start --dir .pg/smoke --port ${pgPort} --db __APP_NAME___smoke`, { encoding: "utf8" });
+      const m = /DATABASE_URL=(\S+)/.exec(out);
+      if (!m) throw new Error(`pg-local start did not print DATABASE_URL: ${out}`);
+      databaseUrl = m[1];
+      stopPg = () => { try { execSync(`node packages/db/scripts/pg-local.mjs stop --dir .pg/smoke --port ${pgPort}`, { stdio: "ignore" }); } catch { /* already down */ } };
+      const seedEnv = { ...process.env, DATABASE_URL: databaseUrl, NODE_ENV: "development" };  // demo seeds refuse NODE_ENV=production
+      execSync("pnpm --filter @__APP_NAME__/db exec prisma migrate deploy", { env: seedEnv, stdio: "ignore" });
+      execSync("pnpm --filter @__APP_NAME__/db run --if-present seed", { env: seedEnv, stdio: "ignore" });
+    }
+    const prodEnv = {
+      DATABASE_URL: databaseUrl, LOG_LEVEL: process.env.LOG_LEVEL ?? "info", PAYMENTS_LIVE: process.env.PAYMENTS_LIVE ?? "false",
+      PRINT_BRIDGE_TOKEN: process.env.PRINT_BRIDGE_TOKEN ?? randomBytes(24).toString("hex"), FOUNDRY_SMOKE: process.env.FOUNDRY_SMOKE ?? "1",
+    };
+    start("pnpm", ["--filter", "@__APP_NAME__/api", "exec", "tsx", "src/index.ts"], { ...prodEnv, PORT: apiPort, API_PORT: apiPort, DEVICE_ENROL_CODE: enrolCode, WEB_ORIGIN: webUrl, NODE_ENV: "production" });
     start("pnpm", ["--filter", "@__APP_NAME__/web", "exec", "next", "start", "-p", webPort], { PORT: webPort, NEXT_PUBLIC_API_URL: apiUrl, NODE_ENV: "production" });
     await waitFor(`${apiUrl}/health`);
     await waitFor(`${webUrl}/`);
@@ -208,6 +230,7 @@ try {
       else p.kill("SIGTERM");
     } catch { /* already gone */ }
   }
+  stopPg();
 }
 const failed = checks.filter((c) => !c.ok);
 console.log(`smoke: ${checks.length - failed.length}/${checks.length} passed`);

@@ -40,22 +40,22 @@ Measured from Claude Code transcripts (`foundry.py metrics ingest`) and priced w
 | T-031 | integration | Integration: payments adapter (network-intl) | 7,316 | 11,299,979 | 5.69 | 0.08 | 1.04 | 6.82 | 24 | 0 |
 | T-032 | integration | Integration: delivery adapter (talabat) | 10,033 | 7,271,108 | 4.25 | 0.00 | 0.00 | 4.25 | 18 | 0 |
 | T-033 | integration | Integration: einvoicing adapter (ae-fta) | 13,307 | 8,799,454 | 4.14 | 0.07 | 1.00 | 5.21 | 18 | 0 |
-| T-034 | compliance | Compliance: access controls (12) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-035 | compliance | Compliance: agentic controls (12) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-036 | compliance | Compliance: api controls (13) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-037 | compliance | Compliance: auth controls (10) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-038 | compliance | Compliance: business-logic controls (17) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-039 | compliance | Compliance: compliance controls (12) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-040 | compliance | Compliance: config controls (11) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-041 | compliance | Compliance: crypto controls (8) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-042 | compliance | Compliance: data controls (17) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-043 | compliance | Compliance: error-log controls (11) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-044 | compliance | Compliance: input controls (14) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-045 | compliance | Compliance: payments controls (3) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-046 | compliance | Compliance: session controls (10) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-047 | compliance | Compliance: supply-chain controls (4) | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| T-900 | release | Release: deploy, observability, runbook | 0 | 0 | 0.00 | 0.00 | 0.00 | 0.00 | 0 | 0 |
-| **total** | 49 tickets | | 1,245,164 | 1,168,020,129 | 383.78 | 6.35 | 503.73 | **893.86** | 2312 | 86 |
+| T-034 | compliance | Compliance: access controls (12) | 5,308 | 6,804,549 | 2.60 | 0.00 | 12.68 | 15.28 | 55 | 0 |
+| T-035 | compliance | Compliance: agentic controls (12) | 5,449 | 8,051,066 | 4.03 | 0.08 | 3.24 | 7.35 | 24 | 0 |
+| T-036 | compliance | Compliance: api controls (13) | 6,562 | 8,343,054 | 3.96 | 0.14 | 2.21 | 6.31 | 16 | 2 |
+| T-037 | compliance | Compliance: auth controls (10) | 15,842 | 19,063,325 | 7.96 | 0.14 | 2.22 | 10.32 | 23 | 12 |
+| T-038 | compliance | Compliance: business-logic controls (17) | 7,131 | 12,901,378 | 6.15 | 0.09 | 2.30 | 8.53 | 26 | 1 |
+| T-039 | compliance | Compliance: compliance controls (12) | 8,812 | 9,132,410 | 4.13 | 0.08 | 2.29 | 6.50 | 19 | 1 |
+| T-040 | compliance | Compliance: config controls (11) | 11,098 | 23,153,828 | 5.50 | 0.00 | 20.49 | 25.99 | 35 | 2 |
+| T-041 | compliance | Compliance: crypto controls (8) | 5,849 | 12,405,818 | 5.78 | 0.09 | 4.52 | 10.39 | 36 | 1 |
+| T-042 | compliance | Compliance: data controls (17) | 15,414 | 23,853,542 | 9.50 | 0.11 | 3.47 | 13.08 | 46 | 3 |
+| T-043 | compliance | Compliance: error-log controls (11) | 7,087 | 11,741,375 | 5.30 | 0.11 | 4.59 | 10.00 | 35 | 2 |
+| T-044 | compliance | Compliance: input controls (14) | 10,917 | 23,031,785 | 9.56 | 0.08 | 4.62 | 14.26 | 56 | 2 |
+| T-045 | compliance | Compliance: payments controls (3) | 13,481 | 12,755,296 | 5.67 | 0.09 | 2.40 | 8.16 | 19 | 1 |
+| T-046 | compliance | Compliance: session controls (10) | 9,583 | 21,532,459 | 7.61 | 0.10 | 3.55 | 11.26 | 26 | 1 |
+| T-047 | compliance | Compliance: supply-chain controls (4) | 8,774 | 11,288,357 | 5.19 | 0.11 | 2.42 | 7.72 | 22 | 1 |
+| T-900 | release | Release: deploy, observability, runbook | 16,764 | 17,854,221 | 6.85 | 0.11 | 3.66 | 10.63 | 23 | 0 |
+| **total** | 49 tickets | | 1,393,235 | 1,389,932,592 | 473.57 | 7.67 | 578.39 | **1059.64** | 2773 | 115 |
 
 ## Medians per ticket type
 
@@ -64,8 +64,8 @@ Measured from Claude Code transcripts (`foundry.py metrics ingest`) and priced w
 | scaffold | 1 | 0 | 0 | 0.00 | 0 |
 | feature | 30 | 25,835 | 36,696,899 | 21.20 | 48 |
 | integration | 3 | 10,033 | 8,799,454 | 5.21 | 18 |
-| compliance | 14 | 0 | 0 | 0.00 | 0 |
-| release | 1 | 0 | 0 | 0.00 | 0 |
+| compliance | 14 | 8,793 | 12,580,557 | 10.16 | 26 |
+| release | 1 | 16,764 | 17,854,221 | 10.63 | 23 |
 
 ## Phases 0–10 (design pipeline, run in P2–P6 before transcript metrics existed)
 

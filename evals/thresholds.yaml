@@ -1,5 +1,5 @@
 version: "1"
-as_of: "2026-09-24"
+as_of: "2026-09-25"
 skeleton_wall_s:
   domain: 10
   architecture: 10
@@ -14,8 +14,8 @@ e2e:
   tickets_min: 35
   tickets_max: 60
   phases_wall_s_max: 2400
-  per_ticket_cost_usd_max: 26.59
-  per_ticket_output_tokens_max: 35455
-  per_ticket_cache_read_max: 46869878
+  per_ticket_cost_usd_max: 22.62
+  per_ticket_output_tokens_max: 23525
+  per_ticket_cache_read_max: 26915573
   build_wall_s_max: 2400
   trigger_accuracy_min: 0.9

@@ -18,14 +18,14 @@ Then the plugin, from GitHub:
 
 ```
 claude plugin marketplace add ryktara/Foundry
-claude plugin install foundry@theagent
+claude plugin install foundry@foundry
 ```
 
-Dev path (a local checkout; the marketplace is still named `theagent`, it was `foundry-local` before 1.0):
+Dev path (a local checkout; the marketplace is named `foundry` from a checkout too; it was `foundry-local` before 1.0):
 
 ```
 claude plugin marketplace add /path/to/foundry
-claude plugin install foundry@theagent
+claude plugin install foundry@foundry
 ```
 
 In a `claude` session, run `/foundry-setup`; done when the last line starts with `setup: ready`.
@@ -120,7 +120,7 @@ Your own numbers, from the app folder: `python <foundry>/scripts/foundry.py metr
 ## Layout
 
 ```
-.claude-plugin/   plugin manifest and marketplace (theagent)
+.claude-plugin/   plugin manifest and marketplace (foundry)
 skills/           one SKILL.md folder per skill and subagent
 packs/            domain packs, packs/index.csv, packs/README.md (schema 2.0)
 data/             CSV knowledge the scripts query

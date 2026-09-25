@@ -30,6 +30,7 @@ inside a logged-in Claude Code session, reads no API key and has no headless mod
 
 ## P11 — v1.0
 
+- marketplace renamed `foundry` to match the repo: install is now `claude plugin marketplace add ryktara/Foundry` + `claude plugin install foundry@foundry`; anyone who added `theagent` re-adds it.
 - docs: repository renamed to ryktara/Foundry; install lines updated (GitHub redirects the old TheAgent URL).
 - fix: CI installs pnpm and the DoD runner unit test skips without pnpm/node (reason: ubuntu runner had no pnpm, so the stub scripts all failed).
 - fix: tickets-skeleton sorts the screens folder (reason: CI on ubuntu produced different ticket slugs and screen order because ext4 returns glob results unordered; golden 0/3 there).

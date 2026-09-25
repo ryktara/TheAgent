@@ -54,7 +54,7 @@ lists `codebase-memory`.
 
 ```powershell
 claude plugin marketplace add ryktara/Foundry        # or a local checkout: "D:\path\to\foundry"
-claude plugin install foundry@theagent
+claude plugin install foundry@foundry
 ```
 
 Done when: `/foundry` appears in the slash-command list of a new `claude` session.

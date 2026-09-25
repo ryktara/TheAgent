@@ -46,7 +46,7 @@ one-liner), then merge into `~/.claude.json`:
 
 ```sh
 claude plugin marketplace add ryktara/Foundry     # or a local checkout: /path/to/foundry
-claude plugin install foundry@theagent
+claude plugin install foundry@foundry
 ```
 
 Then in `claude`: `/foundry-setup`. Done when the last line starts with `setup: ready`.

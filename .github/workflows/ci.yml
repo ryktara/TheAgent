@@ -23,3 +23,5 @@ jobs:
         run: python evals/run.py
       - name: Unit tests
         run: python -m unittest scripts/test_foundry.py -v
+      - name: Hook tests
+        run: python hooks/test_hooks.py

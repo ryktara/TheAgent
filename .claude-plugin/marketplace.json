@@ -1,10 +1,10 @@
 {
-  "name": "foundry-local",
+  "name": "theagent",
   "owner": {
-    "name": "Foundry contributors"
+    "name": "ryktara"
   },
   "metadata": {
-    "description": "Local marketplace exposing the foundry plugin from this checkout."
+    "description": "Marketplace for the Foundry plugin (github.com/ryktara/TheAgent); the same file serves a local checkout."
   },
   "plugins": [
     {

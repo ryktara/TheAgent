@@ -396,7 +396,7 @@ def assert_e2e(project: Path, phases_wall: float | None, build_wall: float | Non
             errs.append(f"{tid} cache_read {d['t_cache_read']} > {th.get('per_ticket_cache_read_max')}")
     RESULTS.mkdir(parents=True, exist_ok=True)
     out = RESULTS / f"e2e-{F._now()[:10]}.json"
-    out.write_text(json.dumps({"date": F._now(), "project": str(project), "pack": pack, "asked": asked, "tickets": n_tickets, "phases_wall_s": phases_wall, "build_wall_s": build_wall,
+    out.write_text(json.dumps({"date": F._now(), "project": project.name,  # folder name only: no machine paths in tracked results "pack": pack, "asked": asked, "tickets": n_tickets, "phases_wall_s": phases_wall, "build_wall_s": build_wall,
                                "per_ticket": {k: {"cost_usd": round(v.get("cost_usd", 0), 2), "t_out": v.get("t_out"), "t_cache_read": v.get("t_cache_read")} for k, v in per.items()}, "errors": errs}, indent=1), encoding="utf-8", newline="\n")
     for e in errs:
         print("    " + e)

@@ -14,11 +14,18 @@ brew install git node python@3.12                                               
 npm install -g @anthropic-ai/claude-code
 ```
 
-Then the plugin, from a local checkout (or `<owner>/<repo>`):
+Then the plugin, from GitHub:
+
+```
+claude plugin marketplace add ryktara/TheAgent
+claude plugin install foundry@theagent
+```
+
+Dev path (a local checkout; the marketplace is still named `theagent`, it was `foundry-local` before 1.0):
 
 ```
 claude plugin marketplace add /path/to/foundry
-claude plugin install foundry@foundry-local
+claude plugin install foundry@theagent
 ```
 
 In a `claude` session, run `/foundry-setup`; done when the last line starts with `setup: ready`.
@@ -113,7 +120,7 @@ Your own numbers, from the app folder: `python <foundry>/scripts/foundry.py metr
 ## Layout
 
 ```
-.claude-plugin/   plugin manifest and local marketplace (foundry-local)
+.claude-plugin/   plugin manifest and marketplace (theagent)
 skills/           one SKILL.md folder per skill and subagent
 packs/            domain packs, packs/index.csv, packs/README.md (schema 2.0)
 data/             CSV knowledge the scripts query
@@ -128,3 +135,7 @@ CHANGELOG.md      step-by-step history (P0 to P11)
 ## Licence
 
 Copyright (c) 2026 Al Sadq IT Solutions LLC. All rights reserved. See [LICENSE](LICENSE).
+
+Source-available, not open-source: you may read and evaluate the code here; any other use needs the
+owner's written permission until Al Sadq IT Solutions LLC says otherwise. See [CONTRIBUTING.md](CONTRIBUTING.md)
+and [SECURITY.md](SECURITY.md).

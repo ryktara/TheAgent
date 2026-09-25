@@ -30,6 +30,8 @@ inside a logged-in Claude Code session, reads no API key and has no headless mod
 
 ## P11 — v1.0
 
+- GitHub release: marketplace renamed `theagent` (install `foundry@theagent` from `ryktara/TheAgent`),
+  CONTRIBUTING.md, SECURITY.md, CI runs the hook tests, tracked eval results carry no machine paths.
 - fix: smoke template regex escape (reason: the Python source emitted a SyntaxWarning on import).
 - fix: the smoke template's `--start` now boots an embedded loopback Postgres (`.pg/smoke`, FOUNDRY_PG_PORT+1),
   migrates, seeds and supplies the production-required env before starting the api (reason: `gate release`

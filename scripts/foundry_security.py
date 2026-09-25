@@ -307,7 +307,7 @@ def tickets_skeleton(project: Path, root: Path) -> list[dict]:
             ops_by_job.setdefault(job, []).append(op["operationId"])
             if not str(path).startswith("/admin"):
                 public_ops.add(op["operationId"])
-    screen_files = {p.stem: p for p in (project / ".foundry" / "screens").glob("*.md")} if (project / ".foundry" / "screens").exists() else {}
+    screen_files = {p.stem: p for p in sorted((project / ".foundry" / "screens").glob("*.md"))} if (project / ".foundry" / "screens").exists() else {}
     screens_by_job: dict[str, list[str]] = {}
     for sid, p in screen_files.items():
         fm, _ = _fm(p)
@@ -597,7 +597,7 @@ def gate_tickets(project: Path, root: Path) -> list[str]:
                 if op["operationId"] not in covered_ops:
                     errs.append(f"public operation {op['operationId']} not covered by a ticket")
     covered_screens = {s for t in tickets for s in t.get("screens") or []}
-    for p in (project / ".foundry" / "screens").glob("*.md"):
+    for p in sorted((project / ".foundry" / "screens").glob("*.md")):
         if p.stem not in covered_screens:
             errs.append(f"screen {p.stem} not covered by a ticket")
     comp = F.parse_yaml((project / ".foundry" / "compliance.yaml").read_text(encoding="utf-8"))

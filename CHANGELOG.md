@@ -30,6 +30,7 @@ inside a logged-in Claude Code session, reads no API key and has no headless mod
 
 ## P11 — v1.0
 
+- fix: tickets-skeleton sorts the screens folder (reason: CI on ubuntu produced different ticket slugs and screen order because ext4 returns glob results unordered; golden 0/3 there).
 - fix: Python 3.11 compatibility (reason: CI on 3.11 rejected a nested same-quote f-string in foundry_design.py; the DoD unit test also ran a real semgrep when one was installed, now mocked out).
 - GitHub release: marketplace renamed `theagent` (install `foundry@theagent` from `ryktara/TheAgent`),
   CONTRIBUTING.md, SECURITY.md, CI runs the hook tests, tracked eval results carry no machine paths.

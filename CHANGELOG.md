@@ -30,6 +30,7 @@ inside a logged-in Claude Code session, reads no API key and has no headless mod
 
 ## P11 — v1.0
 
+- fix: smoke template regex escape (reason: the Python source emitted a SyntaxWarning on import).
 - fix: the smoke template's `--start` now boots an embedded loopback Postgres (`.pg/smoke`, FOUNDRY_PG_PORT+1),
   migrates, seeds and supplies the production-required env before starting the api (reason: `gate release`
   timed out on /health because the fail-fast production config loader had no database and no env).

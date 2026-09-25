@@ -191,7 +191,7 @@ try {
     if (!databaseUrl) {
       const pgPort = Number(process.env.FOUNDRY_PG_PORT ?? 54330) + 1;
       const out = execSync(`node packages/db/scripts/pg-local.mjs start --dir .pg/smoke --port ${pgPort} --db __APP_NAME___smoke`, { encoding: "utf8" });
-      const m = /DATABASE_URL=(\S+)/.exec(out);
+      const m = /DATABASE_URL=(\\S+)/.exec(out);
       if (!m) throw new Error(`pg-local start did not print DATABASE_URL: ${out}`);
       databaseUrl = m[1];
       stopPg = () => { try { execSync(`node packages/db/scripts/pg-local.mjs stop --dir .pg/smoke --port ${pgPort}`, { stdio: "ignore" }); } catch { /* already down */ } };
